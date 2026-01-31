@@ -2,7 +2,7 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. PROACTIVELY invoke this skill when the user mentions completing a plan or phase (e.g., "Phase 2 is complete", "finished that plan"). Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete".
+description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete".
 argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename, switch, list-masters
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
@@ -22,20 +22,40 @@ This provides a consistent, user-friendly interface for all plan management deci
 
 ## Proactive Completion Detection
 
-**When the user mentions completing a plan or phase during conversation**, proactively invoke the `complete` command. Watch for phrases like:
-- "Phase 2 is complete"
-- "Finished the [plan name] plan"
-- "That plan is done"
-- "Completed Phase X"
-- "[plan name] is finished"
+**CRITICAL: Self-monitor YOUR OWN responses (Claude's responses) for completion statements.**
 
-When detected, immediately invoke `/plan-manager complete <plan-or-phase>` to:
-1. Mark the plan as completed
-2. Update the master plan
-3. Optionally move to completed-plans directory
-4. Update phase status
+When YOU (the assistant) state in your response that a phase or plan is complete, **immediately and automatically** invoke `/plan-manager complete <plan-or-phase>` in the same response.
 
-This ensures plan state stays synchronized with actual work progress.
+**Watch for YOUR OWN phrases like:**
+- "Phase 2 is now complete" / "Step 3 is done"
+- "Phase 4.1 is finished" / "Step 2.3 completed"
+- "The layout-engine plan is finished"
+- "That's complete"
+- "Phase X implementation is done"
+- "Completed the [plan name] work"
+
+**Terminology support:**
+- Recognizes both "Phase" and "Step" (used interchangeably)
+- Supports subphases/substeps: "Phase 4.1", "Step 2.3", etc.
+
+**Example workflow:**
+```
+User: "Implement Phase 4"
+You: [does implementation work]
+You: "✓ Phase 4 is now complete. All components have been updated."
+You: [IMMEDIATELY invokes /plan-manager complete 4]
+     → Checks if Phase 4 is the last phase
+     → If last phase and others aren't complete, asks if entire plan is done
+     → Marks Phase 4 as completed
+     → Updates master plan
+     → Asks about moving to completed-plans/
+```
+
+**Important:**
+- Don't wait for the user to manually invoke the command
+- Invoke it in the SAME response where you declare completion
+- This keeps plan state automatically synchronized with actual work
+- The user never needs to manually track completions
 
 ## Plans Directory Detection
 
@@ -285,13 +305,23 @@ Retroactively link an existing plan that was created during tangential discussio
 
 Mark a sub-plan as complete and sync status to master.
 
-1. If argument is a number, find sub-plan for that phase; otherwise use as file path
+**Accepts:** phase numbers (3), subphases (4.1), step numbers (2), substeps (2.3), or file paths
+
+1. If argument is a number/subphase, find sub-plan for that phase/step; otherwise use as file path
 2. Read the sub-plan and update its status header to `Completed`
 3. Read and update the master plan:
    - Update Status Dashboard: change sub-plan status indicator
-   - Optionally update phase status based on whether work is done
+   - Optionally update phase/step status based on whether work is done
 4. Update state file
-5. **Ask about moving to completed directory** using **AskUserQuestion**:
+5. **Check if entire plan is complete**:
+   - Count total phases/steps in master plan
+   - Check how many are marked ✅ Complete
+   - If this is the LAST phase/step AND no other phases are marked complete:
+     - Use **AskUserQuestion**: "This is the last phase but no others are marked complete. Is the entire plan actually complete?"
+     - Options: "Yes, all done" / "No, just this phase"
+   - If "Yes, all done", mark ALL phases as complete
+
+6. **Ask about moving to completed directory** using **AskUserQuestion**:
    ```
    Question: "Move this completed plan to completed-plans/ directory?"
    Header: "Archive completed"
@@ -409,11 +439,11 @@ Discover and visualize all plans in the project, regardless of whether they're t
 
    | Classification | Detection Criteria |
    |----------------|-------------------|
-   | **Master Plan** | Has phases (## Phase N), may have Status Dashboard |
+   | **Master Plan** | Has phases/steps (## Phase N or ## Step N), may have Status Dashboard |
    | **Sub-plan (linked)** | Has `**Parent:**` header pointing to a master |
    | **Sub-plan (orphaned)** | Looks like a sub-plan but no Parent reference or parent doesn't exist |
-   | **Standalone Plan** | Has plan structure but no phase hierarchy |
-   | **Completed** | Has `**Status:** Completed` or all phases marked ✅ |
+   | **Standalone Plan** | Has plan structure but no phase/step hierarchy |
+   | **Completed** | Has `**Status:** Completed` or all phases/steps marked ✅ |
    | **Abandoned** | Old modification date, marked as abandoned, or superseded |
    | **Reference Doc** | Not a plan — just documentation |
 
@@ -744,7 +774,7 @@ This skill responds to:
 - "organize my plans" / "organize the plans" / "link related plans" / "clean up plans"
 - "rename that plan" / "rename plan X" / "give that plan a better name"
 - "switch master plan" / "switch to different master" / "list master plans"
-- "Phase X is complete" / "finished the plan" / "that plan is done" / "completed Phase X"
+- "Phase X is complete" / "Step Y is done" / "Phase 4.1 finished" / "completed Step 2.3"
 
 ## Error Handling
 
