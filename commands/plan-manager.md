@@ -3,7 +3,7 @@
 ---
 name: plan-manager
 description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", or "rename that plan".
-argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename
+argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename, switch, list-masters
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
 
@@ -26,10 +26,24 @@ State is stored in the project's `.claude/plan-manager-state.json`:
 ```json
 {
   "plansDirectory": "plans",
-  "masterPlan": "plans/master-plan.md",
+  "masterPlans": [
+    {
+      "path": "plans/layout-engine.md",
+      "active": true,
+      "created": "2026-01-30",
+      "description": "UI layout system redesign"
+    },
+    {
+      "path": "plans/auth-migration.md",
+      "active": false,
+      "created": "2026-01-29",
+      "description": "Migration to OAuth 2.0"
+    }
+  ],
   "subPlans": [
     {
       "path": "plans/sub-plan-1.md",
+      "parentPlan": "plans/layout-engine.md",
       "parentPhase": 3,
       "status": "in_progress",
       "createdAt": "2026-01-30"
@@ -37,6 +51,8 @@ State is stored in the project's `.claude/plan-manager-state.json`:
   ]
 }
 ```
+
+**Multiple master plans** are supported for projects with parallel initiatives. Commands operate on the "active" master plan by default, but can target specific masters.
 
 This keeps tooling metadata separate from actual plan files.
 
@@ -49,13 +65,28 @@ If the state file doesn't exist, the `overview` command can still scan for plans
 
 ## Commands
 
-### `init <path>`
+### `init <path> [--description "text"]`
 
-Initialize or designate a master plan.
+Initialize or add a master plan to tracking.
 
 1. Validate the file exists and is a markdown file
-2. Create `.claude/plan-manager-state.json` with the master plan path (create `.claude/` directory if needed)
-3. If the master plan doesn't have a Status Dashboard section, offer to add one:
+2. Check if state file exists:
+   - **First master plan**: Create `.claude/plan-manager-state.json` (create `.claude/` directory if needed), mark as active
+   - **Additional master plan**: Add to `masterPlans` array
+3. If multiple masters exist, ask via **AskUserQuestion**:
+
+```
+Question: "You have multiple master plans. Make this the active one?"
+Header: "Active master"
+Options:
+  - Label: "Yes, switch to this"
+    Description: "Make this the active master plan for commands"
+  - Label: "No, keep current"
+    Description: "Add to tracking but keep current master active"
+```
+
+4. Extract or ask for a brief description to identify this master plan
+5. If the master plan doesn't have a Status Dashboard section, offer to add one:
 
 ```markdown
 ## Status Dashboard
@@ -67,13 +98,55 @@ Initialize or designate a master plan.
 ...
 ```
 
-4. Confirm initialization: `✓ Initialized master plan: {path}`
+6. Confirm initialization: `✓ Added master plan: {path} (active)` or `✓ Added master plan: {path}`
 
-### `branch <phase>`
+### `switch <master-plan>`
+
+Switch the active master plan.
+
+1. Read state file to get list of master plans
+2. If argument provided, find matching master plan (by path or fuzzy match)
+3. If no argument, use **AskUserQuestion** to select:
+
+```
+Question: "Which master plan should be active?"
+Header: "Switch master"
+Options:
+  - Label: "layout-engine.md"
+    Description: "UI layout system redesign (3/5 phases complete)"
+  - Label: "auth-migration.md"
+    Description: "Migration to OAuth 2.0 (1/3 phases complete)"
+```
+
+4. Update state file to mark selected master as active (others as inactive)
+5. Confirm: `✓ Switched to master plan: {path}`
+
+### `list-masters`
+
+Show all master plans being tracked.
+
+1. Read state file
+2. Display list with status:
+
+```
+Master Plans:
+
+● plans/layout-engine.md (ACTIVE)
+  UI layout system redesign
+  Status: 3/5 phases complete
+  Sub-plans: 4 (2 in progress, 2 completed)
+
+○ plans/auth-migration.md
+  Migration to OAuth 2.0
+  Status: 1/3 phases complete
+  Sub-plans: 1 (1 in progress)
+```
+
+### `branch <phase> [--master <path>]`
 
 Proactively create a sub-plan when you see a problem coming.
 
-1. Read the state file to get master plan path
+1. Read the state file to get master plan path (use active master, or specified via --master)
 2. Read the master plan to verify the phase exists
 3. Ask the user for a brief description of the sub-plan topic
 4. **Update the master plan FIRST**:
@@ -102,7 +175,7 @@ Proactively create a sub-plan when you see a problem coming.
 6. Update state file with new sub-plan entry
 7. Confirm: `✓ Created sub-plan: {path} (branched from Phase {N})`
 
-### `capture [file] [--phase N]`
+### `capture [file] [--phase N] [--master <path>]`
 
 Retroactively link an existing plan that was created during tangential discussion.
 
@@ -116,7 +189,7 @@ Retroactively link an existing plan that was created during tangential discussio
 
 **For both modes:**
 1. If `--phase N` not provided, ask which phase this relates to
-2. Read the state file to get master plan path
+2. Read the state file to get master plan path (use active master, or specified via --master)
 3. **Add parent reference to the sub-plan** (prepend if not present):
 
 ```markdown
@@ -159,17 +232,19 @@ Mark a sub-plan as complete and sync status to master.
    ```
 6. Confirm: `✓ Completed sub-plan: {path}`
 
-### `status`
+### `status [--all]`
 
 Display the full plan hierarchy and status.
 
-1. Read state file
+**Default (active master only):**
+1. Read state file to get active master plan
 2. Read master plan to extract Status Dashboard
-3. For each sub-plan in state, read its status
+3. For each sub-plan linked to this master, read its status
 4. Display formatted output:
 
 ```
-Master Plan: plans/master-plan.md
+Master Plan: plans/layout-engine.md (ACTIVE)
+UI layout system redesign
 
 Phase 1: ✅ Complete
 Phase 2: 🔄 In Progress
@@ -179,6 +254,30 @@ Phase 3: ⏸️ Blocked
 Phase 4: ⏳ Pending
 
 Sub-plans: 2 total (1 in progress, 1 completed)
+```
+
+**With --all flag:**
+Show status for all master plans:
+
+```
+Master Plans: 2
+
+● plans/layout-engine.md (ACTIVE)
+  UI layout system redesign
+
+  Phase 1: ✅ Complete
+  Phase 2: 🔄 In Progress
+    └─ plans/layout-fix.md (In Progress)
+  ...
+  Sub-plans: 2 total (1 in progress, 1 completed)
+
+○ plans/auth-migration.md
+  Migration to OAuth 2.0
+
+  Phase 1: ✅ Complete
+  Phase 2: 🔄 In Progress
+  ...
+  Sub-plans: 1 total (1 in progress)
 ```
 
 ### `audit`
@@ -527,6 +626,24 @@ Each phase section should have a sub-plans subsection when applicable:
 ...
 ```
 
+## Multiple Master Plans
+
+For projects with multiple parallel initiatives, you can track multiple master plans:
+
+- Each master plan has its own phases and sub-plans
+- One master plan is marked as "active" at a time
+- Commands operate on the active master by default
+- Use `--master <path>` flag to target a specific master
+- Use `/plan-manager switch` to change the active master
+- Use `/plan-manager list-masters` to see all tracked masters
+- Use `/plan-manager status --all` to see all hierarchies
+
+**Common scenarios:**
+- Large refactoring + bug fix initiative running in parallel
+- Frontend redesign + backend API migration
+- Multiple team members working on different features
+- Different Claude Code sessions for different parts of the project
+
 ## Natural Language Triggers
 
 This skill responds to:
@@ -541,6 +658,7 @@ This skill responds to:
 - "scan the plans directory" / "discover plans"
 - "organize my plans" / "organize the plans" / "link related plans" / "clean up plans"
 - "rename that plan" / "rename plan X" / "give that plan a better name"
+- "switch master plan" / "switch to different master" / "list master plans"
 
 ## Error Handling
 
@@ -743,4 +861,44 @@ Claude: Organization Complete
         ├── Master plans: 1 active
         ├── Linked sub-plans: 5
         └── Standalone: 1
+```
+
+### Multiple Master Plans
+
+```
+User: "I'm starting a new initiative for auth migration"
+Claude: *Creates plans/auth-migration.md with 3 phases*
+
+User: "/plan-manager init plans/auth-migration.md"
+Claude: You have multiple master plans. Make this the active one?
+        ┌─────────────────────────────────────────────────────────┐
+        │ ○ Yes, switch to this                                   │
+        │   Make this the active master plan for commands         │
+        │                                                         │
+        │ ○ No, keep current                                      │
+        │   Add to tracking but keep current master active        │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "No, keep current"*
+Claude: ✓ Added master plan: plans/auth-migration.md
+
+User: "/plan-manager list-masters"
+Claude: Master Plans:
+
+        ● plans/layout-engine.md (ACTIVE)
+          UI layout system redesign
+          Status: 3/5 phases complete
+          Sub-plans: 4 (2 in progress, 2 completed)
+
+        ○ plans/auth-migration.md
+          Migration to OAuth 2.0
+          Status: 0/3 phases complete
+          Sub-plans: 0
+
+User: "switch to auth migration"
+Claude: ✓ Switched to master plan: plans/auth-migration.md
+
+User: "/plan-manager branch 1"
+Claude: *Creates sub-plan for auth migration Phase 1*
+        ✓ Created sub-plan: plans/oauth-setup.md (branched from Phase 1)
 ```
