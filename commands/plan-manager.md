@@ -2,7 +2,7 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", or "rename that plan".
+description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. PROACTIVELY invoke this skill when the user mentions completing a plan or phase (e.g., "Phase 2 is complete", "finished that plan"). Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete".
 argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename, switch, list-masters
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
@@ -19,6 +19,23 @@ This skill maintains a single source of truth (master plan) while allowing sub-p
 - A description explaining what that choice does
 
 This provides a consistent, user-friendly interface for all plan management decisions.
+
+## Proactive Completion Detection
+
+**When the user mentions completing a plan or phase during conversation**, proactively invoke the `complete` command. Watch for phrases like:
+- "Phase 2 is complete"
+- "Finished the [plan name] plan"
+- "That plan is done"
+- "Completed Phase X"
+- "[plan name] is finished"
+
+When detected, immediately invoke `/plan-manager complete <plan-or-phase>` to:
+1. Mark the plan as completed
+2. Update the master plan
+3. Optionally move to completed-plans directory
+4. Update phase status
+
+This ensures plan state stays synchronized with actual work progress.
 
 ## Plans Directory Detection
 
@@ -108,6 +125,15 @@ The `plansDirectory` can be configured per-project. Common locations:
 - `.plans/`
 
 If the state file doesn't exist, the `overview` command can still scan for plans; other commands will prompt to run `init` first.
+
+## Completed Plans Directory
+
+Completed plans can be moved to a `completed-plans/` directory to keep the working plans directory clean:
+
+- If `plansDirectory` is `plans/`, completed plans move to `completed-plans/`
+- If `plansDirectory` is `docs/plans/`, completed plans move to `docs/completed-plans/`
+- The directory is created as a sibling to the plans directory
+- Completed plans retain their original filename (no datestamp prefix needed)
 
 ## Commands
 
@@ -265,7 +291,20 @@ Mark a sub-plan as complete and sync status to master.
    - Update Status Dashboard: change sub-plan status indicator
    - Optionally update phase status based on whether work is done
 4. Update state file
-5. Use **AskUserQuestion tool** to determine phase status:
+5. **Ask about moving to completed directory** using **AskUserQuestion**:
+   ```
+   Question: "Move this completed plan to completed-plans/ directory?"
+   Header: "Archive completed"
+   Options:
+     - Label: "Yes, move it"
+       Description: "Move to {completed-plans-dir} to keep plans directory clean"
+     - Label: "Leave in place"
+       Description: "Keep in current location for now"
+   ```
+   - If "Yes, move it", move the file to the appropriate completed-plans directory
+   - Update all references in master plan and state file
+
+6. Use **AskUserQuestion tool** to determine phase status:
    ```
    Question: "Sub-plan completed. What's the status of Phase {N}?"
    Header: "Phase status"
@@ -461,16 +500,16 @@ Options:
     Description: "Analyze content, suggest links for related plans, then handle completed/orphaned"
   - Label: "Review individually"
     Description: "I'll show a summary of each plan and ask what to do with it one by one"
-  - Label: "Archive completed"
-    Description: "Move completed unlinked plans to plans/archive/ with datestamp prefix"
+  - Label: "Move completed"
+    Description: "Move completed unlinked plans to completed-plans/ directory"
   - Label: "Leave as-is"
     Description: "Just show the report, don't take any action"
 ```
 
 Based on selection:
 - **Organize all**: Switch to the `organize` workflow — analyze relationships, suggest links, then cleanup
-- **Review individually**: For each orphan, show content summary and use AskUserQuestion again: Link to phase? Archive? Delete? Skip?
-- **Archive**: Move completed unlinked plans to `plans/archive/` with datestamp
+- **Review individually**: For each orphan, show content summary and use AskUserQuestion again: Link to phase? Move to completed? Delete? Skip?
+- **Move completed**: Move completed unlinked plans to `completed-plans/` (sibling to plans directory)
 - **Leave as-is**: Just report, no action
 
 6. **Output state suggestion**:
@@ -560,8 +599,8 @@ Organization Complete
   • performance-notes.md → Phase 4
   • grid-edge-cases.md → Phase 2
 
-✓ Archived 1 completed plan:
-  • hotfix-login.md → plans/archive/2026-01-30-hotfix-login.md
+✓ Moved 1 completed plan:
+  • hotfix-login.md → completed-plans/hotfix-login.md
 
 ⚠️ 1 plan left unlinked (user skipped):
   • random-ideas.md
@@ -705,6 +744,7 @@ This skill responds to:
 - "organize my plans" / "organize the plans" / "link related plans" / "clean up plans"
 - "rename that plan" / "rename plan X" / "give that plan a better name"
 - "switch master plan" / "switch to different master" / "list master plans"
+- "Phase X is complete" / "finished the plan" / "that plan is done" / "completed Phase X"
 
 ## Error Handling
 
@@ -830,9 +870,9 @@ Claude: *Uses AskUserQuestion tool*
         │   Keep them where they are                              │
         └─────────────────────────────────────────────────────────┘
 
-User: *Selects "Archive completed"*
-Claude: ✓ Moved hotfix-login.md → plans/archive/2026-01-30-hotfix-login.md
-        ✓ Moved cache-optimization.md → plans/archive/2026-01-30-cache-optimization.md
+User: *Selects "Move completed"*
+Claude: ✓ Moved hotfix-login.md → completed-plans/hotfix-login.md
+        ✓ Moved cache-optimization.md → completed-plans/cache-optimization.md
 ```
 
 ### Organizing Messy Plans
