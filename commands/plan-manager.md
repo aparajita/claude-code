@@ -2,8 +2,8 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, capture, complete, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
+description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "merge this branch", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
 ---
@@ -344,52 +344,73 @@ Completed plans can be moved to a `completed-plans/` directory to keep the worki
 
 ### No command (interactive menu)
 
-When invoked without any command (`/plan-manager`), display an interactive menu of available commands.
+When invoked without any command (`/plan-manager`), display an interactive menu of available commands using regular text output.
 
-Use **AskUserQuestion** to present the menu:
+**Display this menu:**
 
 ```
-Question: "What would you like to do with your plans?"
-Header: "Plan Manager"
-Options:
-  - Label: "View status"
-    Description: "Show master plan hierarchy and sub-plan status"
-  - Label: "Overview"
-    Description: "Discover all plans in the project and their relationships"
-  - Label: "Organize plans"
-    Description: "Auto-organize, link, and clean up plans"
-  - Label: "Initialize master plan"
-    Description: "Track a master plan and set up plan management"
-  - Label: "Branch to sub-plan"
-    Description: "Create a sub-plan for the current phase"
-  - Label: "Capture existing plan"
-    Description: "Link an existing plan to a master plan phase"
-  - Label: "Complete plan"
-    Description: "Mark a sub-plan or phase as complete"
-  - Label: "Configure settings"
-    Description: "View/edit category organization settings"
-  - Label: "Switch master plan"
-    Description: "Change which master plan is active"
-  - Label: "Rename plan"
-    Description: "Rename a plan and update all references"
-  - Label: "Audit plans"
-    Description: "Find orphaned plans and broken links"
-  - Label: "List master plans"
-    Description: "Show all tracked master plans"
-  - Label: "Help"
-    Description: "Show available commands and usage"
+Plan Manager — Available Commands
+══════════════════════════════════════════════════════════════
+
+VIEWING & STATUS
+────────────────
+  1. status        Show master plan hierarchy and sub-plan status
+  2. overview      Discover all plans in the project and their relationships
+  3. list-masters  Show all tracked master plans
+
+GETTING STARTED
+───────────────
+  4. init          Initialize or add a master plan
+  5. config        View/edit category organization settings
+
+WORKING WITH PLANS
+──────────────────
+  6. branch        Create a sub-plan for the current phase
+  7. capture       Link an existing plan to a master plan phase
+  8. complete      Mark a sub-plan or phase as complete
+  9. merge         Merge a branch plan's content into the master plan
+
+ORGANIZATION
+────────────
+  10. organize     Auto-organize, link, and clean up plans
+  11. rename       Rename a plan and update all references
+  12. audit        Find orphaned plans and broken links
+
+MULTI-MASTER
+────────────
+  13. switch       Change which master plan is active
+
+HELP
+────
+  14. help         Show detailed command reference and examples
+
+══════════════════════════════════════════════════════════════
+
+Please respond with the number or name of the command you'd like to use.
 ```
 
-After selection, prompt for any required arguments for that command, then execute it.
+After the user responds with their choice, parse it (accepting either number or command name), then prompt for any required arguments for that command and execute it.
 
 **Examples:**
 
 ```
 User: "/plan-manager"
-Claude: *Shows menu*
+Claude: *Shows text menu*
 
-User: *Selects "View status"*
-Claude: Do you want to see all master plans or just the active one?
+        Plan Manager — Available Commands
+        ══════════════════════════════════════════════════════════════
+
+        VIEWING & STATUS
+        ────────────────
+          1. status        Show master plan hierarchy and sub-plan status
+          2. overview      Discover all plans in the project and their relationships
+          ...
+
+        Please respond with the number or name of the command you'd like to use.
+
+User: "1" (or "status")
+Claude: *Uses AskUserQuestion to ask about scope*
+        Do you want to see all master plans or just the active one?
         ┌─────────────────────────────────────────────────────────┐
         │ Status scope                                            │
         │                                                         │
@@ -406,9 +427,9 @@ Claude: *Runs `/plan-manager status` and shows output*
 
 ```
 User: "/plan-manager"
-Claude: *Shows menu*
+Claude: *Shows text menu*
 
-User: *Selects "Initialize master plan"*
+User: "init" (or "4")
 Claude: Which plan file should I initialize as a master plan?
 User: "plans/new-feature.md"
 Claude: *Runs `/plan-manager init plans/new-feature.md`*
@@ -416,9 +437,9 @@ Claude: *Runs `/plan-manager init plans/new-feature.md`*
 
 ```
 User: "/plan-manager"
-Claude: *Shows menu*
+Claude: *Shows text menu*
 
-User: *Selects "Help"*
+User: "help" (or "13")
 Claude: *Runs `/plan-manager help` and shows command reference*
 
         Plan Manager Commands
@@ -641,11 +662,26 @@ Mark a sub-plan as complete and sync status to master.
 
 1. If argument is a number/subphase, find sub-plan for that phase/step; otherwise use as file path
 2. Read the sub-plan and update its status header to `Completed`
-3. Read and update the master plan:
+3. **Ask about merge vs mark complete** using **AskUserQuestion**:
+   ```
+   Question: "This branch plan is complete. How should it be integrated?"
+   Header: "Integration"
+   Options:
+     - Label: "Merge into master (Recommended)"
+       Description: "Merge branch content into the master plan's phase section"
+     - Label: "Just mark complete"
+       Description: "Update Status Dashboard only, keep branch separate"
+   ```
+   - If "Merge into master": Run the merge workflow (see `merge` command)
+   - If "Just mark complete": Continue with steps below
+
+4. Read and update the master plan:
    - Update Status Dashboard: change sub-plan status indicator
-   - Optionally update phase/step status based on whether work is done
-4. Update state file
-5. **Check if entire plan is complete**:
+   - Update phase/step status based on user choice
+
+5. Update state file
+
+6. **Check if entire plan is complete**:
    - Count total phases/steps in master plan
    - Check how many are marked ✅ Complete
    - If this is the LAST phase/step AND no other phases are marked complete:
@@ -653,23 +689,27 @@ Mark a sub-plan as complete and sync status to master.
      - Options: "Yes, all done" / "No, just this phase"
    - If "Yes, all done", mark ALL phases as complete
 
-6. **Ask about moving to completed directory** using **AskUserQuestion**:
+7. **Ask about branch cleanup** using **AskUserQuestion**:
    ```
-   Question: "Move this completed plan to completed-plans/ directory?"
-   Header: "Archive completed"
+   Question: "What should happen to the completed branch plan?"
+   Header: "Branch cleanup"
    Options:
-     - Label: "Yes, move it"
-       Description: "Move to {completed-plans-dir} to keep plans directory clean"
+     - Label: "Archive it"
+       Description: "Move to completed-plans/ directory to keep it for reference"
+     - Label: "Delete it"
+       Description: "Remove the file entirely (content is in master plan)"
      - Label: "Leave in place"
        Description: "Keep in current location for now"
    ```
-   - If "Yes, move it", move the file mirroring subdirectory structure:
+   - If "Archive it", move the file mirroring subdirectory structure:
      - If plan is in `plans/layout-engine/sub-plan.md`, move to `completed-plans/layout-engine/sub-plan.md`
      - If plan is in `plans/sub-plan.md` (flat), move to `completed-plans/sub-plan.md`
      - Create subdirectory in completed-plans if needed
+   - If "Delete it", delete the file
+   - If "Leave in place", do nothing
    - Update all references in master plan and state file
 
-6. Use **AskUserQuestion tool** to determine phase status:
+8. Use **AskUserQuestion tool** to determine phase status:
    ```
    Question: "Sub-plan completed. What's the status of Phase {N}?"
    Header: "Phase status"
@@ -681,7 +721,130 @@ Mark a sub-plan as complete and sync status to master.
      - Label: "Blocked"
        Description: "Phase {N} is waiting on something else, mark it ⏸️ Blocked"
    ```
-6. Confirm: `✓ Completed sub-plan: {path}`
+
+9. Confirm: `✓ Completed sub-plan: {path}`
+
+### `merge [file-or-phase]`
+
+Merge a branch plan's content into the master plan.
+
+**Purpose**: Branch plans often contain updates, refinements, or extensions to the master plan's phase content. This command integrates that work back into the master plan instead of keeping it as a separate document.
+
+**Accepts:** phase numbers (3), subphases (4.1), step numbers (2), substeps (2.3), file paths, or no argument (interactive selection)
+
+**Without argument (interactive mode):**
+1. Read state file to get active master plan
+2. List all sub-plans linked to the active master
+3. Use **AskUserQuestion** to select which branch to merge:
+   ```
+   Question: "Which branch plan do you want to merge into the master?"
+   Header: "Select branch"
+   Options:
+     - Label: "{branch-1-name}.md"
+       Description: "Phase {N}: {brief-description} (Status: {status})"
+     - Label: "{branch-2-name}.md"
+       Description: "Phase {M}: {brief-description} (Status: {status})"
+     [... up to 4 most recent branches, use "Other" for text input if more]
+   ```
+
+**With argument:**
+1. If argument is a number/subphase, find sub-plan for that phase/step; otherwise use as file path
+2. Validate the branch plan exists and is linked to the active master
+
+**Merge workflow:**
+
+1. **Read the branch plan content**
+2. **Identify the target phase** in the master plan (from the branch's Parent header)
+3. **Use AskUserQuestion to confirm merge approach**:
+   ```
+   Question: "How should this branch content be merged?"
+   Header: "Merge strategy"
+   Options:
+     - Label: "Append to phase (Recommended)"
+       Description: "Add branch content to the end of Phase {N} section"
+     - Label: "Replace phase content"
+       Description: "Replace Phase {N} content entirely with branch content"
+     - Label: "Manual review"
+       Description: "Show me both and I'll decide what to keep"
+   ```
+
+4. **Perform the merge**:
+   - If "Append to phase":
+     - Extract the main content from the branch plan (excluding the Parent header and metadata)
+     - Add a subsection to the master plan's phase: `### Merged from {branch-name}.md`
+     - Append the branch content under that subsection
+   - If "Replace phase content":
+     - Replace the entire phase section with the branch content
+     - Preserve the phase heading (`## Phase {N}: {title}`)
+   - If "Manual review":
+     - Display both the current phase content and branch content
+     - Ask user to indicate what should be kept/combined
+
+5. **Update master plan metadata**:
+   - Update Status Dashboard: remove the sub-plan reference
+   - Add a note in the phase section: `✓ Merged from [{branch-name}.md](path) on {date}`
+
+6. **Update state file**: Mark the branch as merged (add `"merged": true, "mergedAt": "{date}"`)
+
+7. **Ask about branch cleanup** using **AskUserQuestion**:
+   ```
+   Question: "Branch merged successfully. What should happen to the branch file?"
+   Header: "Branch cleanup"
+   Options:
+     - Label: "Delete it (Recommended)"
+       Description: "Remove the file (content is now in master plan)"
+     - Label: "Archive it"
+       Description: "Move to completed-plans/ directory for reference"
+     - Label: "Leave in place"
+       Description: "Keep in current location"
+   ```
+   - If "Delete it": Delete the branch file and remove from state
+   - If "Archive it": Move to completed-plans/ mirroring subdirectory structure
+   - If "Leave in place": Do nothing
+
+8. **Ask about phase status** using **AskUserQuestion**:
+   ```
+   Question: "Branch merged. What's the status of Phase {N}?"
+   Header: "Phase status"
+   Options:
+     - Label: "Phase complete"
+       Description: "All work for Phase {N} is done, mark it ✅ Complete"
+     - Label: "Still in progress"
+       Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
+   ```
+
+9. **Confirm**: `✓ Merged {branch-name}.md into Phase {N} of master plan`
+
+**Example:**
+
+```
+User: "/plan-manager merge grid-edge-cases.md"
+Claude: *Reads branch plan content*
+
+        How should this branch content be merged?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Merge strategy                                          │
+        │                                                         │
+        │ ○ Append to phase (Recommended)                         │
+        │   Add branch content to the end of Phase 2 section      │
+        │                                                         │
+        │ ○ Replace phase content                                 │
+        │   Replace Phase 2 content entirely with branch content  │
+        │                                                         │
+        │ ○ Manual review                                         │
+        │   Show me both and I'll decide what to keep             │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Append to phase"*
+Claude: ✓ Appended grid-edge-cases.md content to Phase 2
+
+        Branch merged successfully. What should happen to the branch file?
+        [cleanup options...]
+
+User: *Selects "Delete it"*
+Claude: ✓ Deleted grid-edge-cases.md
+        ✓ Merged grid-edge-cases.md into Phase 2 of master plan
+```
 
 ### `status [--all]`
 
@@ -1255,66 +1418,77 @@ Plan Manager Commands
 
 GETTING STARTED
 ───────────────
+  init <path>
+    Initialize or add a master plan
+    Options: --flat, --description "text"
+    Example: /plan-manager init plans/feature.md
 
-  init <path>              Initialize or add a master plan
-                           Options: --flat, --description "text"
-                           Example: /plan-manager init plans/feature.md
-
-  config                   View/edit category organization settings
-                           Options: --edit, --user, --project
-                           Example: /plan-manager config --edit
+  config
+    View/edit category organization settings
+    Options: --edit, --user, --project
+    Example: /plan-manager config --edit
 
 WORKING WITH PLANS
 ──────────────────
+  branch <phase>
+    Create a sub-plan for a phase
+    Options: --master <path>
+    Example: /plan-manager branch 3
 
-  branch <phase>           Create a sub-plan for a phase
-                           Options: --master <path>
-                           Example: /plan-manager branch 3
+  capture [file]
+    Link an existing plan to a phase
+    Options: --phase N, --master <path>
+    Example: /plan-manager capture plans/fix.md --phase 2
 
-  capture [file]           Link an existing plan to a phase
-                           Options: --phase N, --master <path>
-                           Example: /plan-manager capture plans/fix.md --phase 2
+  complete <plan>
+    Mark a sub-plan or phase as complete
+    Example: /plan-manager complete 3
 
-  complete <plan>          Mark a sub-plan or phase as complete
-                           Example: /plan-manager complete 3
+  merge [file]
+    Merge a branch plan's content into the master plan
+    Example: /plan-manager merge grid-fixes.md
 
 VIEWING STATUS
 ──────────────
+  status
+    Show master plan hierarchy and status
+    Options: --all (show all masters)
+    Example: /plan-manager status
 
-  status                   Show master plan hierarchy and status
-                           Options: --all (show all masters)
-                           Example: /plan-manager status
+  overview [directory]
+    Discover and visualize all plans
+    Example: /plan-manager overview
 
-  overview [directory]     Discover and visualize all plans
-                           Example: /plan-manager overview
-
-  list-masters             Show all tracked master plans
-                           Example: /plan-manager list-masters
+  list-masters
+    Show all tracked master plans
+    Example: /plan-manager list-masters
 
 ORGANIZATION
 ────────────
+  organize [directory]
+    Auto-organize, link, and clean up plans
+    Example: /plan-manager organize
 
-  organize [directory]     Auto-organize, link, and clean up plans
-                           Example: /plan-manager organize
+  rename <file> [name]
+    Rename a plan and update references
+    Example: /plan-manager rename plans/old.md new-name.md
 
-  rename <file> [name]     Rename a plan and update references
-                           Example: /plan-manager rename plans/old.md new-name.md
-
-  audit                    Find orphaned plans and broken links
-                           Example: /plan-manager audit
+  audit
+    Find orphaned plans and broken links
+    Example: /plan-manager audit
 
 MULTI-MASTER
 ────────────
-
-  switch [master]          Change which master plan is active
-                           Example: /plan-manager switch
+  switch [master]
+    Change which master plan is active
+    Example: /plan-manager switch
 
 TIPS
 ────
-
   • Run '/plan-manager' with no command for interactive menu
   • Use natural language: "capture that plan", "organize my plans"
   • Phase completion is auto-detected when you say "Phase X is complete"
+  • Merge branch plans back into master to consolidate updates
   • Category organization keeps different plan types separated
   • Subdirectories keep master plans and sub-plans together
 
@@ -1449,6 +1623,7 @@ This skill responds to:
 - "capture that plan" / "capture the plan you just created"
 - "link this to the master plan" / "link this back to phase 3"
 - "branch from phase 3" / "we need to branch here"
+- "merge this branch" / "merge the branch plan" / "merge into master" / "integrate this back"
 - "show plan status" / "what's the plan status"
 - "audit the plans" / "check for orphaned plans"
 - "overview of plans" / "what plans do we have" / "show me all plans"
@@ -1477,54 +1652,47 @@ This skill responds to:
 
 ```
 User: "/plan-manager"
-Claude: *Shows interactive menu*
+Claude: *Shows text-based menu*
 
-        What would you like to do with your plans?
-        ┌─────────────────────────────────────────────────────────┐
-        │ Plan Manager                                            │
-        │                                                         │
-        │ ○ View status                                           │
-        │   Show master plan hierarchy and sub-plan status        │
-        │                                                         │
-        │ ○ Overview                                              │
-        │   Discover all plans in the project and their           │
-        │   relationships                                         │
-        │                                                         │
-        │ ○ Organize plans                                        │
-        │   Auto-organize, link, and clean up plans               │
-        │                                                         │
-        │ ○ Initialize master plan                                │
-        │   Track a master plan and set up plan management        │
-        │                                                         │
-        │ ○ Branch to sub-plan                                    │
-        │   Create a sub-plan for the current phase               │
-        │                                                         │
-        │ ○ Capture existing plan                                 │
-        │   Link an existing plan to a master plan phase          │
-        │                                                         │
-        │ ○ Complete plan                                         │
-        │   Mark a sub-plan or phase as complete                  │
-        │                                                         │
-        │ ○ Configure settings                                    │
-        │   View/edit category organization settings              │
-        │                                                         │
-        │ ○ Switch master plan                                    │
-        │   Change which master plan is active                    │
-        │                                                         │
-        │ ○ Rename plan                                           │
-        │   Rename a plan and update all references               │
-        │                                                         │
-        │ ○ Audit plans                                           │
-        │   Find orphaned plans and broken links                  │
-        │                                                         │
-        │ ○ List master plans                                     │
-        │   Show all tracked master plans                         │
-        │                                                         │
-        │ ○ Help                                                  │
-        │   Show available commands and usage                     │
-        └─────────────────────────────────────────────────────────┘
+        Plan Manager — Available Commands
+        ══════════════════════════════════════════════════════════════
 
-User: *Selects "Overview"*
+        VIEWING & STATUS
+        ────────────────
+          1. status        Show master plan hierarchy and sub-plan status
+          2. overview      Discover all plans in the project and their relationships
+          3. list-masters  Show all tracked master plans
+
+        GETTING STARTED
+        ───────────────
+          4. init          Initialize or add a master plan
+          5. config        View/edit category organization settings
+
+        WORKING WITH PLANS
+        ──────────────────
+          6. branch        Create a sub-plan for the current phase
+          7. capture       Link an existing plan to a master plan phase
+          8. complete      Mark a sub-plan or phase as complete
+
+        ORGANIZATION
+        ────────────
+          9. organize      Auto-organize, link, and clean up plans
+          10. rename       Rename a plan and update all references
+          11. audit        Find orphaned plans and broken links
+
+        MULTI-MASTER
+        ────────────
+          12. switch       Change which master plan is active
+
+        HELP
+        ────
+          13. help         Show detailed command reference and examples
+
+        ══════════════════════════════════════════════════════════════
+
+        Please respond with the number or name of the command you'd like to use.
+
+User: "2" (or "overview")
 Claude: *Runs overview command and shows plan hierarchy*
 
         Plans Overview: plans/
@@ -1544,9 +1712,9 @@ User: "I'm not sure what to do next with my plans"
 Claude: "Let me show you the plan-manager menu."
 
 User: "/plan-manager"
-Claude: *Shows menu*
+Claude: *Shows text-based menu*
 
-User: *Selects "Organize plans"*
+User: "organize" (or "9")
 Claude: *Runs organize command, offers to migrate to subdirectories, organize by category, etc.*
 ```
 
