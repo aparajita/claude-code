@@ -20,6 +20,51 @@ This skill maintains a single source of truth (master plan) while allowing sub-p
 
 This provides a consistent, user-friendly interface for all plan management decisions.
 
+## Plans Directory Detection
+
+**Before executing any command**, determine the plans directory by checking sources in priority order:
+
+1. **Check `.claude/settings.local.json`**:
+   - If file exists, read `plansDirectory` field
+   - This is the local override (gitignored, machine-specific)
+   - Takes precedence over settings.json
+
+2. **Check `.claude/settings.json`**:
+   - If file exists, read `plansDirectory` field
+   - This is the project's shared configuration
+   - Example: `{"plansDirectory": "docs/plans"}`
+   - **Important**: This is where plan mode stores plans when configured
+
+3. **Check state file** (`.claude/plan-manager-state.json`):
+   - If exists, read `plansDirectory` field
+   - This was stored from previous initialization
+
+3. **Auto-detect from common locations**:
+   - Check these directories in order:
+     - `plans/` (most common)
+     - `docs/plans/`
+     - `.plans/`
+   - Use the first directory that exists and contains `.md` files
+
+4. **If no directory found**:
+   - For `overview` and `organize`: Ask user via **AskUserQuestion**:
+     ```
+     Question: "Where are your plans stored?"
+     Header: "Plans directory"
+     Options:
+       - Label: "plans/"
+         Description: "Standard plans directory in project root"
+       - Label: "docs/plans/"
+         Description: "Plans in documentation folder"
+       - Label: "Custom path"
+         Description: "Enter a custom directory path"
+     ```
+   - For other commands: Error with message "No plans directory found. Run `/plan-manager overview` first to set up."
+
+5. **Persist in state**:
+   - When state file is created (via `init`), store the detected or specified `plansDirectory`
+   - Users can override by setting `plansDirectory` in `.claude/settings.json`
+
 ## State File
 
 State is stored in the project's `.claude/plan-manager-state.json`:
@@ -70,8 +115,9 @@ If the state file doesn't exist, the `overview` command can still scan for plans
 
 Initialize or add a master plan to tracking.
 
-1. Validate the file exists and is a markdown file
-2. Check if state file exists:
+1. **Detect plans directory** (see Plans Directory Detection above)
+2. Validate the file exists and is a markdown file
+3. Check if state file exists:
    - **First master plan**: Create `.claude/plan-manager-state.json` (create `.claude/` directory if needed), mark as active
    - **Additional master plan**: Add to `masterPlans` array
 3. If multiple masters exist, ask via **AskUserQuestion**:
@@ -314,10 +360,9 @@ Discover and visualize all plans in the project, regardless of whether they're t
 **This command works even without initialization** — useful for understanding an existing project's plans.
 
 1. **Determine plans directory**:
-   - Use argument if provided: `/plan-manager overview docs/plans`
-   - Otherwise check state file for `plansDirectory`
-   - Fall back to common locations: `plans/`, `docs/plans/`, `.plans/`
-   - If none found, ask user for the location
+   - If `directory` argument provided: use that path
+   - Otherwise: use **Plans Directory Detection** (see above)
+   - This establishes which directory to scan
 
 2. **Scan all markdown files** in the directory:
    - Read each `.md` file
