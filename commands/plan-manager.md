@@ -20,7 +20,7 @@ This skill maintains a single source of truth (master plan) while allowing sub-p
 
 - Master plan `layout-engine.md` → creates `plans/layout-engine/` subdirectory
 - Master and all sub-plans live in the same subdirectory: `plans/layout-engine/layout-engine.md`, `plans/layout-engine/sub-plan-1.md`, etc.
-- Completed plans mirror this structure: `completed-plans/layout-engine/sub-plan-1.md`
+- Completed plans mirror this structure: `plans/completed/layout-engine/sub-plan-1.md`
 - **Backward compatible**: Existing flat plans continue to work; use `--flat` flag to create new flat plans
 
 ### Category Subdirectories
@@ -51,6 +51,7 @@ Priority order (later overrides earlier):
     "documentation": "docs",
     "migration": "migrations",
     "design": "designs",
+    "feature": "features",
     "reference": "reference",
     "standalone": "misc"
   },
@@ -94,7 +95,7 @@ To disable category organization:
 
 **The settings file is optional.** Commands work fine without it using built-in defaults:
 
-- If no settings file exists, commands use default category directories (docs, migrations, designs, etc.)
+- If no settings file exists, commands use default category directories (docs, migrations, designs, features, etc.)
 - Commands will NOT automatically create the settings file
 - Category organization is enabled by default (can be disabled in settings)
 
@@ -216,7 +217,7 @@ You: [IMMEDIATELY invokes /plan-manager complete 4]
      → If last phase and others aren't complete, asks if entire plan is done
      → Marks Phase 4 as completed
      → Updates master plan
-     → Asks about moving to completed-plans/
+     → Asks about moving to plans/completed/
 ```
 
 **Important:**
@@ -312,7 +313,7 @@ State is stored in the project's `.claude/plan-manager-state.json`:
 - Sub-plans are created in the same subdirectory as their master plan
 - Flat structure (no subdirectory) is still supported for backward compatibility
 - The `subdirectory` field tracks whether a master uses subdirectory organization (null = flat)
-- **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, etc.)
+- **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, features/, etc.)
   - Category-organized plans are not tracked in state file (they're not linked to any master)
   - Category directories are configured in `plan-manager-settings.json`
 
@@ -327,17 +328,17 @@ If the state file doesn't exist, the `overview` command can still scan for plans
 
 ## Completed Plans Directory
 
-Completed plans can be moved to a `completed-plans/` directory to keep the working plans directory clean:
+Completed plans can be moved to a `completed/` subdirectory within the plans directory to keep the working plans directory clean:
 
-- If `plansDirectory` is `plans/`, completed plans move to `completed-plans/`
-- If `plansDirectory` is `docs/plans/`, completed plans move to `docs/completed-plans/`
-- The directory is created as a sibling to the plans directory
+- If `plansDirectory` is `plans/`, completed plans move to `plans/completed/`
+- If `plansDirectory` is `docs/plans/`, completed plans move to `docs/plans/completed/`
+- The directory is created as a subdirectory of the plans directory
 - **Subdirectory structure is mirrored**:
-  - Master plan subdirectories: `plans/layout-engine/sub-plan.md` → `completed-plans/layout-engine/sub-plan.md`
-  - Category subdirectories: `plans/migrations/db-upgrade.md` → `completed-plans/migrations/db-upgrade.md`
-  - Flat plans: `plans/sub-plan.md` → `completed-plans/sub-plan.md`
+  - Master plan subdirectories: `plans/layout-engine/sub-plan.md` → `plans/completed/layout-engine/sub-plan.md`
+  - Category subdirectories: `plans/migrations/db-upgrade.md` → `plans/completed/migrations/db-upgrade.md`
+  - Flat plans: `plans/sub-plan.md` → `plans/completed/sub-plan.md`
 - Completed plans retain their original filename (no datestamp prefix needed)
-- Subdirectories in completed-plans are created automatically as needed
+- Subdirectories in completed/ are created automatically as needed
 - This preserves the organizational structure even after completion, making it easy to find old plans
 
 ## Commands
@@ -695,16 +696,16 @@ Mark a sub-plan as complete and sync status to master.
    Header: "Branch cleanup"
    Options:
      - Label: "Archive it"
-       Description: "Move to completed-plans/ directory to keep it for reference"
+       Description: "Move to plans/completed/ directory to keep it for reference"
      - Label: "Delete it"
        Description: "Remove the file entirely (content is in master plan)"
      - Label: "Leave in place"
        Description: "Keep in current location for now"
    ```
    - If "Archive it", move the file mirroring subdirectory structure:
-     - If plan is in `plans/layout-engine/sub-plan.md`, move to `completed-plans/layout-engine/sub-plan.md`
-     - If plan is in `plans/sub-plan.md` (flat), move to `completed-plans/sub-plan.md`
-     - Create subdirectory in completed-plans if needed
+     - If plan is in `plans/layout-engine/sub-plan.md`, move to `plans/completed/layout-engine/sub-plan.md`
+     - If plan is in `plans/sub-plan.md` (flat), move to `plans/completed/sub-plan.md`
+     - Create subdirectory in plans/completed/ if needed
    - If "Delete it", delete the file
    - If "Leave in place", do nothing
    - Update all references in master plan and state file
@@ -794,12 +795,12 @@ Merge a branch plan's content into the master plan.
      - Label: "Delete it (Recommended)"
        Description: "Remove the file (content is now in master plan)"
      - Label: "Archive it"
-       Description: "Move to completed-plans/ directory for reference"
+       Description: "Move to plans/completed/ directory for reference"
      - Label: "Leave in place"
        Description: "Keep in current location"
    ```
    - If "Delete it": Delete the branch file and remove from state
-   - If "Archive it": Move to completed-plans/ mirroring subdirectory structure
+   - If "Archive it": Move to plans/completed/ mirroring subdirectory structure
    - If "Leave in place": Do nothing
 
 8. **Ask about phase status** using **AskUserQuestion**:
@@ -1063,7 +1064,7 @@ Options:
   - Label: "Review individually"
     Description: "I'll show a summary of each plan and ask what to do with it one by one"
   - Label: "Move completed"
-    Description: "Move completed unlinked plans to completed-plans/ directory"
+    Description: "Move completed unlinked plans to plans/completed/ directory"
   - Label: "Leave as-is"
     Description: "Just show the report, don't take any action"
 ```
@@ -1071,7 +1072,7 @@ Options:
 Based on selection:
 - **Organize all**: Switch to the `organize` workflow — organize by category, analyze relationships, suggest links, then cleanup
 - **Review individually**: For each plan, show content summary and use AskUserQuestion again: Organize by category? Link to phase? Move to completed? Delete? Skip?
-- **Move completed**: Move completed unlinked plans to `completed-plans/` (sibling to plans directory)
+- **Move completed**: Move completed unlinked plans to `plans/completed/` (sibling to plans directory)
 - **Leave as-is**: Just report, no action
 
 6. **Output state suggestion**:
@@ -1093,7 +1094,7 @@ Automatically analyze and link related plans together, rename poorly-named files
 2. **Load category organization settings**:
    - Check for `~/.claude/plan-manager-settings.json` (user global)
    - Check for `<project>/.claude/plan-manager-settings.json` (project-specific, overrides user)
-   - If neither exists, use default category directories (docs, migrations, designs, reference, misc)
+   - If neither exists, use default category directories (docs, migrations, designs, features, reference, misc)
    - **Note**: Settings file is optional and will NOT be auto-created
    - If `enableCategoryOrganization` is false in settings, skip category organization steps
 
@@ -1151,8 +1152,8 @@ Options:
 
 5. **Organize standalone plans by category** (if `enableCategoryOrganization` is true):
    - Identify standalone plans that match category patterns (from classification)
-   - Group by detected category (documentation, migration, design, etc.)
-   - Use default category directories (docs, migrations, designs, etc.) unless custom settings exist
+   - Group by detected category (documentation, migration, design, feature, etc.)
+   - Use default category directories (docs, migrations, designs, features, etc.) unless custom settings exist
    - If categorized plans found, use **AskUserQuestion tool**:
 
 ```
@@ -1160,7 +1161,7 @@ Question: "Found 8 standalone plans that can be organized by category. Organize 
 Header: "Categories"
 Options:
   - Label: "Organize all (Recommended)"
-    Description: "Move plans to category subdirectories (migrations/, docs/, designs/, etc.)"
+    Description: "Move plans to category subdirectories (migrations/, docs/, designs/, features/, etc.)"
   - Label: "Review by category"
     Description: "I'll show each category and you approve or skip"
   - Label: "Skip categories"
@@ -1248,7 +1249,7 @@ Organization Complete
   • grid-edge-cases.md → Phase 2
 
 ✓ Moved 1 completed plan:
-  • hotfix-login.md → completed-plans/hotfix-login.md
+  • hotfix-login.md → plans/completed/hotfix-login.md
 
 ⚠️ 1 plan left unlinked (user skipped):
   • random-ideas.md
@@ -2124,8 +2125,8 @@ Claude: *Uses AskUserQuestion tool*
         └─────────────────────────────────────────────────────────┘
 
 User: *Selects "Move completed"*
-Claude: ✓ Moved hotfix-login.md → completed-plans/hotfix-login.md
-        ✓ Moved cache-optimization.md → completed-plans/cache-optimization.md
+Claude: ✓ Moved hotfix-login.md → plans/completed/hotfix-login.md
+        ✓ Moved cache-optimization.md → plans/completed/cache-optimization.md
 ```
 
 ### Organizing Messy Plans
