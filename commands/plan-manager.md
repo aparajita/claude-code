@@ -5,6 +5,7 @@ name: plan-manager
 description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", or "rename that plan".
 argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename, switch, list-masters
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
+model: sonnet
 ---
 
 ## Overview
