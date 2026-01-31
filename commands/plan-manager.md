@@ -2,8 +2,8 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete".
-argument-hint: <command> [args] — Commands: init, branch, capture, complete, status, audit, overview, organize, rename, switch, list-masters
+description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, capture, complete, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
 ---
@@ -11,6 +11,174 @@ model: sonnet
 ## Overview
 
 This skill maintains a single source of truth (master plan) while allowing sub-plans to branch off for handling issues discovered during execution. All sub-plans are bidirectionally linked to the master plan.
+
+## Subdirectory Organization
+
+### Master Plan Subdirectories
+
+**New master plans automatically use subdirectory organization** to keep related plans together:
+
+- Master plan `layout-engine.md` → creates `plans/layout-engine/` subdirectory
+- Master and all sub-plans live in the same subdirectory: `plans/layout-engine/layout-engine.md`, `plans/layout-engine/sub-plan-1.md`, etc.
+- Completed plans mirror this structure: `completed-plans/layout-engine/sub-plan-1.md`
+- **Backward compatible**: Existing flat plans continue to work; use `--flat` flag to create new flat plans
+
+### Category Subdirectories
+
+**Standalone plans can be organized by type** into category subdirectories:
+
+- Documentation plans → `plans/docs/` (configurable)
+- Migration plans → `plans/migrations/` (configurable)
+- Design plans → `plans/designs/` (configurable)
+- Reference docs → `plans/reference/` (configurable)
+- Miscellaneous → `plans/misc/` (configurable)
+
+**Configuration**: Category directories are configured in `plan-manager-settings.json`:
+
+Priority order (later overrides earlier):
+1. `~/.claude/plan-manager-settings.json` (user global defaults)
+2. `<project>/.claude/plan-manager-settings.json` (project-specific)
+
+**Important notes**:
+- Category-organized plans can still be linked to master plan phases if they turn out to be sub-plans
+- When a plan in a category directory is linked to a master plan, you'll be asked whether to move it to the master's subdirectory
+- Category directories and master plan subdirectories are independent organizational axes
+
+**Default settings** (if no config file exists):
+```json
+{
+  "categoryDirectories": {
+    "documentation": "docs",
+    "migration": "migrations",
+    "design": "designs",
+    "reference": "reference",
+    "standalone": "misc"
+  },
+  "enableCategoryOrganization": true
+}
+```
+
+**Customization examples**:
+```json
+{
+  "categoryDirectories": {
+    "documentation": "documentation",
+    "migration": "db-migrations",
+    "design": "design-docs",
+    "reference": "refs",
+    "feature": "features",
+    "bugfix": "bug-fixes",
+    "standalone": "other"
+  },
+  "enableCategoryOrganization": true
+}
+```
+
+To disable category organization:
+```json
+{
+  "enableCategoryOrganization": false
+}
+```
+
+**Benefits**:
+  - Visual grouping of related plans in file browser
+  - Clean separation between different master plan hierarchies and plan types
+  - Easier to archive/move entire plan hierarchies
+  - Reduces clutter in root plans directory
+  - Customizable to match your project's workflow
+
+**Migration**: The `organize` command can migrate existing plans to subdirectories.
+
+### Settings File Behavior
+
+**The settings file is optional.** Commands work fine without it using built-in defaults:
+
+- If no settings file exists, commands use default category directories (docs, migrations, designs, etc.)
+- Commands will NOT automatically create the settings file
+- Category organization is enabled by default (can be disabled in settings)
+
+**To customize category directories or disable category organization**, create a settings file manually or use the helper command.
+
+### Creating Settings File
+
+**Recommended: Use the interactive editor**
+
+The easiest way to configure category directories is to use the interactive editor:
+
+```bash
+/plan-manager config --edit
+```
+
+This will:
+- Walk you through all settings interactively
+- Let you choose directory names with suggestions
+- Show a preview before saving
+- Ask whether to save to user-wide or project-specific settings
+
+**Quick view: Just see current config**
+
+```bash
+/plan-manager config
+```
+
+This displays the active configuration and offers actions (edit, toggle, etc.)
+
+**Manual creation** (if you prefer to edit files directly):
+
+To manually customize category directories, create a settings file:
+
+**User-wide settings** (applies to all projects):
+```bash
+# Create ~/.claude/plan-manager-settings.json
+mkdir -p ~/.claude
+cat > ~/.claude/plan-manager-settings.json << 'EOF'
+{
+  "categoryDirectories": {
+    "documentation": "docs",
+    "migration": "migrations",
+    "design": "designs",
+    "reference": "reference",
+    "feature": "features",
+    "bugfix": "bug-fixes",
+    "standalone": "misc"
+  },
+  "enableCategoryOrganization": true
+}
+EOF
+```
+
+**Project-specific settings** (overrides user-wide):
+```bash
+# Create .claude/plan-manager-settings.json in your project
+mkdir -p .claude
+cat > .claude/plan-manager-settings.json << 'EOF'
+{
+  "categoryDirectories": {
+    "documentation": "documentation",
+    "migration": "db-migrations",
+    "design": "design-proposals"
+  },
+  "enableCategoryOrganization": true
+}
+EOF
+```
+
+**To disable category organization**:
+```json
+{
+  "enableCategoryOrganization": false
+}
+```
+
+When settings exist, the `organize` command will use them automatically.
+
+**To view your current configuration**, run:
+```bash
+/plan-manager config
+```
+
+This shows which settings file is active (user-wide, project-specific, or built-in defaults) and displays all category directory mappings in a readable format.
 
 ## Interaction Guidelines
 
@@ -111,13 +279,15 @@ State is stored in the project's `.claude/plan-manager-state.json`:
   "plansDirectory": "plans",
   "masterPlans": [
     {
-      "path": "plans/layout-engine.md",
+      "path": "plans/layout-engine/layout-engine.md",
+      "subdirectory": "layout-engine",
       "active": true,
       "created": "2026-01-30",
       "description": "UI layout system redesign"
     },
     {
       "path": "plans/auth-migration.md",
+      "subdirectory": null,
       "active": false,
       "created": "2026-01-29",
       "description": "Migration to OAuth 2.0"
@@ -125,8 +295,8 @@ State is stored in the project's `.claude/plan-manager-state.json`:
   ],
   "subPlans": [
     {
-      "path": "plans/sub-plan-1.md",
-      "parentPlan": "plans/layout-engine.md",
+      "path": "plans/layout-engine/sub-plan-1.md",
+      "parentPlan": "plans/layout-engine/layout-engine.md",
       "parentPhase": 3,
       "status": "in_progress",
       "createdAt": "2026-01-30"
@@ -136,6 +306,15 @@ State is stored in the project's `.claude/plan-manager-state.json`:
 ```
 
 **Multiple master plans** are supported for projects with parallel initiatives. Commands operate on the "active" master plan by default, but can target specific masters.
+
+**Subdirectory organization** is supported for better organization:
+- New master plans automatically get their own subdirectory (e.g., `plans/layout-engine/`)
+- Sub-plans are created in the same subdirectory as their master plan
+- Flat structure (no subdirectory) is still supported for backward compatibility
+- The `subdirectory` field tracks whether a master uses subdirectory organization (null = flat)
+- **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, etc.)
+  - Category-organized plans are not tracked in state file (they're not linked to any master)
+  - Category directories are configured in `plan-manager-settings.json`
 
 This keeps tooling metadata separate from actual plan files.
 
@@ -153,20 +332,136 @@ Completed plans can be moved to a `completed-plans/` directory to keep the worki
 - If `plansDirectory` is `plans/`, completed plans move to `completed-plans/`
 - If `plansDirectory` is `docs/plans/`, completed plans move to `docs/completed-plans/`
 - The directory is created as a sibling to the plans directory
+- **Subdirectory structure is mirrored**:
+  - Master plan subdirectories: `plans/layout-engine/sub-plan.md` → `completed-plans/layout-engine/sub-plan.md`
+  - Category subdirectories: `plans/migrations/db-upgrade.md` → `completed-plans/migrations/db-upgrade.md`
+  - Flat plans: `plans/sub-plan.md` → `completed-plans/sub-plan.md`
 - Completed plans retain their original filename (no datestamp prefix needed)
+- Subdirectories in completed-plans are created automatically as needed
+- This preserves the organizational structure even after completion, making it easy to find old plans
 
 ## Commands
 
-### `init <path> [--description "text"]`
+### No command (interactive menu)
+
+When invoked without any command (`/plan-manager`), display an interactive menu of available commands.
+
+Use **AskUserQuestion** to present the menu:
+
+```
+Question: "What would you like to do with your plans?"
+Header: "Plan Manager"
+Options:
+  - Label: "View status"
+    Description: "Show master plan hierarchy and sub-plan status"
+  - Label: "Overview"
+    Description: "Discover all plans in the project and their relationships"
+  - Label: "Organize plans"
+    Description: "Auto-organize, link, and clean up plans"
+  - Label: "Initialize master plan"
+    Description: "Track a master plan and set up plan management"
+  - Label: "Branch to sub-plan"
+    Description: "Create a sub-plan for the current phase"
+  - Label: "Capture existing plan"
+    Description: "Link an existing plan to a master plan phase"
+  - Label: "Complete plan"
+    Description: "Mark a sub-plan or phase as complete"
+  - Label: "Configure settings"
+    Description: "View/edit category organization settings"
+  - Label: "Switch master plan"
+    Description: "Change which master plan is active"
+  - Label: "Rename plan"
+    Description: "Rename a plan and update all references"
+  - Label: "Audit plans"
+    Description: "Find orphaned plans and broken links"
+  - Label: "List master plans"
+    Description: "Show all tracked master plans"
+  - Label: "Help"
+    Description: "Show available commands and usage"
+```
+
+After selection, prompt for any required arguments for that command, then execute it.
+
+**Examples:**
+
+```
+User: "/plan-manager"
+Claude: *Shows menu*
+
+User: *Selects "View status"*
+Claude: Do you want to see all master plans or just the active one?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Status scope                                            │
+        │                                                         │
+        │ ○ Active master only                                    │
+        │   Show status for the currently active master plan      │
+        │                                                         │
+        │ ○ All master plans                                      │
+        │   Show status for all tracked master plans              │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Active master only"*
+Claude: *Runs `/plan-manager status` and shows output*
+```
+
+```
+User: "/plan-manager"
+Claude: *Shows menu*
+
+User: *Selects "Initialize master plan"*
+Claude: Which plan file should I initialize as a master plan?
+User: "plans/new-feature.md"
+Claude: *Runs `/plan-manager init plans/new-feature.md`*
+```
+
+```
+User: "/plan-manager"
+Claude: *Shows menu*
+
+User: *Selects "Help"*
+Claude: *Runs `/plan-manager help` and shows command reference*
+
+        Plan Manager Commands
+        ═══════════════════════════════════════════════════════════
+
+        GETTING STARTED
+        ───────────────
+
+          init <path>              Initialize or add a master plan
+          config                   View/edit category organization settings
+
+        WORKING WITH PLANS
+        ──────────────────
+
+          branch <phase>           Create a sub-plan for a phase
+          capture [file]           Link an existing plan to a phase
+          complete <plan>          Mark a sub-plan or phase as complete
+
+        [... full command reference ...]
+```
+
+This makes the skill discoverable for new users and provides quick access to common operations without memorizing command names.
+
+### `init <path> [--description "text"] [--flat]`
 
 Initialize or add a master plan to tracking.
 
 1. **Detect plans directory** (see Plans Directory Detection above)
-2. Validate the file exists and is a markdown file
-3. Check if state file exists:
+2. **Determine subdirectory organization**:
+   - By default, new master plans use subdirectory organization (automatic)
+   - Use `--flat` flag to keep the plan in the root of the plans directory (backward compatibility)
+   - If the plan file already exists, preserve its current location
+3. **Set up subdirectory structure** (if not using --flat):
+   - Extract base name from plan filename (e.g., `layout-engine.md` → `layout-engine`)
+   - Create subdirectory: `{plansDirectory}/{baseName}/`
+   - If plan file exists at root level, move it to subdirectory:
+     - `plans/layout-engine.md` → `plans/layout-engine/layout-engine.md`
+   - If plan doesn't exist yet, will be created in subdirectory when user creates it
+   - Update all references to the old path (if moved)
+4. Check if state file exists:
    - **First master plan**: Create `.claude/plan-manager-state.json` (create `.claude/` directory if needed), mark as active
    - **Additional master plan**: Add to `masterPlans` array
-3. If multiple masters exist, ask via **AskUserQuestion**:
+5. If multiple masters exist, ask via **AskUserQuestion**:
 
 ```
 Question: "You have multiple master plans. Make this the active one?"
@@ -178,8 +473,8 @@ Options:
     Description: "Add to tracking but keep current master active"
 ```
 
-4. Extract or ask for a brief description to identify this master plan
-5. If the master plan doesn't have a Status Dashboard section, offer to add one:
+6. Extract or ask for a brief description to identify this master plan
+7. If the master plan doesn't have a Status Dashboard section, offer to add one:
 
 ```markdown
 ## Status Dashboard
@@ -191,7 +486,32 @@ Options:
 ...
 ```
 
-6. Confirm initialization: `✓ Added master plan: {path} (active)` or `✓ Added master plan: {path}`
+8. Record subdirectory usage in state:
+   - If using subdirectory: `"subdirectory": "layout-engine"`
+   - If flat structure: `"subdirectory": null`
+
+9. **Offer configuration setup** (only if this is the first master plan and no settings exist):
+   - Check if `~/.claude/plan-manager-settings.json` or `.claude/plan-manager-settings.json` exists
+   - If neither exists, use **AskUserQuestion**:
+
+```
+Question: "Configure category organization for standalone plans?"
+Header: "Setup"
+Options:
+  - Label: "Configure now (Recommended)"
+    Description: "Set up category directories (migrations/, docs/, etc.)"
+  - Label: "Use defaults"
+    Description: "Use built-in defaults (migrations, docs, designs, etc.)"
+  - Label: "Skip for now"
+    Description: "Don't set up categories yet, I'll configure later"
+```
+
+   - If "Configure now", run the `config` command interactively
+   - If "Use defaults" or "Skip for now", continue without creating settings file
+
+10. Confirm initialization:
+   - `✓ Added master plan: {path} (active)` or `✓ Added master plan: {path}`
+   - If subdirectory created: `✓ Created subdirectory: plans/{baseName}/`
 
 ### `switch <master-plan>`
 
@@ -224,12 +544,14 @@ Show all master plans being tracked.
 ```
 Master Plans:
 
-● plans/layout-engine.md (ACTIVE)
+● plans/layout-engine/layout-engine.md (ACTIVE)
+  Subdirectory: layout-engine/
   UI layout system redesign
   Status: 3/5 phases complete
   Sub-plans: 4 (2 in progress, 2 completed)
 
 ○ plans/auth-migration.md
+  Flat structure
   Migration to OAuth 2.0
   Status: 1/3 phases complete
   Sub-plans: 1 (1 in progress)
@@ -242,10 +564,17 @@ Proactively create a sub-plan when you see a problem coming.
 1. Read the state file to get master plan path (use active master, or specified via --master)
 2. Read the master plan to verify the phase exists
 3. Ask the user for a brief description of the sub-plan topic
-4. **Update the master plan FIRST**:
+4. **Determine sub-plan location**:
+   - Check if master plan uses subdirectory organization (from state file)
+   - If master is in subdirectory (e.g., `plans/layout-engine/layout-engine.md`):
+     - Create sub-plan in same subdirectory: `plans/layout-engine/{sub-plan-name}.md`
+   - If master is flat (e.g., `plans/legacy-plan.md`):
+     - Create sub-plan at root: `plans/{sub-plan-name}.md`
+5. **Update the master plan FIRST**:
    - Update the Status Dashboard: change phase status to `🔀 Branching`
    - Add sub-plan reference to the phase section
-5. Create the sub-plan file with header:
+   - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)
+6. Create the sub-plan file with header:
 
 ```markdown
 # Sub-plan: {description}
@@ -265,8 +594,8 @@ Proactively create a sub-plan when you see a problem coming.
 {To be filled in}
 ```
 
-6. Update state file with new sub-plan entry
-7. Confirm: `✓ Created sub-plan: {path} (branched from Phase {N})`
+7. Update state file with new sub-plan entry
+8. Confirm: `✓ Created sub-plan: {path} (branched from Phase {N})`
 
 ### `capture [file] [--phase N] [--master <path>]`
 
@@ -283,7 +612,10 @@ Retroactively link an existing plan that was created during tangential discussio
 **For both modes:**
 1. If `--phase N` not provided, ask which phase this relates to
 2. Read the state file to get master plan path (use active master, or specified via --master)
-3. **Add parent reference to the sub-plan** (prepend if not present):
+3. **Move to subdirectory if needed**:
+   - If master plan uses subdirectory and captured plan is not in it, move the plan
+   - If master plan is flat and captured plan is in a subdirectory, ask whether to move or keep
+4. **Add parent reference to the sub-plan** (prepend if not present):
 
 ```markdown
 **Parent:** {master-plan-path} → Phase {N}
@@ -331,7 +663,10 @@ Mark a sub-plan as complete and sync status to master.
      - Label: "Leave in place"
        Description: "Keep in current location for now"
    ```
-   - If "Yes, move it", move the file to the appropriate completed-plans directory
+   - If "Yes, move it", move the file mirroring subdirectory structure:
+     - If plan is in `plans/layout-engine/sub-plan.md`, move to `completed-plans/layout-engine/sub-plan.md`
+     - If plan is in `plans/sub-plan.md` (flat), move to `completed-plans/sub-plan.md`
+     - Create subdirectory in completed-plans if needed
    - Update all references in master plan and state file
 
 6. Use **AskUserQuestion tool** to determine phase status:
@@ -359,14 +694,15 @@ Display the full plan hierarchy and status.
 4. Display formatted output:
 
 ```
-Master Plan: plans/layout-engine.md (ACTIVE)
+Master Plan: plans/layout-engine/layout-engine.md (ACTIVE)
+Subdirectory: layout-engine/
 UI layout system redesign
 
 Phase 1: ✅ Complete
 Phase 2: 🔄 In Progress
-  └─ plans/layout-fix.md (In Progress)
+  └─ layout-fix.md (In Progress)
 Phase 3: ⏸️ Blocked
-  └─ plans/api-redesign.md (Completed)
+  └─ api-redesign.md (Completed)
 Phase 4: ⏳ Pending
 
 Sub-plans: 2 total (1 in progress, 1 completed)
@@ -378,16 +714,18 @@ Show status for all master plans:
 ```
 Master Plans: 2
 
-● plans/layout-engine.md (ACTIVE)
+● plans/layout-engine/layout-engine.md (ACTIVE)
+  Subdirectory: layout-engine/
   UI layout system redesign
 
   Phase 1: ✅ Complete
   Phase 2: 🔄 In Progress
-    └─ plans/layout-fix.md (In Progress)
+    └─ layout-fix.md (In Progress)
   ...
   Sub-plans: 2 total (1 in progress, 1 completed)
 
 ○ plans/auth-migration.md
+  Flat structure
   Migration to OAuth 2.0
 
   Phase 1: ✅ Complete
@@ -433,7 +771,9 @@ Discover and visualize all plans in the project, regardless of whether they're t
    - Otherwise: use **Plans Directory Detection** (see above)
    - This establishes which directory to scan
 
-2. **Scan all markdown files** in the directory:
+2. **Scan all markdown files** in the directory and subdirectories:
+   - Recursively scan the plans directory for `.md` files
+   - Include files in subdirectories (e.g., `plans/layout-engine/*.md`)
    - Read each `.md` file
    - Classify each file by analyzing its content:
 
@@ -446,6 +786,18 @@ Discover and visualize all plans in the project, regardless of whether they're t
    | **Completed** | Has `**Status:** Completed` or all phases/steps marked ✅ |
    | **Abandoned** | Old modification date, marked as abandoned, or superseded |
    | **Reference Doc** | Not a plan — just documentation |
+
+   **Additionally, classify standalone plans by category** for organization:
+
+   | Category | Detection Criteria |
+   |----------|-------------------|
+   | **Documentation** | Titles/content include "docs", "documentation", "guide", "manual", "how-to", "reference" |
+   | **Migration** | Titles/content include "migration", "migrate", "upgrade", "transition", "port" |
+   | **Design** | Titles/content include "design", "architecture", "proposal", "RFC", "spec" |
+   | **Feature** | Titles/content include "feature", "enhancement", "new", "add" |
+   | **Bugfix** | Titles/content include "bug", "fix", "issue", "problem", "error" |
+   | **Reference** | Pure reference material, glossaries, decision logs |
+   | **Standalone** | Doesn't match other categories |
 
 3. **Build relationship graph**:
    - Map parent → children relationships
@@ -461,19 +813,20 @@ Plans Overview: plans/
 ACTIVE HIERARCHIES
 ──────────────────
 
-📋 layout-engine.md (Master Plan)
-│   Status: 3/5 phases complete
+📋 layout-engine/ (Subdirectory)
+│  └── layout-engine.md (Master Plan)
+│      Status: 3/5 phases complete
 │
-├── Phase 1: ✅ Complete
-├── Phase 2: 🔄 In Progress
-│   └── 📄 grid-rethink.md (In Progress)
-│       └── 📄 grid-edge-cases.md (In Progress)
-├── Phase 3: ⏸️ Blocked
-│   └── 📄 api-redesign.md (Completed)
-├── Phase 4: ⏳ Pending
-└── Phase 5: ⏳ Pending
+│  ├── Phase 1: ✅ Complete
+│  ├── Phase 2: 🔄 In Progress
+│  │   └── 📄 grid-rethink.md (In Progress)
+│  │       └── 📄 grid-edge-cases.md (In Progress)
+│  ├── Phase 3: ⏸️ Blocked
+│  │   └── 📄 api-redesign.md (Completed)
+│  ├── Phase 4: ⏳ Pending
+│  └── Phase 5: ⏳ Pending
 
-📋 auth-migration.md (Master Plan)
+📋 auth-migration.md (Master Plan, flat structure)
 │   Status: 1/3 phases complete
 │
 ├── Phase 1: ✅ Complete
@@ -481,11 +834,26 @@ ACTIVE HIERARCHIES
 └── Phase 3: ⏳ Pending
 
 
-STANDALONE PLANS
-────────────────
+BY CATEGORY (with suggested organization)
+──────────────────────────────────────────
 
-📄 quick-fix-notes.md — No phases, appears to be notes
-📄 performance-ideas.md — Standalone plan, not linked
+📂 migrations/ (suggested category dir)
+   📄 database-schema-v2.md — Migration plan
+   📄 api-v3-migration.md — Migration plan
+
+📂 docs/ (suggested category dir)
+   📄 quick-fix-notes.md — Documentation
+   📄 onboarding-guide.md — Documentation
+
+📂 designs/ (suggested category dir)
+   📄 performance-ideas.md — Design proposal
+   📄 new-api-design.md — Architecture design
+
+
+UNCATEGORIZED STANDALONE
+─────────────────────────
+
+📄 random-ideas.md — Standalone, no clear category
 
 
 ORPHANED / UNLINKED
@@ -510,24 +878,25 @@ COMPLETED (not linked to active work)
 SUMMARY
 ───────
 
-Total plans: 11
+Total plans: 16
 ├── Master plans: 3 (2 active, 1 completed)
 ├── Linked sub-plans: 4
-├── Standalone: 2
+├── Category-organized: 5 (migrations: 2, docs: 2, designs: 1)
+├── Uncategorized standalone: 1
 └── Orphaned/Unlinked: 2
 
 ```
 
 5. **Interactive cleanup for orphaned/completed**:
 
-If orphaned or unlinked completed plans are found, use the **AskUserQuestion tool** with descriptive options:
+If orphaned, unlinked completed, or uncategorized standalone plans are found, use the **AskUserQuestion tool** with descriptive options:
 
 ```
-Question: "Found 2 orphaned plans and 1 completed plan. How would you like to handle them?"
+Question: "Found 2 orphaned plans, 1 completed plan, and 5 uncategorized standalone plans. How would you like to handle them?"
 Header: "Cleanup"
 Options:
   - Label: "Organize all"
-    Description: "Analyze content, suggest links for related plans, then handle completed/orphaned"
+    Description: "Categorize standalone plans, analyze content, suggest links for related plans, then handle completed/orphaned"
   - Label: "Review individually"
     Description: "I'll show a summary of each plan and ask what to do with it one by one"
   - Label: "Move completed"
@@ -537,8 +906,8 @@ Options:
 ```
 
 Based on selection:
-- **Organize all**: Switch to the `organize` workflow — analyze relationships, suggest links, then cleanup
-- **Review individually**: For each orphan, show content summary and use AskUserQuestion again: Link to phase? Move to completed? Delete? Skip?
+- **Organize all**: Switch to the `organize` workflow — organize by category, analyze relationships, suggest links, then cleanup
+- **Review individually**: For each plan, show content summary and use AskUserQuestion again: Organize by category? Link to phase? Move to completed? Delete? Skip?
 - **Move completed**: Move completed unlinked plans to `completed-plans/` (sibling to plans directory)
 - **Leave as-is**: Just report, no action
 
@@ -558,7 +927,48 @@ Automatically analyze and link related plans together, rename poorly-named files
 
 1. **Run full overview scan** (same as `overview` steps 1-4)
 
-2. **Detect and offer to rename randomly-named plans**:
+2. **Load category organization settings**:
+   - Check for `~/.claude/plan-manager-settings.json` (user global)
+   - Check for `<project>/.claude/plan-manager-settings.json` (project-specific, overrides user)
+   - If neither exists, use default category directories (docs, migrations, designs, reference, misc)
+   - **Note**: Settings file is optional and will NOT be auto-created
+   - If `enableCategoryOrganization` is false in settings, skip category organization steps
+
+3. **Detect flat master plans and offer subdirectory migration**:
+   - Scan for master plans at the root of plans directory (not in subdirectories)
+   - If found, use **AskUserQuestion tool**:
+
+```
+Question: "Found 2 master plans using flat structure. Migrate them to subdirectories?"
+Header: "Subdirectories"
+Options:
+  - Label: "Migrate all"
+    Description: "Move each master plan and its sub-plans into a subdirectory"
+  - Label: "Review individually"
+    Description: "I'll ask about each master plan separately"
+  - Label: "Leave flat"
+    Description: "Keep current flat structure, skip migration"
+```
+
+   - **If "Migrate all"**: For each flat master plan:
+     - Create subdirectory: `plans/{master-basename}/`
+     - Move master plan: `plans/layout-engine.md` → `plans/layout-engine/layout-engine.md`
+     - Move all linked sub-plans to the same subdirectory
+     - Update all references (state file, links in plans)
+     - Update state file `subdirectory` field
+
+   - **If "Review individually"**: For each flat master, use **AskUserQuestion**:
+     ```
+     Question: "Migrate 'layout-engine.md' and its 3 sub-plans to a subdirectory?"
+     Header: "Migrate master"
+     Options:
+       - Label: "Yes, migrate"
+         Description: "Create plans/layout-engine/ and move master + sub-plans"
+       - Label: "Leave flat"
+         Description: "Keep this master plan in flat structure"
+     ```
+
+4. **Detect and offer to rename randomly-named plans**:
    - Scan for files with random/meaningless names (see `rename` command for patterns)
    - If found, use **AskUserQuestion tool**:
 
@@ -571,17 +981,54 @@ Options:
   - Label: "Rename all"
     Description: "Accept all my naming suggestions"
   - Label: "Skip renaming"
-    Description: "Keep current names, move on to linking"
+    Description: "Keep current names, move on to category organization"
 ```
 
    - For each rename, suggest meaningful names based on content analysis
 
-3. **Analyze relationships between unlinked plans**:
+5. **Organize standalone plans by category** (if `enableCategoryOrganization` is true):
+   - Identify standalone plans that match category patterns (from classification)
+   - Group by detected category (documentation, migration, design, etc.)
+   - Use default category directories (docs, migrations, designs, etc.) unless custom settings exist
+   - If categorized plans found, use **AskUserQuestion tool**:
+
+```
+Question: "Found 8 standalone plans that can be organized by category. Organize them?"
+Header: "Categories"
+Options:
+  - Label: "Organize all (Recommended)"
+    Description: "Move plans to category subdirectories (migrations/, docs/, designs/, etc.)"
+  - Label: "Review by category"
+    Description: "I'll show each category and you approve or skip"
+  - Label: "Skip categories"
+    Description: "Don't organize by category, move on to linking"
+```
+
+   - **If "Organize all"**: For each categorized plan:
+     - Create category subdirectory if needed (e.g., `plans/migrations/`)
+     - Move plan to category directory
+     - Update all references
+
+   - **If "Review by category"**: For each category with plans, use **AskUserQuestion**:
+     ```
+     Question: "Move 3 migration plans to plans/migrations/?"
+     Header: "Organize category"
+     Options:
+       - Label: "Yes, move them"
+         Description: "database-schema-v2.md, api-v3-migration.md, auth-upgrade.md"
+       - Label: "Review individually"
+         Description: "Ask about each plan separately"
+       - Label: "Skip this category"
+         Description: "Leave these plans where they are"
+     ```
+
+6. **Analyze relationships between unlinked plans**:
    - For each standalone or orphaned plan, analyze its content
    - Look for references to phases, topics, or keywords that match master plan phases
    - Build a list of suggested linkages
+   - **Important**: Plans organized into category directories can still be linked to master plan phases if appropriate
 
-4. **Present linking suggestions** via AskUserQuestion:
+7. **Present linking suggestions** via AskUserQuestion:
 
 ```
 Question: "I found 3 plans that appear related to your master plan. Review my suggestions?"
@@ -595,7 +1042,7 @@ Options:
     Description: "Don't link anything, move on to cleanup"
 ```
 
-5. **If "Review suggestions" selected**, for each suggested link use AskUserQuestion:
+8. **If "Review suggestions" selected**, for each suggested link use AskUserQuestion:
 
 ```
 Question: "performance-notes.md mentions 'caching' and 'render optimization'. Link to Phase 4 (Performance)?"
@@ -611,15 +1058,23 @@ Options:
     Description: "This is standalone documentation, not a sub-plan"
 ```
 
-6. **After linking, handle orphaned/completed plans** (same as `overview` step 5):
+9. **After linking, handle orphaned/completed plans** (same as `overview` step 5):
    - Ask what to do with remaining orphans
    - Ask what to do with completed unlinked plans
 
-7. **Summary output**:
+10. **Summary output**:
 
 ```
 Organization Complete
 ─────────────────────
+
+✓ Migrated to subdirectories:
+  • layout-engine.md → layout-engine/layout-engine.md (+ 3 sub-plans)
+
+✓ Organized by category (using defaults):
+  • 3 migration plans → migrations/
+  • 2 documentation plans → docs/
+  • 1 design plan → designs/
 
 ✓ Renamed 2 plans:
   • lexical-puzzling-emerson.md → grid-edge-cases.md
@@ -636,9 +1091,234 @@ Organization Complete
   • random-ideas.md
 
 Current state:
-├── Master plans: 1 active
+├── Master plans: 1 active (using subdirectory)
 ├── Linked sub-plans: 5
+├── Category-organized: 6
 └── Unlinked: 1
+
+💡 Tip: Run `/plan-manager config` to customize category directory names
+```
+
+**If custom settings were used**, the output shows:
+```
+✓ Organized by category (using custom settings from .claude/plan-manager-settings.json):
+  • 3 migration plans → db-migrations/
+  • 2 documentation plans → documentation/
+  • 1 design plan → design-proposals/
+```
+
+### `config [--user|--project] [--edit]`
+
+Display and configure category organization settings interactively.
+
+**Without flags** (show current configuration):
+1. Load and display current configuration from all sources:
+
+```
+Plan Manager Configuration
+══════════════════════════
+
+Source Priority (highest to lowest):
+  1. Project settings: .claude/plan-manager-settings.json [NOT FOUND]
+  2. User settings: ~/.claude/plan-manager-settings.json [ACTIVE]
+  3. Built-in defaults [FALLBACK]
+
+Active Configuration (from user settings):
+──────────────────────────────────────────
+
+Category Organization: ENABLED
+
+Category Directories:
+  documentation  → docs/
+  migration      → db-migrations/
+  design         → designs/
+  reference      → reference/
+  feature        → features/
+  bugfix         → bug-fixes/
+  standalone     → misc/
+
+File Location: ~/.claude/plan-manager-settings.json
+```
+
+2. Use **AskUserQuestion** to offer actions:
+
+```
+Question: "What would you like to do?"
+Header: "Config actions"
+Options:
+  - Label: "Edit categories"
+    Description: "Modify category directory names interactively"
+  - Label: "Toggle organization"
+    Description: "Enable/disable category organization"
+  - Label: "Create project config"
+    Description: "Create project-specific settings to override user settings"
+  - Label: "Edit file directly"
+    Description: "Open the settings file for manual editing"
+  - Label: "Done"
+    Description: "Exit configuration"
+```
+
+**With --edit flag** (interactive editor):
+1. Load current settings (or defaults if none exist)
+2. If no settings file exists, ask which scope to create (user or project)
+3. Enter interactive editing mode using **AskUserQuestion** for each setting:
+
+**Step 1: Enable/disable category organization**
+```
+Question: "Enable category organization for standalone plans?"
+Header: "Organization"
+Options:
+  - Label: "Enabled (Recommended)"
+    Description: "Organize standalone plans by category (migrations/, docs/, etc.)"
+  - Label: "Disabled"
+    Description: "Don't organize standalone plans by category"
+```
+
+**Step 2: Edit each category** (if enabled):
+For each category, use **AskUserQuestion**:
+
+```
+Question: "Directory name for migration plans? (current: migrations)"
+Header: "Migration plans"
+Options:
+  - Label: "migrations (current)"
+    Description: "Use 'migrations' directory"
+  - Label: "db-migrations"
+    Description: "Use 'db-migrations' directory"
+  - Label: "migration"
+    Description: "Use 'migration' directory (singular)"
+  - Label: "Custom..."
+    Description: "Enter a custom directory name"
+```
+
+Repeat for: documentation, design, reference, feature, bugfix, standalone
+
+**Step 3: Add custom categories** (optional)
+```
+Question: "Add custom category types?"
+Header: "Custom categories"
+Options:
+  - Label: "Add one"
+    Description: "Define a new category (e.g., 'infrastructure', 'api')"
+  - Label: "Done"
+    Description: "No more categories, save configuration"
+```
+
+If "Add one", ask for:
+- Category type (e.g., "infrastructure")
+- Directory name (e.g., "infra")
+- Keywords for detection (e.g., "infrastructure, infra, k8s, docker")
+
+**Step 4: Save**
+4. Show preview of configuration
+5. Use **AskUserQuestion** to confirm:
+
+```
+Question: "Save this configuration?"
+Header: "Confirm"
+Options:
+  - Label: "Save to project"
+    Description: "Save to .claude/plan-manager-settings.json"
+  - Label: "Save to user settings"
+    Description: "Save to ~/.claude/plan-manager-settings.json"
+  - Label: "Discard changes"
+    Description: "Don't save, exit without changes"
+```
+
+6. Write settings to selected file
+7. Confirm: `✓ Saved configuration to <path>`
+
+**With --user flag**:
+- Show/edit `~/.claude/plan-manager-settings.json` (user-wide) only
+
+**With --project flag**:
+- Show/edit `.claude/plan-manager-settings.json` (project-specific) only
+
+**Examples:**
+
+```bash
+/plan-manager config              # Show current config
+/plan-manager config --edit       # Interactive editor
+/plan-manager config --user       # Show user-wide config
+/plan-manager config --project --edit  # Edit project config
+```
+
+### `help`
+
+Display command reference with descriptions and examples.
+
+Show a formatted list of all available commands:
+
+```
+Plan Manager Commands
+═══════════════════════════════════════════════════════════
+
+GETTING STARTED
+───────────────
+
+  init <path>              Initialize or add a master plan
+                           Options: --flat, --description "text"
+                           Example: /plan-manager init plans/feature.md
+
+  config                   View/edit category organization settings
+                           Options: --edit, --user, --project
+                           Example: /plan-manager config --edit
+
+WORKING WITH PLANS
+──────────────────
+
+  branch <phase>           Create a sub-plan for a phase
+                           Options: --master <path>
+                           Example: /plan-manager branch 3
+
+  capture [file]           Link an existing plan to a phase
+                           Options: --phase N, --master <path>
+                           Example: /plan-manager capture plans/fix.md --phase 2
+
+  complete <plan>          Mark a sub-plan or phase as complete
+                           Example: /plan-manager complete 3
+
+VIEWING STATUS
+──────────────
+
+  status                   Show master plan hierarchy and status
+                           Options: --all (show all masters)
+                           Example: /plan-manager status
+
+  overview [directory]     Discover and visualize all plans
+                           Example: /plan-manager overview
+
+  list-masters             Show all tracked master plans
+                           Example: /plan-manager list-masters
+
+ORGANIZATION
+────────────
+
+  organize [directory]     Auto-organize, link, and clean up plans
+                           Example: /plan-manager organize
+
+  rename <file> [name]     Rename a plan and update references
+                           Example: /plan-manager rename plans/old.md new-name.md
+
+  audit                    Find orphaned plans and broken links
+                           Example: /plan-manager audit
+
+MULTI-MASTER
+────────────
+
+  switch [master]          Change which master plan is active
+                           Example: /plan-manager switch
+
+TIPS
+────
+
+  • Run '/plan-manager' with no command for interactive menu
+  • Use natural language: "capture that plan", "organize my plans"
+  • Phase completion is auto-detected when you say "Phase X is complete"
+  • Category organization keeps different plan types separated
+  • Subdirectories keep master plans and sub-plans together
+
+For detailed documentation, see the full plan-manager guide.
 ```
 
 ### `rename <file> [new-name]`
@@ -762,8 +1442,10 @@ For projects with multiple parallel initiatives, you can track multiple master p
 ## Natural Language Triggers
 
 This skill responds to:
+- "/plan-manager" (no command - shows interactive menu)
 - "/plan-manager {command}"
 - "use /plan-manager to capture..."
+- "show me the plan-manager menu" / "what can plan-manager do"
 - "capture that plan" / "capture the plan you just created"
 - "link this to the master plan" / "link this back to phase 3"
 - "branch from phase 3" / "we need to branch here"
@@ -772,9 +1454,15 @@ This skill responds to:
 - "overview of plans" / "what plans do we have" / "show me all plans"
 - "scan the plans directory" / "discover plans"
 - "organize my plans" / "organize the plans" / "link related plans" / "clean up plans"
+- "migrate plans to subdirectories" / "organize into folders"
+- "organize plans by category" / "categorize my plans" / "group plans by type"
+- "customize category directories" / "configure plan categories" / "setup plan-manager config"
+- "create plan-manager settings" / "configure plan-manager" / "edit plan-manager config"
+- "show plan-manager config" / "view configuration" / "what are my category settings"
 - "rename that plan" / "rename plan X" / "give that plan a better name"
 - "switch master plan" / "switch to different master" / "list master plans"
 - "Phase X is complete" / "Step Y is done" / "Phase 4.1 finished" / "completed Step 2.3"
+- "plan-manager help" / "show plan-manager commands" / "how do I use plan-manager"
 
 ## Error Handling
 
@@ -785,32 +1473,132 @@ This skill responds to:
 
 ## Example Workflows
 
-### Starting Fresh
+### Using the Interactive Menu
+
+```
+User: "/plan-manager"
+Claude: *Shows interactive menu*
+
+        What would you like to do with your plans?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Plan Manager                                            │
+        │                                                         │
+        │ ○ View status                                           │
+        │   Show master plan hierarchy and sub-plan status        │
+        │                                                         │
+        │ ○ Overview                                              │
+        │   Discover all plans in the project and their           │
+        │   relationships                                         │
+        │                                                         │
+        │ ○ Organize plans                                        │
+        │   Auto-organize, link, and clean up plans               │
+        │                                                         │
+        │ ○ Initialize master plan                                │
+        │   Track a master plan and set up plan management        │
+        │                                                         │
+        │ ○ Branch to sub-plan                                    │
+        │   Create a sub-plan for the current phase               │
+        │                                                         │
+        │ ○ Capture existing plan                                 │
+        │   Link an existing plan to a master plan phase          │
+        │                                                         │
+        │ ○ Complete plan                                         │
+        │   Mark a sub-plan or phase as complete                  │
+        │                                                         │
+        │ ○ Configure settings                                    │
+        │   View/edit category organization settings              │
+        │                                                         │
+        │ ○ Switch master plan                                    │
+        │   Change which master plan is active                    │
+        │                                                         │
+        │ ○ Rename plan                                           │
+        │   Rename a plan and update all references               │
+        │                                                         │
+        │ ○ Audit plans                                           │
+        │   Find orphaned plans and broken links                  │
+        │                                                         │
+        │ ○ List master plans                                     │
+        │   Show all tracked master plans                         │
+        │                                                         │
+        │ ○ Help                                                  │
+        │   Show available commands and usage                     │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Overview"*
+Claude: *Runs overview command and shows plan hierarchy*
+
+        Plans Overview: plans/
+        ═══════════════════════════════════════════════════════════
+
+        ACTIVE HIERARCHIES
+        ──────────────────
+
+        📋 layout-engine/ (Subdirectory)
+        │  └── layout-engine.md (Master Plan)
+        │      Status: 3/5 phases complete
+        ...
+```
+
+```
+User: "I'm not sure what to do next with my plans"
+Claude: "Let me show you the plan-manager menu."
+
+User: "/plan-manager"
+Claude: *Shows menu*
+
+User: *Selects "Organize plans"*
+Claude: *Runs organize command, offers to migrate to subdirectories, organize by category, etc.*
+```
+
+### Starting Fresh (with Config Setup)
 
 ```
 User: "Let's implement the new layout engine"
 Claude: *Creates plans/layout-engine.md with 5 phases*
 
 User: "/plan-manager init plans/layout-engine.md"
-Claude: ✓ Initialized master plan: plans/layout-engine.md
+Claude: ✓ Created subdirectory: plans/layout-engine/
+        ✓ Moved plans/layout-engine.md → plans/layout-engine/layout-engine.md
+        ✓ Initialized master plan: plans/layout-engine/layout-engine.md
         ✓ Added Status Dashboard with 5 phases
+
+        Configure category organization for standalone plans?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Setup                                                   │
+        │                                                         │
+        │ ○ Configure now (Recommended)                           │
+        │   Set up category directories (migrations/, docs/, etc.)│
+        │                                                         │
+        │ ○ Use defaults                                          │
+        │   Use built-in defaults (migrations, docs, designs,     │
+        │   etc.)                                                 │
+        │                                                         │
+        │ ○ Skip for now                                          │
+        │   Don't set up categories yet, I'll configure later     │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Use defaults"*
+Claude: ✓ Will use default category directories
+
+        Initialization complete! You can customize category directories
+        later by running `/plan-manager config --edit`
 
 User: *Working on Phase 2...*
 User: "Wait, we need to rethink the grid system"
-Claude: *Creates plans/grid-rethink.md*
+Claude: *Creates plans/layout-engine/grid-rethink.md*
 
 User: "/plan-manager capture"
-Claude: I see you just created plans/grid-rethink.md. Which phase does this relate to?
+Claude: I see you just created plans/layout-engine/grid-rethink.md. Which phase does this relate to?
 User: "Phase 2"
-Claude: ✓ Captured plans/grid-rethink.md → linked to Phase 2
+Claude: ✓ Captured plans/layout-engine/grid-rethink.md → linked to Phase 2
         ✓ Updated master plan Status Dashboard
 
 User: "/plan-manager status"
-Claude: Master Plan: plans/layout-engine.md
+Claude: Master Plan: plans/layout-engine/layout-engine.md (subdirectory: layout-engine/)
 
         Phase 1: ✅ Complete
         Phase 2: 🔄 In Progress
-          └─ plans/grid-rethink.md (In Progress)
+          └─ plans/layout-engine/grid-rethink.md (In Progress)
         Phase 3: ⏳ Pending
         ...
 ```
@@ -873,6 +1661,273 @@ User: *Selects "Phase 4: Performance Optimization"*
 Claude: ✓ Captured performance-notes.md → linked to Phase 4
 ```
 
+### Using Flat Structure (Backward Compatibility)
+
+```
+User: "I prefer to keep my plans flat in the plans directory"
+Claude: "No problem! Use the --flat flag to skip subdirectory creation"
+
+User: "/plan-manager init plans/simple-feature.md --flat"
+Claude: ✓ Initialized master plan: plans/simple-feature.md (flat structure)
+        ✓ Added Status Dashboard with 3 phases
+
+User: "/plan-manager branch 2"
+Claude: *Creates plans/feature-branch.md (in root, not in subdirectory)*
+        ✓ Created sub-plan: plans/feature-branch.md (branched from Phase 2)
+```
+
+### Organizing by Category
+
+```
+User: "I have a lot of migration and design docs mixed in with my plans. Can we organize them?"
+Claude: "Absolutely! Let me run the organize command."
+
+User: "/plan-manager organize"
+Claude: *Scans plans directory*
+
+        BY CATEGORY (with suggested organization)
+        ──────────────────────────────────────────
+
+        📂 migrations/ (suggested category dir)
+           📄 database-schema-v2.md — Migration plan
+           📄 api-v3-migration.md — Migration plan
+           📄 auth-upgrade.md — Migration plan
+
+        📂 docs/ (suggested category dir)
+           📄 onboarding-guide.md — Documentation
+           📄 api-reference.md — Documentation
+
+        📂 designs/ (suggested category dir)
+           📄 new-cache-design.md — Design proposal
+
+Claude: *Uses AskUserQuestion tool*
+        ┌─────────────────────────────────────────────────────────┐
+        │ Found 6 standalone plans that can be organized by       │
+        │ category. Organize them?                                │
+        │                                                         │
+        │ ○ Organize all (Recommended)                            │
+        │   Move plans to category subdirs (migrations/, docs/,   │
+        │   designs/)                                             │
+        │                                                         │
+        │ ○ Review by category                                    │
+        │   I'll show each category and you approve or skip       │
+        │                                                         │
+        │ ○ Skip categories                                       │
+        │   Don't organize by category, move on to linking        │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Organize all"*
+Claude: ✓ Created plans/migrations/
+        ✓ Moved 3 migration plans → plans/migrations/
+        ✓ Created plans/docs/
+        ✓ Moved 2 documentation plans → plans/docs/
+        ✓ Created plans/designs/
+        ✓ Moved 1 design plan → plans/designs/
+
+        Organization Complete
+        ─────────────────────
+
+        ✓ Organized by category:
+          • 3 migration plans → migrations/
+          • 2 documentation plans → docs/
+          • 1 design plan → designs/
+
+        Current state:
+        ├── Master plans: 1 active (using subdirectory)
+        ├── Linked sub-plans: 4
+        ├── Category-organized: 6
+        └── Unlinked: 0
+```
+
+### Customizing Category Directories (Interactive Editor)
+
+```
+User: "I want my migration plans to go in 'db-migrations' instead of 'migrations'"
+Claude: "No problem! Let me open the interactive configuration editor."
+
+User: "/plan-manager config --edit"
+Claude: *Runs config command in edit mode*
+
+        Enable category organization for standalone plans?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Organization                                            │
+        │                                                         │
+        │ ○ Enabled (Recommended)                                 │
+        │   Organize standalone plans by category (migrations/,   │
+        │   docs/, etc.)                                          │
+        │                                                         │
+        │ ○ Disabled                                              │
+        │   Don't organize standalone plans by category           │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Enabled"*
+Claude: *Asks about each category directory*
+
+        Directory name for migration plans? (current: migrations)
+        ┌─────────────────────────────────────────────────────────┐
+        │ Migration plans                                         │
+        │                                                         │
+        │ ○ migrations (current)                                  │
+        │   Use 'migrations' directory                            │
+        │                                                         │
+        │ ○ db-migrations                                         │
+        │   Use 'db-migrations' directory                         │
+        │                                                         │
+        │ ○ migration                                             │
+        │   Use 'migration' directory (singular)                  │
+        │                                                         │
+        │ ○ Custom...                                             │
+        │   Enter a custom directory name                         │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "db-migrations"*
+Claude: *Continues for other categories...*
+
+        [After configuring all categories]
+
+        Configuration Preview:
+        ═════════════════════
+
+        Category Organization: ENABLED
+
+        Category Directories:
+          documentation  → docs/
+          migration      → db-migrations/
+          design         → designs/
+          reference      → reference/
+          feature        → features/
+          bugfix         → bug-fixes/
+          standalone     → misc/
+
+        Save this configuration?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Confirm                                                 │
+        │                                                         │
+        │ ○ Save to project                                       │
+        │   Save to .claude/plan-manager-settings.json            │
+        │                                                         │
+        │ ○ Save to user settings                                 │
+        │   Save to ~/.claude/plan-manager-settings.json          │
+        │                                                         │
+        │ ○ Discard changes                                       │
+        │   Don't save, exit without changes                      │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Save to project"*
+Claude: ✓ Saved configuration to .claude/plan-manager-settings.json
+
+        Now when you run `/plan-manager organize`, migration plans will be
+        moved to plans/db-migrations/ instead of plans/migrations/.
+```
+
+### Viewing Current Configuration
+
+```
+User: "/plan-manager config"
+Claude: *Shows current configuration*
+
+        Plan Manager Configuration
+        ══════════════════════════
+
+        Source Priority (highest to lowest):
+          1. Project settings: .claude/plan-manager-settings.json [ACTIVE]
+          2. User settings: ~/.claude/plan-manager-settings.json [NOT FOUND]
+          3. Built-in defaults [FALLBACK]
+
+        Active Configuration (from project settings):
+        ─────────────────────────────────────────────
+
+        Category Organization: ENABLED
+
+        Category Directories:
+          documentation  → docs/
+          migration      → db-migrations/
+          design         → designs/
+          reference      → reference/
+          feature        → features/
+          bugfix         → bug-fixes/
+          standalone     → misc/
+
+        File Location: .claude/plan-manager-settings.json
+
+        What would you like to do?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Config actions                                          │
+        │                                                         │
+        │ ○ Edit categories                                       │
+        │   Modify category directory names interactively         │
+        │                                                         │
+        │ ○ Toggle organization                                   │
+        │   Enable/disable category organization                  │
+        │                                                         │
+        │ ○ Create project config                                 │
+        │   Create project-specific settings to override user     │
+        │   settings                                              │
+        │                                                         │
+        │ ○ Edit file directly                                    │
+        │   Open the settings file for manual editing             │
+        │                                                         │
+        │ ○ Done                                                  │
+        │   Exit configuration                                    │
+        └─────────────────────────────────────────────────────────┘
+```
+
+### Adding Custom Categories
+
+```
+User: "I have a lot of infrastructure plans. Can I create a custom category for them?"
+Claude: "Absolutely! Use the interactive editor to add custom categories."
+
+User: "/plan-manager config --edit"
+Claude: *After configuring standard categories...*
+
+        Add custom category types?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Custom categories                                       │
+        │                                                         │
+        │ ○ Add one                                               │
+        │   Define a new category (e.g., 'infrastructure', 'api') │
+        │                                                         │
+        │ ○ Done                                                  │
+        │   No more categories, save configuration                │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Add one"*
+Claude: What type of plans is this category for? (e.g., "infrastructure", "api", "testing")
+
+User: "infrastructure"
+Claude: What directory name should be used? (e.g., "infra", "infrastructure")
+
+User: "infra"
+Claude: ✓ Added custom category: infrastructure → infra/
+
+        This category will match plans with keywords like "infrastructure",
+        "infra", "k8s", "kubernetes", "docker", "deployment"
+
+        Add custom category types?
+        [Same options as before...]
+
+User: *Selects "Done"*
+Claude: *Shows preview with custom category included*
+
+        Configuration Preview:
+        ═════════════════════
+
+        Category Organization: ENABLED
+
+        Category Directories:
+          documentation    → docs/
+          migration        → migrations/
+          design           → designs/
+          infrastructure   → infra/        [CUSTOM]
+          reference        → reference/
+          feature          → features/
+          bugfix           → bug-fixes/
+          standalone       → misc/
+
+        [Saves configuration...]
+```
+
 ### Cleaning Up After Long Work Session
 
 ```
@@ -916,12 +1971,65 @@ Claude: *Runs /plan-manager organize*
 
         [... displays hierarchy ...]
 
+        Found 1 master plan using flat structure: layout-engine.md
+
+Claude: *Uses AskUserQuestion tool*
+        ┌─────────────────────────────────────────────────────────┐
+        │ Found 1 master plan using flat structure. Migrate to   │
+        │ subdirectories?                                         │
+        │                                                         │
+        │ ○ Migrate all                                           │
+        │   Move each master plan and its sub-plans to subdir     │
+        │                                                         │
+        │ ○ Review individually                                   │
+        │   Ask about each master plan separately                 │
+        │                                                         │
+        │ ○ Leave flat                                            │
+        │   Keep current flat structure, skip migration           │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Migrate all"*
+Claude: ✓ Created subdirectory: plans/layout-engine/
+        ✓ Moved layout-engine.md → layout-engine/layout-engine.md
+        ✓ Moved 3 sub-plans to layout-engine/ subdirectory
+        ✓ Updated all references
+
+        BY CATEGORY (with suggested organization)
+        ──────────────────────────────────────────
+
+        📂 migrations/ (suggested)
+           📄 database-schema-v2.md — Migration plan
+           📄 api-v3-migration.md — Migration plan
+
+        📂 docs/ (suggested)
+           📄 onboarding-guide.md — Documentation
+
         STANDALONE PLANS
         ────────────────
 
         📄 performance-notes.md — mentions "caching", "render optimization"
         📄 edge-cases.md — mentions "grid", "layout edge cases"
         📄 random-ideas.md — miscellaneous notes
+
+Claude: *Uses AskUserQuestion tool*
+        ┌─────────────────────────────────────────────────────────┐
+        │ Found 3 standalone plans that can be organized by       │
+        │ category. Organize them?                                │
+        │                                                         │
+        │ ○ Organize all (Recommended)                            │
+        │   Move plans to category subdirs (migrations/, docs/)   │
+        │                                                         │
+        │ ○ Review by category                                    │
+        │   I'll show each category and you approve or skip       │
+        │                                                         │
+        │ ○ Skip categories                                       │
+        │   Don't organize by category, move on to linking        │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Organize all"*
+Claude: ✓ Created category subdirectories
+        ✓ Moved 2 migration plans → plans/migrations/
+        ✓ Moved 1 documentation plan → plans/docs/
 
 Claude: *Uses AskUserQuestion tool*
         ┌─────────────────────────────────────────────────────────┐
