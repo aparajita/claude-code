@@ -2,15 +2,19 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans. Use when the user wants to initialize a master plan, branch into a sub-plan, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "capture that plan", "link this to the master plan", "branch from phase 3", "merge this branch", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
+description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "link this to the master plan", "merge this branch", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
 ---
 
 ## Overview
 
-This skill maintains a single source of truth (master plan) while allowing sub-plans to branch off for handling issues discovered during execution. All sub-plans are bidirectionally linked to the master plan.
+This skill maintains a single source of truth (master plan) while supporting two types of linked plans:
+- **Sub-plans**: For implementing phases that need substantial planning (either pre-planned or created during execution)
+- **Branches**: For handling unexpected issues/problems discovered during execution
+
+All sub-plans and branches are bidirectionally linked to the master plan.
 
 ## Subdirectory Organization
 
@@ -300,11 +304,19 @@ State is stored in the project's `.claude/plan-manager-state.json`:
       "parentPlan": "plans/layout-engine/layout-engine.md",
       "parentPhase": 3,
       "status": "in_progress",
-      "createdAt": "2026-01-30"
+      "createdAt": "2026-01-30",
+      "type": "sub-plan",
+      "prePlanned": false
     }
   ]
 }
 ```
+
+**Plan types** (`type` field):
+- `"sub-plan"`: For implementing phases that need substantial planning
+- `"branch"`: For handling unexpected issues/problems discovered during execution
+
+**Pre-planned indicator** (`prePlanned` field): For sub-plans, tracks whether created upfront (`true`) or during execution (`false`). Always `false` for branches.
 
 **Multiple master plans** are supported for projects with parallel initiatives. Commands operate on the "active" master plan by default, but can target specific masters.
 
@@ -366,24 +378,25 @@ GETTING STARTED
 
 WORKING WITH PLANS
 ──────────────────
-  6. branch        Create a sub-plan for the current phase
-  7. capture       Link an existing plan to a master plan phase
-  8. complete      Mark a sub-plan or phase as complete
-  9. merge         Merge a branch plan's content into the master plan
+  6. branch        Create a branch plan for handling issues
+  7. sub-plan      Create a sub-plan for implementing a phase (also: subplan)
+  8. capture       Link an existing plan to a master plan phase
+  9. complete      Mark a sub-plan or phase as complete
+  10. merge        Merge a branch plan's content into the master plan
 
 ORGANIZATION
 ────────────
-  10. organize     Auto-organize, link, and clean up plans
-  11. rename       Rename a plan and update all references
-  12. audit        Find orphaned plans and broken links
+  11. organize     Auto-organize, link, and clean up plans
+  12. rename       Rename a plan and update all references
+  13. audit        Find orphaned plans and broken links
 
 MULTI-MASTER
 ────────────
-  13. switch       Change which master plan is active
+  14. switch       Change which master plan is active
 
 HELP
 ────
-  14. help         Show detailed command reference and examples
+  15. help         Show detailed command reference and examples
 
 ══════════════════════════════════════════════════════════════
 
@@ -570,13 +583,13 @@ Master Plans:
   Subdirectory: layout-engine/
   UI layout system redesign
   Status: 3/5 phases complete
-  Sub-plans: 4 (2 in progress, 2 completed)
+  Sub-plans: 4 total (2 sub-plans, 2 branches; 2 in progress, 2 completed)
 
 ○ plans/auth-migration.md
   Flat structure
   Migration to OAuth 2.0
   Status: 1/3 phases complete
-  Sub-plans: 1 (1 in progress)
+  Sub-plans: 1 total (1 branch; 1 in progress)
 ```
 
 ### `branch <phase> [--master <path>]`
@@ -593,14 +606,15 @@ Proactively create a sub-plan when you see a problem coming.
    - If master is flat (e.g., `plans/legacy-plan.md`):
      - Create sub-plan at root: `plans/{sub-plan-name}.md`
 5. **Update the master plan FIRST**:
-   - Update the Status Dashboard: change phase status to `🔀 Branching`
+   - Update the Status Dashboard: change phase status to `🔀 Branch`
    - Add sub-plan reference to the phase section
-   - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)
+   - Use relative path for link if in same subdirectory (e.g., `[branch.md](./branch.md)`)
 6. Create the sub-plan file with header:
 
 ```markdown
-# Sub-plan: {description}
+# Branch: {description}
 
+**Type:** Branch
 **Parent:** {master-plan-path} → Phase {N}
 **Created:** {date}
 **Status:** In Progress
@@ -616,8 +630,68 @@ Proactively create a sub-plan when you see a problem coming.
 {To be filled in}
 ```
 
-7. Update state file with new sub-plan entry
-8. Confirm: `✓ Created sub-plan: {path} (branched from Phase {N})`
+7. Update state file with new sub-plan entry (set type: "branch", prePlanned: false)
+8. Confirm: `✓ Created branch: {path} (branched from Phase {N})`
+
+### `sub-plan|subplan <phase> [--master <path>] [--pre-planned]`
+
+Create a sub-plan for implementing a phase that needs substantial planning. Both "sub-plan" and "subplan" are accepted.
+
+1. Read the state file to get master plan path (use active master, or specified via --master)
+2. Read the master plan to verify the phase exists
+3. Ask the user for a brief description of the sub-plan topic
+4. **Ask if pre-planned** using **AskUserQuestion** (unless --pre-planned flag provided):
+   ```
+   Question: "Was this sub-plan pre-planned or created during execution?"
+   Header: "Planning timing"
+   Options:
+     - Label: "Pre-planned"
+       Description: "Created upfront during initial planning phase"
+     - Label: "During execution"
+       Description: "Created just-in-time when starting work on this phase"
+   ```
+5. **Determine sub-plan location**:
+   - Check if master plan uses subdirectory organization (from state file)
+   - If master is in subdirectory (e.g., `plans/layout-engine/layout-engine.md`):
+     - Create sub-plan in same subdirectory: `plans/layout-engine/{sub-plan-name}.md`
+   - If master is flat (e.g., `plans/legacy-plan.md`):
+     - Create sub-plan at root: `plans/{sub-plan-name}.md`
+6. **Update the master plan FIRST**:
+   - Update the Status Dashboard: change phase status to `📋 Sub-plan`
+   - Add sub-plan reference to the phase section
+   - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)
+7. Create the sub-plan file with header:
+
+```markdown
+# Sub-plan: {description}
+
+**Type:** Sub-plan
+**Parent:** {master-plan-path} → Phase {N}
+**Created:** {date}
+**Pre-planned:** {Yes/No}
+**Status:** In Progress
+
+---
+
+## Purpose
+
+{Brief description of what this phase aims to accomplish}
+
+## Implementation Approach
+
+{To be filled in - how will this phase be implemented}
+
+## Dependencies
+
+{Any dependencies or prerequisites}
+
+## Plan
+
+{Detailed implementation steps}
+```
+
+8. Update state file with new sub-plan entry (set type: "sub-plan", prePlanned: true/false based on user's answer)
+9. Confirm: `✓ Created sub-plan: {path} (for Phase {N} implementation)`
 
 ### `capture [file] [--phase N] [--master <path>]`
 
@@ -634,12 +708,47 @@ Retroactively link an existing plan that was created during tangential discussio
 **For both modes:**
 1. If `--phase N` not provided, ask which phase this relates to
 2. Read the state file to get master plan path (use active master, or specified via --master)
-3. **Move to subdirectory if needed**:
+3. **Ask plan type** using **AskUserQuestion**:
+   ```
+   Question: "What type of plan is this?"
+   Header: "Plan type"
+   Options:
+     - Label: "Sub-plan"
+       Description: "Implements a phase that needs substantial planning"
+     - Label: "Branch"
+       Description: "Handles an unexpected issue or problem discovered during execution"
+   ```
+4. **If sub-plan type selected**, ask if pre-planned using **AskUserQuestion**:
+   ```
+   Question: "Was this sub-plan pre-planned or created during execution?"
+   Header: "Planning timing"
+   Options:
+     - Label: "Pre-planned"
+       Description: "Created upfront during initial planning phase"
+     - Label: "During execution"
+       Description: "Created just-in-time when starting work on this phase"
+   ```
+5. **Move to subdirectory if needed**:
    - If master plan uses subdirectory and captured plan is not in it, move the plan
    - If master plan is flat and captured plan is in a subdirectory, ask whether to move or keep
-4. **Add parent reference to the sub-plan** (prepend if not present):
+6. **Add parent reference to the plan** (prepend if not present):
 
+**For sub-plans:**
 ```markdown
+**Type:** Sub-plan
+**Parent:** {master-plan-path} → Phase {N}
+**Captured:** {date}
+**Pre-planned:** {Yes/No}
+**Status:** In Progress
+
+---
+
+{original content}
+```
+
+**For branches:**
+```markdown
+**Type:** Branch
 **Parent:** {master-plan-path} → Phase {N}
 **Captured:** {date}
 **Status:** In Progress
@@ -649,11 +758,13 @@ Retroactively link an existing plan that was created during tangential discussio
 {original content}
 ```
 
-4. **Update the master plan**:
-   - Update Status Dashboard: add sub-plan reference to the phase
-   - Update the phase section with link to sub-plan
-5. Update state file
-6. Confirm: `✓ Captured {file} → linked to Phase {N}`
+7. **Update the master plan**:
+   - Update Status Dashboard: add plan reference to the phase (📋 Sub-plan or 🔀 Branch)
+   - Update the phase section with link to the plan
+8. Update state file (set type: "sub-plan" or "branch", prePlanned: true/false for sub-plans or false for branches)
+9. Confirm based on type:
+   - Sub-plan: `✓ Captured {file} → linked as sub-plan to Phase {N}`
+   - Branch: `✓ Captured {file} → linked as branch to Phase {N}`
 
 ### `complete <file-or-phase>`
 
@@ -661,18 +772,20 @@ Mark a sub-plan as complete and sync status to master.
 
 **Accepts:** phase numbers (3), subphases (4.1), step numbers (2), substeps (2.3), or file paths
 
-1. If argument is a number/subphase, find sub-plan for that phase/step; otherwise use as file path
-2. Read the sub-plan and update its status header to `Completed`
-3. **Ask about merge vs mark complete** using **AskUserQuestion**:
+1. If argument is a number/subphase, find plan for that phase/step; otherwise use as file path
+2. Read the plan to determine its type (from "Type:" field: "Sub-plan" or "Branch")
+3. Update the plan's status header to `Completed`
+4. **Ask about merge vs mark complete** using **AskUserQuestion** (use plan type in question):
    ```
-   Question: "This branch plan is complete. How should it be integrated?"
+   Question: "This {type} is complete. How should it be integrated?"
    Header: "Integration"
    Options:
      - Label: "Merge into master (Recommended)"
-       Description: "Merge branch content into the master plan's phase section"
+       Description: "Merge {type} content into the master plan's phase section"
      - Label: "Just mark complete"
-       Description: "Update Status Dashboard only, keep branch separate"
+       Description: "Update Status Dashboard only, keep {type} separate"
    ```
+   Where {type} is replaced with "sub-plan" or "branch" based on the plan's Type field.
    - If "Merge into master": Run the merge workflow (see `merge` command)
    - If "Just mark complete": Continue with steps below
 
@@ -690,10 +803,10 @@ Mark a sub-plan as complete and sync status to master.
      - Options: "Yes, all done" / "No, just this phase"
    - If "Yes, all done", mark ALL phases as complete
 
-7. **Ask about branch cleanup** using **AskUserQuestion**:
+7. **Ask about plan cleanup** using **AskUserQuestion** (use plan type in question):
    ```
-   Question: "What should happen to the completed branch plan?"
-   Header: "Branch cleanup"
+   Question: "What should happen to the completed {type}?"
+   Header: "Plan cleanup"
    Options:
      - Label: "Archive it"
        Description: "Move to plans/completed/ directory to keep it for reference"
@@ -702,6 +815,7 @@ Mark a sub-plan as complete and sync status to master.
      - Label: "Leave in place"
        Description: "Keep in current location for now"
    ```
+   Where {type} is replaced with "sub-plan" or "branch" based on the plan's Type field.
    - If "Archive it", move the file mirroring subdirectory structure:
      - If plan is in `plans/layout-engine/sub-plan.md`, move to `plans/completed/layout-engine/sub-plan.md`
      - If plan is in `plans/sub-plan.md` (flat), move to `plans/completed/sub-plan.md`
@@ -710,9 +824,9 @@ Mark a sub-plan as complete and sync status to master.
    - If "Leave in place", do nothing
    - Update all references in master plan and state file
 
-8. Use **AskUserQuestion tool** to determine phase status:
+8. Use **AskUserQuestion tool** to determine phase status (use plan type in question):
    ```
-   Question: "Sub-plan completed. What's the status of Phase {N}?"
+   Question: "{Type} completed. What's the status of Phase {N}?"
    Header: "Phase status"
    Options:
      - Label: "Phase complete"
@@ -727,70 +841,70 @@ Mark a sub-plan as complete and sync status to master.
 
 ### `merge [file-or-phase]`
 
-Merge a branch plan's content into the master plan.
+Merge a sub-plan or branch's content into the master plan.
 
-**Purpose**: Branch plans often contain updates, refinements, or extensions to the master plan's phase content. This command integrates that work back into the master plan instead of keeping it as a separate document.
+**Purpose**: Sub-plans and branches often contain updates, refinements, or extensions to the master plan's phase content. This command integrates that work back into the master plan instead of keeping it as a separate document. (Note: Branches are more commonly merged; sub-plans typically remain separate as detailed implementation guides.)
 
 **Accepts:** phase numbers (3), subphases (4.1), step numbers (2), substeps (2.3), file paths, or no argument (interactive selection)
 
 **Without argument (interactive mode):**
 1. Read state file to get active master plan
-2. List all sub-plans linked to the active master
-3. Use **AskUserQuestion** to select which branch to merge:
+2. List all sub-plans and branches linked to the active master
+3. Use **AskUserQuestion** to select which plan to merge:
    ```
-   Question: "Which branch plan do you want to merge into the master?"
-   Header: "Select branch"
+   Question: "Which sub-plan or branch do you want to merge into the master?"
+   Header: "Select plan"
    Options:
-     - Label: "{branch-1-name}.md"
-       Description: "Phase {N}: {brief-description} (Status: {status})"
-     - Label: "{branch-2-name}.md"
-       Description: "Phase {M}: {brief-description} (Status: {status})"
-     [... up to 4 most recent branches, use "Other" for text input if more]
+     - Label: "{plan-1-name}.md"
+       Description: "Phase {N}: {brief-description} (Type: {type}, Status: {status})"
+     - Label: "{plan-2-name}.md"
+       Description: "Phase {M}: {brief-description} (Type: {type}, Status: {status})"
+     [... up to 4 most recent plans, use "Other" for text input if more]
    ```
 
 **With argument:**
-1. If argument is a number/subphase, find sub-plan for that phase/step; otherwise use as file path
-2. Validate the branch plan exists and is linked to the active master
+1. If argument is a number/subphase, find plan for that phase/step; otherwise use as file path
+2. Validate the plan exists and is linked to the active master
 
 **Merge workflow:**
 
-1. **Read the branch plan content**
-2. **Identify the target phase** in the master plan (from the branch's Parent header)
+1. **Read the plan content**
+2. **Identify the target phase** in the master plan (from the plan's Parent header)
 3. **Use AskUserQuestion to confirm merge approach**:
    ```
-   Question: "How should this branch content be merged?"
+   Question: "How should this plan's content be merged?"
    Header: "Merge strategy"
    Options:
      - Label: "Append to phase (Recommended)"
-       Description: "Add branch content to the end of Phase {N} section"
+       Description: "Add plan content to the end of Phase {N} section"
      - Label: "Replace phase content"
-       Description: "Replace Phase {N} content entirely with branch content"
+       Description: "Replace Phase {N} content entirely with plan content"
      - Label: "Manual review"
        Description: "Show me both and I'll decide what to keep"
    ```
 
 4. **Perform the merge**:
    - If "Append to phase":
-     - Extract the main content from the branch plan (excluding the Parent header and metadata)
-     - Add a subsection to the master plan's phase: `### Merged from {branch-name}.md`
-     - Append the branch content under that subsection
+     - Extract the main content from the plan (excluding the Parent header and metadata)
+     - Add a subsection to the master plan's phase: `### Merged from {plan-name}.md`
+     - Append the plan content under that subsection
    - If "Replace phase content":
-     - Replace the entire phase section with the branch content
+     - Replace the entire phase section with the plan content
      - Preserve the phase heading (`## Phase {N}: {title}`)
    - If "Manual review":
-     - Display both the current phase content and branch content
+     - Display both the current phase content and plan content
      - Ask user to indicate what should be kept/combined
 
 5. **Update master plan metadata**:
-   - Update Status Dashboard: remove the sub-plan reference
-   - Add a note in the phase section: `✓ Merged from [{branch-name}.md](path) on {date}`
+   - Update Status Dashboard: remove the plan reference
+   - Add a note in the phase section: `✓ Merged from [{plan-name}.md](path) on {date}`
 
-6. **Update state file**: Mark the branch as merged (add `"merged": true, "mergedAt": "{date}"`)
+6. **Update state file**: Mark the plan as merged (add `"merged": true, "mergedAt": "{date}"`)
 
-7. **Ask about branch cleanup** using **AskUserQuestion**:
+7. **Ask about plan cleanup** using **AskUserQuestion**:
    ```
-   Question: "Branch merged successfully. What should happen to the branch file?"
-   Header: "Branch cleanup"
+   Question: "Plan merged successfully. What should happen to the plan file?"
+   Header: "Plan cleanup"
    Options:
      - Label: "Delete it (Recommended)"
        Description: "Remove the file (content is now in master plan)"
@@ -799,13 +913,13 @@ Merge a branch plan's content into the master plan.
      - Label: "Leave in place"
        Description: "Keep in current location"
    ```
-   - If "Delete it": Delete the branch file and remove from state
+   - If "Delete it": Delete the plan file and remove from state
    - If "Archive it": Move to plans/completed/ mirroring subdirectory structure
    - If "Leave in place": Do nothing
 
 8. **Ask about phase status** using **AskUserQuestion**:
    ```
-   Question: "Branch merged. What's the status of Phase {N}?"
+   Question: "Plan merged. What's the status of Phase {N}?"
    Header: "Phase status"
    Options:
      - Label: "Phase complete"
@@ -814,23 +928,23 @@ Merge a branch plan's content into the master plan.
        Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
    ```
 
-9. **Confirm**: `✓ Merged {branch-name}.md into Phase {N} of master plan`
+9. **Confirm**: `✓ Merged {plan-name}.md into Phase {N} of master plan`
 
 **Example:**
 
 ```
 User: "/plan-manager merge grid-edge-cases.md"
-Claude: *Reads branch plan content*
+Claude: *Reads plan content*
 
-        How should this branch content be merged?
+        How should this plan's content be merged?
         ┌─────────────────────────────────────────────────────────┐
         │ Merge strategy                                          │
         │                                                         │
         │ ○ Append to phase (Recommended)                         │
-        │   Add branch content to the end of Phase 2 section      │
+        │   Add plan content to the end of Phase 2 section        │
         │                                                         │
         │ ○ Replace phase content                                 │
-        │   Replace Phase 2 content entirely with branch content  │
+        │   Replace Phase 2 content entirely with plan content    │
         │                                                         │
         │ ○ Manual review                                         │
         │   Show me both and I'll decide what to keep             │
@@ -839,7 +953,7 @@ Claude: *Reads branch plan content*
 User: *Selects "Append to phase"*
 Claude: ✓ Appended grid-edge-cases.md content to Phase 2
 
-        Branch merged successfully. What should happen to the branch file?
+        Plan merged successfully. What should happen to the plan file?
         [cleanup options...]
 
 User: *Selects "Delete it"*
@@ -864,12 +978,12 @@ UI layout system redesign
 
 Phase 1: ✅ Complete
 Phase 2: 🔄 In Progress
-  └─ layout-fix.md (In Progress)
-Phase 3: ⏸️ Blocked
-  └─ api-redesign.md (Completed)
+  └─ layout-fix.md (Branch - In Progress)
+Phase 3: 📋 Sub-plan
+  └─ api-redesign.md (Sub-plan - In Progress)
 Phase 4: ⏳ Pending
 
-Sub-plans: 2 total (1 in progress, 1 completed)
+Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
 ```
 
 **With --all flag:**
@@ -884,9 +998,9 @@ Master Plans: 2
 
   Phase 1: ✅ Complete
   Phase 2: 🔄 In Progress
-    └─ layout-fix.md (In Progress)
+    └─ layout-fix.md (Branch - In Progress)
   ...
-  Sub-plans: 2 total (1 in progress, 1 completed)
+  Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
 
 ○ plans/auth-migration.md
   Flat structure
@@ -895,7 +1009,7 @@ Master Plans: 2
   Phase 1: ✅ Complete
   Phase 2: 🔄 In Progress
   ...
-  Sub-plans: 1 total (1 in progress)
+  Sub-plans: 1 total (1 branch; 1 in progress)
 ```
 
 ### `audit`
@@ -1565,7 +1679,7 @@ The Status Dashboard should be near the top of the master plan:
 |-------|--------|-----------|
 | 1     | ✅ Complete | — |
 | 2     | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
-| 3     | 🔀 Branching | [api-redesign.md](./api-redesign.md) |
+| 3     | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
 | 4     | ⏸️ Blocked by 3 | — |
 | 5     | ⏳ Pending | — |
 ```
@@ -1574,7 +1688,8 @@ The Status Dashboard should be near the top of the master plan:
 
 - ⏳ Pending — Not started
 - 🔄 In Progress — Active work
-- 🔀 Branching — Sub-plan created, diverging
+- 🔀 Branch — Branch plan created for handling issues
+- 📋 Sub-plan — Sub-plan created for implementing a phase
 - ⏸️ Blocked — Waiting on another phase or sub-plan
 - ✅ Complete — Done
 
@@ -1842,7 +1957,7 @@ Claude: ✓ Initialized master plan: plans/simple-feature.md (flat structure)
 
 User: "/plan-manager branch 2"
 Claude: *Creates plans/feature-branch.md (in root, not in subdirectory)*
-        ✓ Created sub-plan: plans/feature-branch.md (branched from Phase 2)
+        ✓ Created branch: plans/feature-branch.md (branched from Phase 2)
 ```
 
 ### Organizing by Category
@@ -2292,6 +2407,6 @@ User: "switch to auth migration"
 Claude: ✓ Switched to master plan: plans/auth-migration.md
 
 User: "/plan-manager branch 1"
-Claude: *Creates sub-plan for auth migration Phase 1*
-        ✓ Created sub-plan: plans/oauth-setup.md (branched from Phase 1)
+Claude: *Creates branch plan for auth migration Phase 1*
+        ✓ Created branch: plans/oauth-setup.md (branched from Phase 1)
 ```
