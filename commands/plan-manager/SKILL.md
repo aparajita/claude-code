@@ -1,0 +1,84 @@
+# Plan Manager — Maintain master plan integrity with linked sub-plans
+
+---
+name: plan-manager
+description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "link this to the master plan", "merge this branch", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
+allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
+model: sonnet
+---
+
+## Overview
+
+This skill maintains a single source of truth (master plan) while supporting two types of linked plans:
+- **Sub-plans**: For implementing phases that need substantial planning (either pre-planned or created during execution)
+- **Branches**: For handling unexpected issues/problems discovered during execution
+
+All sub-plans and branches are bidirectionally linked to the master plan.
+
+## Quick Command Reference
+
+### Viewing & Status
+- **status** [--all] — Show plan hierarchy and status
+- **overview** — Discover all plans and their relationships
+- **list-masters** — Show all tracked master plans
+
+### Getting Started
+- **init** <file> [--flat] — Initialize a master plan
+- **config** [--edit] — View/edit category organization settings
+
+### Working with Plans
+- **branch** <phase> [--master <path>] — Create a branch for handling issues
+- **sub-plan** <phase> [--master <path>] [--pre-planned] — Create a sub-plan for implementing a phase
+- **capture** [file] [--phase N] [--master <path>] — Link an existing plan to a master
+- **complete** <file-or-phase> — Mark a plan/phase as complete
+- **merge** [file-or-phase] — Merge a plan's content into the master
+
+### Organization
+- **organize** — Auto-organize, link, and clean up plans
+- **rename** <old-path> <new-path> — Rename a plan and update references
+- **audit** — Find orphaned plans and broken links
+
+### Multi-Master
+- **switch** <master-plan> — Change which master plan is active
+
+### Help
+- **help** — Show detailed command reference
+
+## Documentation
+
+### Command Specifications
+For detailed command documentation, see `commands/<command-name>.md`:
+- [init](commands/init.md), [branch](commands/branch.md), [sub-plan](commands/sub-plan.md), [capture](commands/capture.md)
+- [complete](commands/complete.md), [merge](commands/merge.md), [status](commands/status.md)
+- [audit](commands/audit.md), [overview](commands/overview.md), [organize](commands/organize.md)
+- [rename](commands/rename.md), [config](commands/config.md), [switch](commands/switch.md), [list-masters](commands/list-masters.md)
+
+### Reference Documentation
+- **[organization.md](organization.md)** — Subdirectory structure, category directories, and completed plans
+- **[state-schema.md](state-schema.md)** — State file format and schema details
+
+### Examples and Templates
+- **[examples/templates.md](examples/templates.md)** — Plan templates and format specifications
+- **[examples/workflows.md](examples/workflows.md)** — Common workflow examples
+- **[examples/category-organization.md](examples/category-organization.md)** — Category organization examples
+- **[examples/multi-master.md](examples/multi-master.md)** — Working with multiple master plans
+- **[examples/natural-language.md](examples/natural-language.md)** — Natural language triggers and quick reference
+
+## Interactive Menu
+
+Invoke with no arguments (`/plan-manager`) to show a menu of available commands. The menu displays all commands organized by category, and you can select by number or name.
+
+## Key Concepts
+
+**Master Plans**: The single source of truth for a project initiative. Contains phases/steps and links to sub-plans.
+
+**Sub-plans**: Detailed implementation plans for phases that need substantial planning. Marked with 📋 in status displays.
+
+**Branches**: Plans for handling unexpected issues discovered during execution. Marked with 🔀 in status displays.
+
+**State File**: Tracks master plans, sub-plans, and their relationships in `.claude/plan-manager-state.json`.
+
+**Subdirectories**: Master plans automatically get their own subdirectory (e.g., `plans/layout-engine/`) to organize related files.
+
+**Category Directories**: Standalone plans can be organized into category subdirectories (docs/, migrations/, designs/, etc.).
