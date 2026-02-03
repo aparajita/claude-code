@@ -9,13 +9,13 @@ The Status Dashboard should be near the top of the master plan:
 ```markdown
 ## Status Dashboard
 
-| Phase | Status | Sub-plans |
-|-------|--------|-----------|
-| 1     | ✅ Complete | — |
-| 2     | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
-| 3     | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
-| 4     | ⏸️ Blocked by 3 | — |
-| 5     | ⏳ Pending | — |
+| Phase | Description | Status | Sub-plan |
+|-------|-------------|--------|----------|
+| 1 | [Foundation](#phase-1-foundation) | ⏳ Pending | — |
+| 2 | [Layout Engine](#phase-2-layout-engine) | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
+| 3 | [API Redesign](#phase-3-api-redesign) | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
+| 4 | [Testing](#phase-4-testing) | ⏸️ Blocked by 3 | — |
+| 5 | [Deployment](#phase-5-deployment) | ⏳ Pending | — |
 ```
 
 ### Status Icons
