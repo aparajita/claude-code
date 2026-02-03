@@ -1717,6 +1717,7 @@ Each phase section should have a sub-plans subsection when applicable:
 ```markdown
 ## Phase 3: Layout Engine
 
+**Status:** Pending  <br>
 **Recommended Model:** Inherit  <br>
 **Testing:** TBD  <br>
 **Priority:** TBD  <br>
