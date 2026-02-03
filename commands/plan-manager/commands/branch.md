@@ -28,9 +28,9 @@ Proactively create a sub-plan when you see a problem coming.
 ```markdown
 # Branch: {description}
 
-**Type:** Branch
-**Parent:** {master-plan-path} → Phase {N}
-**Created:** {date}
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Created:** {date}  <br>
 **Status:** In Progress
 
 ---

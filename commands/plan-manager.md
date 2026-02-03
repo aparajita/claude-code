@@ -619,9 +619,9 @@ Proactively create a sub-plan when you see a problem coming.
 ```markdown
 # Branch: {description}
 
-**Type:** Branch
-**Parent:** {master-plan-path} → Phase {N}
-**Created:** {date}
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Created:** {date}  <br>
 **Status:** In Progress
 
 ---
@@ -671,10 +671,10 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
 ```markdown
 # Sub-plan: {description}
 
-**Type:** Sub-plan
-**Parent:** {master-plan-path} → Phase {N}
-**Created:** {date}
-**Pre-planned:** {Yes/No}
+**Type:** Sub-plan  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Created:** {date}  <br>
+**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress
 
 ---
@@ -741,10 +741,10 @@ Retroactively link an existing plan that was created during tangential discussio
 
 **For sub-plans:**
 ```markdown
-**Type:** Sub-plan
-**Parent:** {master-plan-path} → Phase {N}
-**Captured:** {date}
-**Pre-planned:** {Yes/No}
+**Type:** Sub-plan  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
+**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress
 
 ---
@@ -754,9 +754,9 @@ Retroactively link an existing plan that was created during tangential discussio
 
 **For branches:**
 ```markdown
-**Type:** Branch
-**Parent:** {master-plan-path} → Phase {N}
-**Captured:** {date}
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
 **Status:** In Progress
 
 ---
@@ -1716,6 +1716,11 @@ Each phase section should have a sub-plans subsection when applicable:
 
 ```markdown
 ## Phase 3: Layout Engine
+
+**Recommended Model:** Inherit  <br>
+**Testing:** TBD  <br>
+**Priority:** TBD  <br>
+**Estimated Lines:** TBD
 
 ### Status: In Progress
 

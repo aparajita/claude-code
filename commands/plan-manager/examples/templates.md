@@ -34,6 +34,11 @@ Each phase section should have a sub-plans subsection when applicable:
 ```markdown
 ## Phase 3: Layout Engine
 
+**Recommended Model:** Inherit  <br>
+**Testing:** TBD  <br>
+**Priority:** TBD  <br>
+**Estimated Lines:** TBD
+
 ### Status: In Progress
 
 ### Sub-plans
@@ -52,9 +57,9 @@ Created when branching from a phase to handle an issue or problem:
 ```markdown
 # Branch: {description}
 
-**Type:** Branch
-**Parent:** {master-plan-path} → Phase {N}
-**Created:** {date}
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Created:** {date}  <br>
 **Status:** In Progress
 
 ---
@@ -75,10 +80,10 @@ Created for implementing a phase that needs substantial planning:
 ```markdown
 # Sub-plan: {description}
 
-**Type:** Sub-plan
-**Parent:** {master-plan-path} → Phase {N}
-**Created:** {date}
-**Pre-planned:** {Yes/No}
+**Type:** Sub-plan  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Created:** {date}  <br>
+**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress
 
 ---
@@ -105,10 +110,10 @@ Created for implementing a phase that needs substantial planning:
 When capturing an existing plan as a sub-plan:
 
 ```markdown
-**Type:** Sub-plan
-**Parent:** {master-plan-path} → Phase {N}
-**Captured:** {date}
-**Pre-planned:** {Yes/No}
+**Type:** Sub-plan  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
+**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress
 
 ---
@@ -121,9 +126,9 @@ When capturing an existing plan as a sub-plan:
 When capturing an existing plan as a branch:
 
 ```markdown
-**Type:** Branch
-**Parent:** {master-plan-path} → Phase {N}
-**Captured:** {date}
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
 **Status:** In Progress
 
 ---
