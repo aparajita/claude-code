@@ -34,6 +34,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 - Documentation plans → `plans/docs/` (configurable)
 - Migration plans → `plans/migrations/` (configurable)
 - Design plans → `plans/designs/` (configurable)
+- Refactor plans → `plans/refactors/` (configurable)
 - Reference docs → `plans/reference/` (configurable)
 - Miscellaneous → `plans/misc/` (configurable)
 
@@ -56,6 +57,7 @@ Priority order (later overrides earlier):
     "migration": "migrations",
     "design": "designs",
     "feature": "features",
+    "refactor": "refactors",
     "reference": "reference",
     "standalone": "misc"
   },
@@ -72,6 +74,7 @@ Priority order (later overrides earlier):
     "design": "design-docs",
     "reference": "refs",
     "feature": "features",
+    "refactor": "refactors",
     "bugfix": "bug-fixes",
     "standalone": "other"
   },
@@ -99,7 +102,7 @@ To disable category organization:
 
 **The settings file is optional.** Commands work fine without it using built-in defaults:
 
-- If no settings file exists, commands use default category directories (docs, migrations, designs, features, etc.)
+- If no settings file exists, commands use default category directories (docs, migrations, designs, features, refactors, etc.)
 - Commands will NOT automatically create the settings file
 - Category organization is enabled by default (can be disabled in settings)
 
@@ -145,6 +148,7 @@ cat > ~/.claude/plan-manager-settings.json << 'EOF'
     "design": "designs",
     "reference": "reference",
     "feature": "features",
+    "refactor": "refactors",
     "bugfix": "bug-fixes",
     "standalone": "misc"
   },
@@ -325,7 +329,7 @@ State is stored in the project's `.claude/plan-manager-state.json`:
 - Sub-plans are created in the same subdirectory as their master plan
 - Flat structure (no subdirectory) is still supported for backward compatibility
 - The `subdirectory` field tracks whether a master uses subdirectory organization (null = flat)
-- **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, features/, etc.)
+- **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, features/, refactors/, etc.)
   - Category-organized plans are not tracked in state file (they're not linked to any master)
   - Category directories are configured in `plan-manager-settings.json`
 
@@ -540,7 +544,7 @@ Options:
   - Label: "Configure now (Recommended)"
     Description: "Set up category directories (migrations/, docs/, etc.)"
   - Label: "Use defaults"
-    Description: "Use built-in defaults (migrations, docs, designs, etc.)"
+    Description: "Use built-in defaults (migrations, docs, designs, features, refactors, etc.)"
   - Label: "Skip for now"
     Description: "Don't set up categories yet, I'll configure later"
 ```
@@ -1082,6 +1086,7 @@ Discover and visualize all plans in the project, regardless of whether they're t
    | **Migration** | Titles/content include "migration", "migrate", "upgrade", "transition", "port" |
    | **Design** | Titles/content include "design", "architecture", "proposal", "RFC", "spec" |
    | **Feature** | Titles/content include "feature", "enhancement", "new", "add" |
+   | **Refactor** | Titles/content include "refactor", "refactoring", "restructure", "reorganize", "cleanup", "simplify" |
    | **Bugfix** | Titles/content include "bug", "fix", "issue", "problem", "error" |
    | **Reference** | Pure reference material, glossaries, decision logs |
    | **Standalone** | Doesn't match other categories |
@@ -1217,7 +1222,7 @@ Automatically analyze and link related plans together, rename poorly-named files
 2. **Load category organization settings**:
    - Check for `~/.claude/plan-manager-settings.json` (user global)
    - Check for `<project>/.claude/plan-manager-settings.json` (project-specific, overrides user)
-   - If neither exists, use default category directories (docs, migrations, designs, features, reference, misc)
+   - If neither exists, use default category directories (docs, migrations, designs, features, refactors, reference, misc)
    - **Note**: Settings file is optional and will NOT be auto-created
    - If `enableCategoryOrganization` is false in settings, skip category organization steps
 
@@ -1276,7 +1281,7 @@ Options:
 5. **Organize standalone plans by category** (if `enableCategoryOrganization` is true):
    - Identify standalone plans that match category patterns (from classification)
    - Group by detected category (documentation, migration, design, feature, etc.)
-   - Use default category directories (docs, migrations, designs, features, etc.) unless custom settings exist
+   - Use default category directories (docs, migrations, designs, features, refactors, etc.) unless custom settings exist
    - If categorized plans found, use **AskUserQuestion tool**:
 
 ```
@@ -1284,7 +1289,7 @@ Question: "Found 8 standalone plans that can be organized by category. Organize 
 Header: "Categories"
 Options:
   - Label: "Organize all (Recommended)"
-    Description: "Move plans to category subdirectories (migrations/, docs/, designs/, features/, etc.)"
+    Description: "Move plans to category subdirectories (migrations/, docs/, designs/, features/, refactors/, etc.)"
   - Label: "Review by category"
     Description: "I'll show each category and you approve or skip"
   - Label: "Skip categories"
@@ -1878,7 +1883,7 @@ Claude: ✓ Created subdirectory: plans/layout-engine/
         │                                                         │
         │ ○ Use defaults                                          │
         │   Use built-in defaults (migrations, docs, designs,     │
-        │   etc.)                                                 │
+        │   features, refactors, etc.)                            │
         │                                                         │
         │ ○ Skip for now                                          │
         │   Don't set up categories yet, I'll configure later     │
