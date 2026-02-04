@@ -3,10 +3,12 @@
 ---
 name: plan-manager
 description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "link this to the master plan", "merge this branch", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, complete, merge, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
 ---
+
+**Version: 1.1.0**
 
 ## Overview
 
@@ -398,9 +400,10 @@ MULTI-MASTER
 ────────────
   14. switch       Change which master plan is active
 
-HELP
-────
+HELP & INFO
+───────────
   15. help         Show detailed command reference and examples
+  16. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 
@@ -1612,6 +1615,16 @@ MULTI-MASTER
     Change which master plan is active
     Example: /plan-manager switch
 
+HELP & INFO
+───────────
+  help
+    Show this command reference
+    Example: /plan-manager help
+
+  version
+    Show plan-manager version
+    Example: /plan-manager version
+
 TIPS
 ────
   • Run '/plan-manager' with no command for interactive menu
@@ -1622,6 +1635,15 @@ TIPS
   • Subdirectories keep master plans and sub-plans together
 
 For detailed documentation, see the full plan-manager guide.
+```
+
+### `version`
+
+Display the plan-manager version number.
+
+Output:
+```
+Plan Manager v1.1.0
 ```
 
 ### `rename <file> [new-name]`
@@ -1790,6 +1812,7 @@ This skill responds to:
 - "switch master plan" / "switch to different master" / "list master plans"
 - "Phase X is complete" / "Step Y is done" / "Phase 4.1 finished" / "completed Step 2.3"
 - "plan-manager help" / "show plan-manager commands" / "how do I use plan-manager"
+- "plan-manager version" / "what version of plan-manager" / "show plan-manager version"
 
 ## Error Handling
 
@@ -1836,9 +1859,10 @@ Claude: *Shows text-based menu*
         ────────────
           12. switch       Change which master plan is active
 
-        HELP
-        ────
+        HELP & INFO
+        ───────────
           13. help         Show detailed command reference and examples
+          14. version      Show plan-manager version
 
         ══════════════════════════════════════════════════════════════
 
