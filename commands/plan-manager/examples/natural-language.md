@@ -39,6 +39,7 @@ The plan-manager skill responds to the following natural language phrases:
 - "migrate plans to subdirectories" / "organize into folders"
 - "organize plans by category" / "categorize my plans" / "group plans by type"
 - "rename that plan" / "rename plan X" / "give that plan a better name"
+- "archive that plan" / "archive the completed plan" / "move plan to completed"
 
 ### Configuration
 - "customize category directories" / "configure plan categories" / "setup plan-manager config"
@@ -65,6 +66,7 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager capture [file]           # Link an existing plan to a phase
 /plan-manager complete <plan>          # Mark a sub-plan or phase as complete
 /plan-manager merge [file]             # Merge a branch plan's content into master
+/plan-manager archive [file]           # Archive or delete a completed plan
 
 # Viewing Status
 /plan-manager status                   # Show master plan hierarchy and status
@@ -107,23 +109,26 @@ Claude: *Shows text-based menu*
 
         WORKING WITH PLANS
         ──────────────────
-          6. branch        Create a sub-plan for the current phase
-          7. capture       Link an existing plan to a master plan phase
-          8. complete      Mark a sub-plan or phase as complete
+          6. branch        Create a branch plan for handling issues
+          7. sub-plan      Create a sub-plan for implementing a phase (also: subplan)
+          8. capture       Link an existing plan to a master plan phase
+          9. complete      Mark a sub-plan or phase as complete
+          10. merge        Merge a branch plan's content into the master plan
+          11. archive      Archive or delete a completed plan
 
         ORGANIZATION
         ────────────
-          9. organize      Auto-organize, link, and clean up plans
-          10. rename       Rename a plan and update all references
-          11. audit        Find orphaned plans and broken links
+          12. organize     Auto-organize, link, and clean up plans
+          13. rename       Rename a plan and update all references
+          14. audit        Find orphaned plans and broken links
 
         MULTI-MASTER
         ────────────
-          12. switch       Change which master plan is active
+          15. switch       Change which master plan is active
 
         HELP
         ────
-          13. help         Show detailed command reference and examples
+          16. help         Show detailed command reference and examples
 
         ══════════════════════════════════════════════════════════════
 

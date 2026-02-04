@@ -48,6 +48,10 @@ WORKING WITH PLANS
     Merge a branch plan's content into the master plan
     Example: /plan-manager merge grid-fixes.md
 
+  archive [file]
+    Archive or delete a completed plan
+    Example: /plan-manager archive completed-plan.md
+
 VIEWING STATUS
 ──────────────
   status

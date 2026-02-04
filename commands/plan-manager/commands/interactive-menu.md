@@ -26,20 +26,21 @@ WORKING WITH PLANS
   8. capture       Link an existing plan to a master plan phase
   9. complete      Mark a sub-plan or phase as complete
   10. merge        Merge a branch plan's content into the master plan
+  11. archive      Archive or delete a completed plan
 
 ORGANIZATION
 ────────────
-  11. organize     Auto-organize, link, and clean up plans
-  12. rename       Rename a plan and update all references
-  13. audit        Find orphaned plans and broken links
+  12. organize     Auto-organize, link, and clean up plans
+  13. rename       Rename a plan and update all references
+  14. audit        Find orphaned plans and broken links
 
 MULTI-MASTER
 ────────────
-  14. switch       Change which master plan is active
+  15. switch       Change which master plan is active
 
 HELP
 ────
-  15. help         Show detailed command reference and examples
+  16. help         Show detailed command reference and examples
 
 ══════════════════════════════════════════════════════════════
 
