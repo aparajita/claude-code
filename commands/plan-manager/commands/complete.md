@@ -30,7 +30,8 @@ Mark a sub-plan as complete and sync status to master.
    - If "Just mark complete": Continue with steps below
 
 4. Read and update the master plan:
-   - Update Status Dashboard: change sub-plan status indicator
+   - Update Status Dashboard: change Status to `✅ Complete` and update the Sub-plan column as needed
+   - Keep the Description column link unchanged
    - Update phase/step status based on user choice
    - Update phase/step header icon to ✅ if marking complete
 

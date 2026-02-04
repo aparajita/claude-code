@@ -18,6 +18,12 @@ The Status Dashboard should be near the top of the master plan:
 | 5 | [Deployment](#phase-5-deployment) | ⏳ Pending | — |
 ```
 
+**Important:** The Description column should contain a markdown link to the corresponding phase section. To create the anchor:
+1. Take the phase heading (e.g., `## Phase 2: Layout Engine`)
+2. Extract the phase title/description part (e.g., `Layout Engine`)
+3. Convert the full heading to lowercase and replace spaces with hyphens (e.g., `#phase-2-layout-engine`)
+4. Wrap the description in a link: `[Layout Engine](#phase-2-layout-engine)`
+
 ### Status Icons
 
 - ⏳ Pending — Not started
@@ -26,6 +32,8 @@ The Status Dashboard should be near the top of the master plan:
 - 📋 Sub-plan — Sub-plan created for implementing a phase
 - ⏸️ Blocked — Waiting on another phase or sub-plan
 - ✅ Complete — Done
+
+**CRITICAL:** When updating the Status Dashboard, ALWAYS preserve the markdown links in the Description column. Each description must link to its corresponding phase section (e.g., `[Foundation](#phase-1-foundation)`). Never write plain text descriptions without the link wrapper.
 
 ### Blocker Notation
 

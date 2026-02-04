@@ -87,6 +87,16 @@ MULTI-MASTER
     Change which master plan is active
     Example: /plan-manager switch
 
+HELP & INFO
+───────────
+  help
+    Show this command reference
+    Example: /plan-manager help
+
+  version
+    Show plan-manager version
+    Example: /plan-manager version
+
 TIPS
 ────
   • Run '/plan-manager' with no command for interactive menu

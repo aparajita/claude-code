@@ -17,7 +17,7 @@ Rename a plan file and update all references to it.
 1. Validate the source file exists
 2. Rename the file to the new name
 3. Find and update all references:
-   - Master plan Status Dashboard links
+   - Master plan Status Dashboard Sub-plan column links
    - Master plan phase section links
    - Other sub-plans that reference this file
    - State file entries

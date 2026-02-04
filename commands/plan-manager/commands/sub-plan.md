@@ -31,7 +31,8 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
      - Create sub-plan at root: `plans/{sub-plan-name}.md`
 6. **Update the master plan FIRST**:
    - Update the phase header icon to 📋 (e.g., `## Phase 3: 📋 Layout Engine`)
-   - Update the Status Dashboard: change phase status to `📋 Sub-plan`
+   - Update the Status Dashboard: change phase Status to `📋 Sub-plan` and add the sub-plan link to the Sub-plan column (e.g., `[sub-plan.md](./sub-plan.md)`)
+   - Keep the Description column link unchanged (e.g., `[API Layer](#phase-3-api-layer)`)
    - Add sub-plan reference to the phase section
    - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)
 7. Create the sub-plan file with header:

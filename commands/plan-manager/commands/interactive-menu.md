@@ -38,9 +38,10 @@ MULTI-MASTER
 ────────────
   15. switch       Change which master plan is active
 
-HELP
-────
+HELP & INFO
+───────────
   16. help         Show detailed command reference and examples
+  17. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 
