@@ -24,24 +24,27 @@ WORKING WITH PLANS
   6. branch        Create a branch plan for handling issues
   7. sub-plan      Create a sub-plan for implementing a phase (also: subplan)
   8. capture       Link an existing plan to a master plan phase
-  9. complete      Mark a sub-plan or phase as complete
-  10. merge        Merge a branch plan's content into the master plan
-  11. archive      Archive or delete a completed plan
+  9. add           Context-aware: add as master or link to phase
+  10. complete     Mark a sub-plan or phase as complete
+  11. merge        Merge a branch plan's content into the master plan
+  12. archive      Archive or delete a completed plan
+  13. block        Mark a phase as blocked by another phase/step/sub-plan
+  14. unblock      Remove blockers from a phase
 
 ORGANIZATION
 ────────────
-  12. organize     Auto-organize, link, and clean up plans
-  13. rename       Rename a plan and update all references
-  14. audit        Find orphaned plans and broken links
+  15. organize     Auto-organize, link, and clean up plans
+  16. rename       Rename a plan and update all references
+  17. audit        Find orphaned plans and broken links
 
 MULTI-MASTER
 ────────────
-  15. switch       Change which master plan is active
+  18. switch       Change which master plan is active
 
 HELP & INFO
 ───────────
-  16. help         Show detailed command reference and examples
-  17. version      Show plan-manager version
+  19. help         Show detailed command reference and examples
+  20. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 

@@ -31,14 +31,24 @@ GETTING STARTED
 WORKING WITH PLANS
 ──────────────────
   branch <phase>
-    Create a sub-plan for a phase
+    Create a branch plan for handling issues
     Options: --master <path>
     Example: /plan-manager branch 3
+
+  sub-plan <phase>
+    Create a sub-plan for implementing a phase
+    Options: --master <path>, --pre-planned
+    Example: /plan-manager sub-plan 3
 
   capture [file]
     Link an existing plan to a phase
     Options: --phase N, --master <path>
     Example: /plan-manager capture plans/fix.md --phase 2
+
+  add [file]
+    Context-aware: add as master plan or link to phase
+    Options: --phase N, --master <path>
+    Example: /plan-manager add plans/feature.md
 
   complete <plan>
     Mark a sub-plan or phase as complete
@@ -51,6 +61,15 @@ WORKING WITH PLANS
   archive [file]
     Archive or delete a completed plan
     Example: /plan-manager archive completed-plan.md
+
+  block <phase> by <blocker>
+    Mark a phase as blocked by another phase/step/sub-plan
+    Example: /plan-manager block 4 by 3
+
+  unblock <phase>
+    Remove blockers from a phase
+    Options: from <blocker> (remove specific blocker)
+    Example: /plan-manager unblock 4
 
 VIEWING STATUS
 ──────────────
