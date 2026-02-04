@@ -2,8 +2,8 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, merge branch plans back into master, mark sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "link this to the master plan", "merge this branch", "archive that plan", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, complete, merge, archive, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help, version
+description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master, mark sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. **CRITICAL: Monitor YOUR OWN responses** - when YOU (Claude) state that a phase or plan is complete in your response (e.g., "Phase 2 is now complete", "the layout-engine plan is finished"), IMMEDIATELY and PROACTIVELY invoke `/plan-manager complete` to mark it complete. Do not wait for the user to ask. This keeps plan state synchronized automatically. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", or "Phase X is complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, add, complete, merge, archive, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 model: sonnet
 ---
@@ -31,6 +31,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 - **branch** <phase> [--master <path>] — Create a branch for handling issues
 - **sub-plan** <phase> [--master <path>] [--pre-planned] — Create a sub-plan for implementing a phase
 - **capture** [file] [--phase N] [--master <path>] — Link an existing plan to a master
+- **add** [file] [--phase N] [--master <path>] — Context-aware: add as master plan or link to phase
 - **complete** <file-or-phase> — Mark a plan/phase as complete
 - **merge** [file-or-phase] — Merge a plan's content into the master
 - **archive** [file-or-phase] — Archive or delete a completed plan
@@ -51,7 +52,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 
 ### Command Specifications
 For detailed command documentation, see `commands/<command-name>.md`:
-- [init](commands/init.md), [branch](commands/branch.md), [sub-plan](commands/sub-plan.md), [capture](commands/capture.md)
+- [init](commands/init.md), [branch](commands/branch.md), [sub-plan](commands/sub-plan.md), [capture](commands/capture.md), [add](commands/add.md)
 - [complete](commands/complete.md), [merge](commands/merge.md), [archive](commands/archive.md), [status](commands/status.md)
 - [audit](commands/audit.md), [overview](commands/overview.md), [organize](commands/organize.md)
 - [rename](commands/rename.md), [config](commands/config.md), [switch](commands/switch.md), [list-masters](commands/list-masters.md)

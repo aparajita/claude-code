@@ -15,7 +15,9 @@ The plan-manager skill responds to the following natural language phrases:
 - "show me the plan-manager menu" / "what can plan-manager do"
 - "plan-manager help" / "show plan-manager commands" / "how do I use plan-manager"
 
-### Capturing Plans
+### Adding & Capturing Plans
+- "add this plan" / "add as master plan" (creates new master plan)
+- "add this to phase X" / "add this to the master plan" (links to phase as sub-plan/branch)
 - "capture that plan" / "capture the plan you just created"
 - "link this to the master plan" / "link this back to phase 3"
 
@@ -64,6 +66,7 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager branch <phase>           # Create a sub-plan for a phase
 /plan-manager sub-plan <phase>         # Create a sub-plan for implementing a phase
 /plan-manager capture [file]           # Link an existing plan to a phase
+/plan-manager add [file]               # Context-aware: add as master or link to phase
 /plan-manager complete <plan>          # Mark a sub-plan or phase as complete
 /plan-manager merge [file]             # Merge a branch plan's content into master
 /plan-manager archive [file]           # Archive or delete a completed plan
@@ -112,23 +115,24 @@ Claude: *Shows text-based menu*
           6. branch        Create a branch plan for handling issues
           7. sub-plan      Create a sub-plan for implementing a phase (also: subplan)
           8. capture       Link an existing plan to a master plan phase
-          9. complete      Mark a sub-plan or phase as complete
-          10. merge        Merge a branch plan's content into the master plan
-          11. archive      Archive or delete a completed plan
+          9. add           Context-aware: add as master or link to phase
+          10. complete     Mark a sub-plan or phase as complete
+          11. merge        Merge a branch plan's content into the master plan
+          12. archive      Archive or delete a completed plan
 
         ORGANIZATION
         ────────────
-          12. organize     Auto-organize, link, and clean up plans
-          13. rename       Rename a plan and update all references
-          14. audit        Find orphaned plans and broken links
+          13. organize     Auto-organize, link, and clean up plans
+          14. rename       Rename a plan and update all references
+          15. audit        Find orphaned plans and broken links
 
         MULTI-MASTER
         ────────────
-          15. switch       Change which master plan is active
+          16. switch       Change which master plan is active
 
         HELP
         ────
-          16. help         Show detailed command reference and examples
+          17. help         Show detailed command reference and examples
 
         ══════════════════════════════════════════════════════════════
 
@@ -325,6 +329,56 @@ When detected, the skill will suggest meaningful names based on:
 - The plan's title/heading
 - Key topics and keywords
 - Parent phase context (if linked)
+
+## Context-Aware "add" Command
+
+The `add` command intelligently routes based on context:
+
+### As Master Plan (no phase context)
+When you say "add this plan" without mentioning a phase, it creates a new master plan:
+```
+User: "add this plan"
+Claude: *Routes to init command*
+        ✓ Initialized master plan: plans/new-plan.md
+```
+
+### As Sub-plan/Branch (with phase context)
+When you mention a phase, it captures the plan and links it to that phase:
+```
+User: "add this to phase 2"
+Claude: *Routes to capture command with phase 2*
+        ✓ Captured plan.md → linked to Phase 2
+```
+
+### Intelligent Phase Detection
+When you say "add this to the master plan" without specifying which phase:
+1. Analyzes recent conversation for phase context
+2. Checks plan content for clues about which phase it relates to
+3. Looks at current in-progress or pending phases
+4. If confident, suggests a phase with confirmation
+5. If unclear, asks with intelligent options
+
+```
+User: "add this to the master plan"
+Claude: *Analyzes context, sees Phase 3 was recently discussed*
+        I'll add this to Phase 3: API Layer based on recent discussion. Is that correct?
+
+User: "yes"
+Claude: ✓ Captured plan.md → linked to Phase 3
+```
+
+Or if unclear:
+```
+User: "add this to the master plan"
+Claude: Which phase should this plan be linked to?
+
+        ┌─────────────────────────────────────────┐
+        │ Phase 2: Layout Engine (In Progress)    │
+        │ Phase 3: API Layer (Pending)            │
+        │ Phase 4: Testing (Pending)              │
+        │ Other phase                              │
+        └─────────────────────────────────────────┘
+```
 
 ## Tips
 
