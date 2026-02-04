@@ -32,6 +32,7 @@ Mark a sub-plan as complete and sync status to master.
 4. Read and update the master plan:
    - Update Status Dashboard: change sub-plan status indicator
    - Update phase/step status based on user choice
+   - Update phase/step header icon to ✅ if marking complete
 
 5. Update state file
 
@@ -42,8 +43,43 @@ Mark a sub-plan as complete and sync status to master.
      - Use **AskUserQuestion**: "This is the last phase but no others are marked complete. Is the entire plan actually complete?"
      - Options: "Yes, all done" / "No, just this phase"
    - If "Yes, all done", mark ALL phases as complete
+   - **If master plan is now complete** (all phases marked ✅ Complete), use **AskUserQuestion**:
+     ```
+     Question: "The master plan is complete. What should happen to it?"
+     Header: "Master plan cleanup"
+     Options:
+       - Label: "Archive it"
+         Description: "Move to plans/completed/ directory to keep it for reference"
+       - Label: "Delete it"
+         Description: "Remove the file entirely"
+       - Label: "Leave in place"
+         Description: "Keep in current location for now"
+     ```
+     - If "Archive it", move the master plan file to `plans/completed/` (mirroring subdirectory structure if nested)
+     - If "Delete it", delete the master plan file
+     - If "Leave in place", do nothing
+     - Update state file accordingly
 
-7. **Ask about plan cleanup** using **AskUserQuestion** (use plan type in question):
+7. **Check if all phases are now complete**:
+   - After updating the phase status (from step 4), check if ALL phases in the master plan are now marked ✅ Complete
+   - If yes AND we haven't already asked about master plan disposition in step 6, use **AskUserQuestion**:
+     ```
+     Question: "All phases are now complete. What should happen to the master plan?"
+     Header: "Master plan cleanup"
+     Options:
+       - Label: "Archive it"
+         Description: "Move to plans/completed/ directory to keep it for reference"
+       - Label: "Delete it"
+         Description: "Remove the file entirely"
+       - Label: "Leave in place"
+         Description: "Keep in current location for now"
+     ```
+     - If "Archive it", move the master plan file to `plans/completed/` (mirroring subdirectory structure if nested)
+     - If "Delete it", delete the master plan file
+     - If "Leave in place", do nothing
+     - Update state file accordingly
+
+8. **Ask about sub-plan/branch cleanup** using **AskUserQuestion** (use plan type in question):
    ```
    Question: "What should happen to the completed {type}?"
    Header: "Plan cleanup"
@@ -64,7 +100,7 @@ Mark a sub-plan as complete and sync status to master.
    - If "Leave in place", do nothing
    - Update all references in master plan and state file
 
-8. Use **AskUserQuestion tool** to determine phase status (use plan type in question):
+9. Use **AskUserQuestion tool** to determine phase status (use plan type in question):
    ```
    Question: "{Type} completed. What's the status of Phase {N}?"
    Header: "Phase status"
@@ -77,4 +113,24 @@ Mark a sub-plan as complete and sync status to master.
        Description: "Phase {N} is waiting on something else, mark it ⏸️ Blocked"
    ```
 
-9. Confirm: `✓ Completed sub-plan: {path}`
+10. **Check for blocked dependencies**:
+    - Read state file to find all phases/steps that are blocked by the completed phase (check `blocks` array)
+    - If any phases/steps are blocked by this completed phase:
+      - For each blocked item, use **AskUserQuestion**:
+        ```
+        Question: "Phase {blocked} was blocked by {completed}. Should it be unblocked now?"
+        Header: "Unblock dependency"
+        Options:
+          - Label: "Yes, unblock it (Recommended)"
+            Description: "Remove blocker and allow Phase {blocked} to proceed"
+          - Label: "No, keep it blocked"
+            Description: "Other blockers may still exist, leave it blocked for now"
+        ```
+      - If "Yes, unblock it":
+        - Run unblock logic (same as `unblock` command)
+        - Remove blocker from the blocked phase's `blockedBy` field in master plan and state file
+        - If no other blockers remain, prompt for new status
+        - Update Status Dashboard accordingly
+      - If "No, keep it blocked", do nothing
+
+11. Confirm: `✓ Completed sub-plan: {path}`

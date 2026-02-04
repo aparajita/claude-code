@@ -37,7 +37,9 @@ This keeps tooling metadata separate from actual plan files.
       "status": "in_progress",
       "createdAt": "2026-01-30",
       "type": "sub-plan",
-      "prePlanned": false
+      "prePlanned": false,
+      "blockedBy": [],
+      "blocks": [4]
     }
   ]
 }
@@ -68,6 +70,11 @@ This keeps tooling metadata separate from actual plan files.
 - **createdAt** (string): ISO date when sub-plan was created (e.g., `"2026-01-30"`)
 - **type** (string): Plan type - `"sub-plan"` or `"branch"`
 - **prePlanned** (boolean): For sub-plans, whether created upfront (`true`) or during execution (`false`). Always `false` for branches.
+- **blockedBy** (array): List of blockers that prevent this sub-plan from progressing. Each item can be:
+  - Phase number (e.g., `3`) - blocked by a phase in the parent master plan
+  - Step number (e.g., `2.1`) - blocked by a specific step
+  - Sub-plan path (e.g., `"plans/layout-engine/api-redesign.md"`) - blocked by another sub-plan
+- **blocks** (array): List of phases/steps/sub-plans that are blocked by this sub-plan. Same format as `blockedBy`.
 
 ### Optional Sub-Plan Fields
 

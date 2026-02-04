@@ -1717,12 +1717,13 @@ The Status Dashboard should be near the top of the master plan:
 
 ### Phase Section Format
 
-Each phase section should have a sub-plans subsection when applicable:
+Each phase section should have a status icon at the beginning of the header for quick visual scanning:
 
 ```markdown
-## Phase 3: Layout Engine
+## Phase 3: 🔄 Layout Engine
 
-**Status:** Pending  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —  <br>
 **Recommended Model:** Inherit  <br>
 **Testing:** TBD  <br>
 **Priority:** TBD  <br>
@@ -1738,6 +1739,13 @@ Each phase section should have a sub-plans subsection when applicable:
 2. Add responsive breakpoints
 ...
 ```
+
+**Phase Header Icon Synchronization:**
+- The status icon in the phase header (e.g., `## Phase 3: 🔄 Layout Engine`) must be kept synchronized with the Status Dashboard
+- When commands update the Status Dashboard, they must also update the corresponding phase header icon
+- Icon mapping: ⏳ Pending, 🔄 In Progress, ⏸️ Blocked, 🔀 Branch, 📋 Sub-plan, ✅ Complete
+- This enables quick visual scanning when scrolling through the plan document
+- The same pattern applies to step headers (e.g., `## Step 2.1: ⏳ Configure Database`)
 
 ## Multiple Master Plans
 

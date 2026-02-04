@@ -49,8 +49,17 @@ Discover and visualize all plans in the project, regardless of whether they're t
    - Map parent → children relationships
    - Identify which sub-plans link to which master plans
    - Detect circular references or broken links
+   - Extract blocker information from phase sections and state file
+   - For blocked phases, determine what's blocking them (phases, steps, or sub-plans)
 
 4. **Display ASCII hierarchy chart**:
+   - Show phase status with emojis (✅ Complete, 🔄 In Progress, ⏸️ Blocked, ⏳ Pending)
+   - For blocked phases, include blocker details: `⏸️ Blocked by Phase 3` or `⏸️ Blocked by Phase 3, api-redesign.md`
+   - Blocker format:
+     - Phase blockers: `Phase N`
+     - Step blockers: `Step N.M`
+     - Sub-plan blockers: filename only (e.g., `api-redesign.md`)
+     - Multiple blockers: comma-separated
 
 ```
 Plans Overview: plans/
@@ -67,9 +76,9 @@ ACTIVE HIERARCHIES
 │  ├── Phase 2: 🔄 In Progress
 │  │   └── 📄 grid-rethink.md (In Progress)
 │  │       └── 📄 grid-edge-cases.md (In Progress)
-│  ├── Phase 3: ⏸️ Blocked
+│  ├── Phase 3: ⏸️ Blocked by Phase 2
 │  │   └── 📄 api-redesign.md (Completed)
-│  ├── Phase 4: ⏳ Pending
+│  ├── Phase 4: ⏸️ Blocked by Phase 3, api-redesign.md
 │  └── Phase 5: ⏳ Pending
 
 📋 auth-migration.md (Master Plan, flat structure)

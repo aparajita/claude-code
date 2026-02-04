@@ -94,6 +94,8 @@ Merge a sub-plan or branch's content into the master plan.
      - Label: "Still in progress"
        Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
    ```
+   - Update the phase header icon based on selection (✅ for complete, 🔄 for in progress)
+   - Update Status Dashboard accordingly
 
 9. **Confirm**: `✓ Merged {plan-name}.md into Phase {N} of master plan`
 

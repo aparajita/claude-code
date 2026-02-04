@@ -30,6 +30,7 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
    - If master is flat (e.g., `plans/legacy-plan.md`):
      - Create sub-plan at root: `plans/{sub-plan-name}.md`
 6. **Update the master plan FIRST**:
+   - Update the phase header icon to 📋 (e.g., `## Phase 3: 📋 Layout Engine`)
    - Update the Status Dashboard: change phase status to `📋 Sub-plan`
    - Add sub-plan reference to the phase section
    - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)

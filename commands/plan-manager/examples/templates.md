@@ -27,14 +27,26 @@ The Status Dashboard should be near the top of the master plan:
 - ⏸️ Blocked — Waiting on another phase or sub-plan
 - ✅ Complete — Done
 
+### Blocker Notation
+
+When a phase is blocked, the Status column should include the blocker information:
+- `⏸️ Blocked by 3` — Blocked by phase 3
+- `⏸️ Blocked by 2.1` — Blocked by step 2.1
+- `⏸️ Blocked by [api-redesign.md](./api-redesign.md)` — Blocked by a sub-plan
+
+Multiple blockers can be comma-separated: `⏸️ Blocked by 3, 4`
+
+This notation is synchronized with the structured `blockedBy` field in the phase section metadata and state file.
+
 ## Phase Section Format
 
-Each phase section should have a sub-plans subsection when applicable:
+Each phase section should have a status icon at the beginning of the header for quick visual scanning:
 
 ```markdown
-## Phase 3: Layout Engine
+## Phase 3: 🔄 Layout Engine
 
-**Status:** Pending  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —  <br>
 **Recommended Model:** Inherit  <br>
 **Testing:** TBD  <br>
 **Priority:** TBD  <br>
@@ -51,6 +63,23 @@ Each phase section should have a sub-plans subsection when applicable:
 ...
 ```
 
+### Phase Header Icon Sync
+
+The status icon in the phase header must be kept synchronized with the Status Dashboard:
+- When the Status Dashboard is updated, update the phase header icon accordingly
+- The icon uses the same emoji as the Status Dashboard (⏳ ⏸️ 🔄 🔀 📋 ✅)
+- This enables quick visual scanning when scrolling through the plan document
+
+**Icon-to-Status Mapping:**
+- `⏳ Phase N: Title` — Pending (not started)
+- `🔄 Phase N: Title` — In Progress (active work)
+- `⏸️ Phase N: Title` — Blocked (waiting on dependencies)
+- `🔀 Phase N: Title` — Branch (branch plan created)
+- `📋 Phase N: Title` — Sub-plan (sub-plan created)
+- `✅ Phase N: Title` — Complete (done)
+
+The same pattern applies to step headers (e.g., `## Step 2.1: ⏳ Configure Database`).
+
 ## Branch Plan Template
 
 Created when branching from a phase to handle an issue or problem:
@@ -61,7 +90,8 @@ Created when branching from a phase to handle an issue or problem:
 **Type:** Branch  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Created:** {date}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
@@ -85,7 +115,8 @@ Created for implementing a phase that needs substantial planning:
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Created:** {date}  <br>
 **Pre-planned:** {Yes/No}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
@@ -115,7 +146,8 @@ When capturing an existing plan as a sub-plan:
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Captured:** {date}  <br>
 **Pre-planned:** {Yes/No}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
@@ -130,7 +162,8 @@ When capturing an existing plan as a branch:
 **Type:** Branch  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Captured:** {date}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
