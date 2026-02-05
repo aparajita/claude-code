@@ -55,7 +55,6 @@ Each phase section should have a status icon at the beginning of the header for 
 
 **Status:** In Progress  <br>
 **BlockedBy:** —  <br>
-**Recommended Model:** Inherit  <br>
 **Testing:** TBD  <br>
 **Priority:** TBD  <br>
 **Estimated Lines:** TBD
