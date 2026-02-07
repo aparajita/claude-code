@@ -43,6 +43,12 @@ The plan-manager skill responds to the following natural language phrases:
 - "rename that plan" / "rename plan X" / "give that plan a better name"
 - "archive that plan" / "archive the completed plan" / "move plan to completed"
 
+### Formatting
+- "add divs to \<plan\>" / "add div to \<plan\>" / "wrap \<plan\> with markdown-body div" / "add div wrapper to the plan"
+- "remove divs from \<plan\>" / "remove div from \<plan\>" / "unwrap \<plan\>" / "remove div wrapper from the plan"
+- "add div to all plans" / "add divs to all plans" / "wrap all plans with divs"
+- "remove div from all plans" / "remove divs from all plans" / "unwrap all plans"
+
 ### Configuration
 - "customize category directories" / "configure plan categories" / "setup plan-manager config"
 - "create plan-manager settings" / "configure plan-manager" / "edit plan-manager config"
@@ -81,6 +87,12 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager organize [directory]     # Auto-organize, link, and clean up plans
 /plan-manager rename <file> [name]     # Rename a plan and update references
 /plan-manager audit                    # Find orphaned plans and broken links
+
+# Formatting
+/plan-manager div [file]          # Add/remove div wrapper for markdown-body styling
+/plan-manager div [file] --remove # Remove div wrapper from a plan
+/plan-manager div all             # Add div wrapper to all plans
+/plan-manager div all --remove    # Remove div wrapper from all plans
 
 # Multi-Master
 /plan-manager switch [master]          # Change which master plan is active

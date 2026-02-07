@@ -37,14 +37,18 @@ ORGANIZATION
   16. rename       Rename a plan and update all references
   17. audit        Find orphaned plans and broken links
 
+FORMATTING
+──────────
+  18. div          Add or remove div wrapper for markdown-body styling
+
 MULTI-MASTER
 ────────────
-  18. switch       Change which master plan is active
+  19. switch       Change which master plan is active
 
 HELP & INFO
 ───────────
-  19. help         Show detailed command reference and examples
-  20. version      Show plan-manager version
+  20. help         Show detailed command reference and examples
+  21. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 

@@ -100,6 +100,13 @@ ORGANIZATION
     Find orphaned plans and broken links
     Example: /plan-manager audit
 
+FORMATTING
+──────────
+  div [file]
+    Add or remove div wrapper for markdown-body styling
+    Options: --remove (remove wrapper instead of adding)
+    Example: /plan-manager div plans/layout-engine.md
+
 MULTI-MASTER
 ────────────
   switch [master]

@@ -81,6 +81,14 @@ This keeps tooling metadata separate from actual plan files.
 - **merged** (boolean): Set to `true` if the sub-plan has been merged into the master plan
 - **mergedAt** (string): ISO date when the merge occurred (e.g., `"2026-01-31"`)
 
+## Settings File Fields
+
+The settings file (`plan-manager-settings.json`) can contain the following optional fields:
+
+- **categoryDirectories** (object): Maps plan types to directory names (e.g., `{"documentation": "docs", "migration": "migrations"}`)
+- **enableCategoryOrganization** (boolean): Whether to organize standalone plans by category (default: `true`)
+- **addDiv** (boolean): Whether to automatically wrap new plans with `<div class="markdown-body">` tags (default: `false`)
+
 ## Plan Types
 
 **Plan types** (`type` field):

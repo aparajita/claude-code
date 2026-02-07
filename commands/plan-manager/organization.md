@@ -45,7 +45,8 @@ Priority order (later overrides earlier):
     "reference": "reference",
     "standalone": "misc"
   },
-  "enableCategoryOrganization": true
+  "enableCategoryOrganization": true,
+  "addDiv": false
 }
 ```
 
@@ -61,7 +62,8 @@ Priority order (later overrides earlier):
     "bugfix": "bug-fixes",
     "standalone": "other"
   },
-  "enableCategoryOrganization": true
+  "enableCategoryOrganization": true,
+  "addDiv": true
 }
 ```
 
@@ -71,6 +73,15 @@ To disable category organization:
   "enableCategoryOrganization": false
 }
 ```
+
+To automatically wrap new plans with `<div class="markdown-body">` tags:
+```json
+{
+  "addDiv": true
+}
+```
+
+This setting controls whether new plans created by `init`, `branch`, and `sub-plan` commands are automatically wrapped with HTML div tags for GitHub markdown styling. Use the `div` command to manually add or remove wrappers from existing plans.
 
 **Benefits**:
   - Visual grouping of related plans in file browser
@@ -134,7 +145,8 @@ cat > ~/.claude/plan-manager-settings.json << 'EOF'
     "bugfix": "bug-fixes",
     "standalone": "misc"
   },
-  "enableCategoryOrganization": true
+  "enableCategoryOrganization": true,
+  "addDiv": false
 }
 EOF
 ```
@@ -150,7 +162,8 @@ cat > .claude/plan-manager-settings.json << 'EOF'
     "migration": "db-migrations",
     "design": "design-proposals"
   },
-  "enableCategoryOrganization": true
+  "enableCategoryOrganization": true,
+  "addDiv": false
 }
 EOF
 ```
