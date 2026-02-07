@@ -71,6 +71,23 @@ For detailed command documentation, see `commands/<command-name>.md`:
 - **[examples/multi-master.md](examples/multi-master.md)** — Working with multiple master plans
 - **[examples/natural-language.md](examples/natural-language.md)** — Natural language triggers and quick reference
 
+## Execution Instructions
+
+**CRITICAL: Command Routing**
+
+When invoked with arguments (e.g., `/plan-manager <command> [args]`):
+
+1. **Parse the first argument as the command name**
+2. **Check if a command file exists**: `commands/plan-manager/commands/<command>.md`
+3. **If the command file exists**: Read it and follow its instructions exactly
+4. **If the command file does not exist**: Show an error message listing valid commands
+
+**Valid commands**: init, branch, sub-plan (subplan), capture, add, complete, merge, archive, status, audit, overview, organize, rename, div, block, unblock, config, switch, list-masters, help, version
+
+**Special cases**:
+- No arguments: Show the interactive menu (see commands/interactive-menu.md)
+- Natural language: Match against patterns in examples/natural-language.md
+
 ## Interactive Menu
 
 Invoke with no arguments (`/plan-manager`) to show a menu of available commands. The menu displays all commands organized by category, and you can select by number or name.
