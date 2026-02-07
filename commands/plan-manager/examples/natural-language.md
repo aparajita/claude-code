@@ -44,10 +44,10 @@ The plan-manager skill responds to the following natural language phrases:
 - "archive that plan" / "archive the completed plan" / "move plan to completed"
 
 ### Formatting
-- "add divs to \<plan\>" / "add div to \<plan\>" / "wrap \<plan\> with markdown-body div" / "add div wrapper to the plan"
-- "remove divs from \<plan\>" / "remove div from \<plan\>" / "unwrap \<plan\>" / "remove div wrapper from the plan"
-- "add div to all plans" / "add divs to all plans" / "wrap all plans with divs"
-- "remove div from all plans" / "remove divs from all plans" / "unwrap all plans"
+- "add divs to \<plan\>" / "add div to \<plan\>" / "add the div to \<plan\>" / "add div wrapper to \<plan\>" / "add the div wrapper to \<plan\>" / "add wrapper to \<plan\>" / "add the wrapper to \<plan\>" / "wrap \<plan\> with markdown-body div" / "wrap \<plan\> with div wrapper" / "add div wrapper to the plan" / "add wrapper div to the plan"
+- "remove divs from \<plan\>" / "remove div from \<plan\>" / "remove the div from \<plan\>" / "remove div wrapper from \<plan\>" / "remove the div wrapper from \<plan\>" / "remove wrapper from \<plan\>" / "remove the wrapper from \<plan\>" / "unwrap \<plan\>" / "remove div wrapper from the plan"
+- "add div to all plans" / "add divs to all plans" / "add div wrapper to all plans" / "add wrapper to all plans" / "wrap all plans with divs" / "wrap all plans with div wrapper"
+- "remove div from all plans" / "remove divs from all plans" / "remove div wrapper from all plans" / "remove wrapper from all plans" / "unwrap all plans"
 
 ### Configuration
 - "customize category directories" / "configure plan categories" / "setup plan-manager config"

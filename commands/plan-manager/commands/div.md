@@ -223,15 +223,15 @@ When `addDiv` is `false` or not set:
 ## Natural Language Triggers
 
 This command responds to phrases like:
-- "add divs to \<plan\>" / "add div to \<plan\>"
-- "wrap \<plan\> with markdown-body div"
-- "add div wrapper to the plan"
-- "remove divs from \<plan\>" / "remove div from \<plan\>"
-- "unwrap \<plan\>"
-- "add div to all plans" / "add divs to all plans"
-- "remove div from all plans" / "remove divs from all plans"
-- "wrap all plans with divs"
-- "unwrap all plans"
+- "add divs to \<plan\>" / "add div to \<plan\>" / "add the div to \<plan\>" / "add div wrapper to \<plan\>" / "add the div wrapper to \<plan\>" / "add wrapper to \<plan\>" / "add the wrapper to \<plan\>"
+- "wrap \<plan\> with markdown-body div" / "wrap \<plan\> with div wrapper"
+- "add div wrapper to the plan" / "add wrapper div to the plan"
+- "remove divs from \<plan\>" / "remove div from \<plan\>" / "remove the div from \<plan\>" / "remove div wrapper from \<plan\>" / "remove the div wrapper from \<plan\>" / "remove wrapper from \<plan\>" / "remove the wrapper from \<plan\>"
+- "unwrap \<plan\>" / "remove wrapper from \<plan\>"
+- "add div to all plans" / "add divs to all plans" / "add div wrapper to all plans" / "add wrapper to all plans"
+- "remove div from all plans" / "remove divs from all plans" / "remove div wrapper from all plans" / "remove wrapper from all plans"
+- "wrap all plans with divs" / "wrap all plans with div wrapper"
+- "unwrap all plans" / "remove wrapper from all plans"
 
 ## Examples
 
