@@ -11,18 +11,21 @@ The Status Dashboard should be near the top of the master plan:
 
 | Phase | Description | Status | Sub-plan |
 |-------|-------------|--------|----------|
-| 1 | [Foundation](#phase-1-foundation) | ⏳ Pending | — |
-| 2 | [Layout Engine](#phase-2-layout-engine) | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
-| 3 | [API Redesign](#phase-3-api-redesign) | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
-| 4 | [Testing](#phase-4-testing) | ⏸️ Blocked by 3 | — |
-| 5 | [Deployment](#phase-5-deployment) | ⏳ Pending | — |
+| 1 | [Foundation](#phase-1--foundation) | ⏳ Pending | — |
+| 2 | [Layout Engine](#phase-2--layout-engine) | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
+| 3 | [API Redesign](#phase-3--api-redesign) | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
+| 4 | [Testing](#phase-4--testing) | ⏸️ Blocked by 3 | — |
+| 5 | [Deployment](#phase-5--deployment) | ⏳ Pending | — |
 ```
 
 **Important:** The Description column should contain a markdown link to the corresponding phase section. To create the anchor:
-1. Take the phase heading (e.g., `## Phase 2: Layout Engine`)
+1. Take the phase heading (e.g., `## Phase 2: Layout Engine` or `## Phase 2: 🔄 Layout Engine`)
 2. Extract the phase title/description part (e.g., `Layout Engine`)
-3. Convert the full heading to lowercase and replace spaces with hyphens (e.g., `#phase-2-layout-engine`)
-4. Wrap the description in a link: `[Layout Engine](#phase-2-layout-engine)`
+3. Convert the full heading to lowercase, remove any status icons, and replace spaces with hyphens
+   - `## Phase 2: Layout Engine` becomes `#phase-2--layout-engine`
+   - `## Phase 2: 🔄 Layout Engine` becomes `#phase-2--layout-engine`
+   - Note the double dash after the phase number (from the `: ` separator)
+4. Wrap the description in a link: `[Layout Engine](#phase-2--layout-engine)`
 
 ### Status Icons
 
@@ -33,7 +36,7 @@ The Status Dashboard should be near the top of the master plan:
 - ⏸️ Blocked — Waiting on another phase or sub-plan
 - ✅ Complete — Done
 
-**CRITICAL:** When updating the Status Dashboard, ALWAYS preserve the markdown links in the Description column. Each description must link to its corresponding phase section (e.g., `[Foundation](#phase-1-foundation)`). Never write plain text descriptions without the link wrapper.
+**CRITICAL:** When updating the Status Dashboard, ALWAYS preserve the markdown links in the Description column. Each description must link to its corresponding phase section (e.g., `[Foundation](#phase-1--foundation)`). Never write plain text descriptions without the link wrapper.
 
 ### Blocker Notation
 
@@ -55,9 +58,7 @@ Each phase section should have a status icon at the beginning of the header for 
 
 **Status:** In Progress  <br>
 **BlockedBy:** —  <br>
-**Testing:** TBD  <br>
-**Priority:** TBD  <br>
-**Estimated Lines:** TBD
+**Testing:** TBD
 
 ### Status: In Progress
 

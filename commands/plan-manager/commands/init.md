@@ -49,8 +49,8 @@ Options:
 
 | Phase | Description | Status | Sub-plan |
 |-------|-------------|--------|----------|
-| 1 | [Foundation](#phase-1-foundation) | ⏳ Pending | — |
-| 2 | [Layout Engine](#phase-2-layout-engine) | ⏳ Pending | — |
+| 1 | [Foundation](#phase-1--foundation) | ⏳ Pending | — |
+| 2 | [Layout Engine](#phase-2--layout-engine) | ⏳ Pending | — |
 ...
 ```
 
