@@ -35,8 +35,6 @@ Category Directories:
   bugfix         → bug-fixes/
   standalone     → misc/
 
-Div Wrapping: DISABLED
-
 File Location: ~/.claude/plan-manager-settings.json
 ```
 
@@ -50,8 +48,6 @@ Options:
     Description: "Modify category directory names interactively"
   - Label: "Toggle organization"
     Description: "Enable/disable category organization"
-  - Label: "Toggle div wrapping"
-    Description: "Enable/disable automatic div wrapper for new plans"
   - Label: "Create project config"
     Description: "Create project-specific settings to override user settings"
   - Label: "Edit file directly"
@@ -76,32 +72,6 @@ Options:
   - Label: "Disabled"
     Description: "Don't organize standalone plans by category"
 ```
-
-**Step 1b: Enable/disable div wrapping**
-```
-Question: "Automatically wrap new plans with markdown-body div tags?"
-Header: "Div wrapping"
-Options:
-  - Label: "Disabled (Recommended)"
-    Description: "Don't add div wrappers to new plans automatically"
-  - Label: "Enabled"
-    Description: "Wrap new plans with <div class=\"markdown-body\"> tags"
-```
-
-**If div wrapping setting changes**, use **AskUserQuestion**:
-```
-Question: "Apply this change to all existing plans?"
-Header: "Apply to existing plans"
-Options:
-  - Label: "Yes, update all"
-    Description: "Add/remove div wrapper from all existing plan files"
-  - Label: "No, only affect new plans"
-    Description: "Only apply this setting to plans created from now on"
-```
-
-- If enabling (false → true): Offer to add divs to all existing plans
-- If disabling (true → false): Offer to remove divs from all existing plans
-- Invoke `/plan-manager div all` or `/plan-manager div all --remove` accordingly
 
 **Step 2: Edit each category** (if enabled):
 For each category, use **AskUserQuestion**:

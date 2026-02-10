@@ -89,7 +89,6 @@ The settings file (`plan-manager-settings.json`) can contain the following optio
 
 - **categoryDirectories** (object): Maps plan types to directory names (e.g., `{"documentation": "docs", "migration": "migrations"}`)
 - **enableCategoryOrganization** (boolean): Whether to organize standalone plans by category (default: `true`)
-- **addDiv** (boolean): Whether to automatically wrap new plans with `<div class="markdown-body">` tags (default: `false`)
 
 ## Plan Types
 
