@@ -12,6 +12,7 @@ This keeps tooling metadata separate from actual plan files.
 
 ```json
 {
+  "version": "1.0.0",
   "plansDirectory": "plans",
   "masterPlans": [
     {
@@ -49,6 +50,7 @@ This keeps tooling metadata separate from actual plan files.
 
 ### Root Level
 
+- **version** (string): State file schema version (currently `"1.0.0"`). Used for schema migrations and backward compatibility if the state file format evolves in future versions.
 - **plansDirectory** (string): The base directory where plans are stored (e.g., `"plans"`, `"docs/plans"`)
 - **masterPlans** (array): List of tracked master plans
 - **subPlans** (array): List of all sub-plans and branches linked to master plans
