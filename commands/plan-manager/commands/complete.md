@@ -97,7 +97,7 @@ After completing a sub-plan/branch OR direct phase(s), perform these steps:
 
 1. Read and update the master plan (if not already done in Section 3):
    - Update Status Dashboard: change Status to `✅ Complete` and update the Sub-plan column as needed
-   - Keep the Description column link unchanged
+   - Update the Description column link anchor to match the updated phase header
    - Update phase/step header icon to ✅ if marking complete
 
 2. Update state file

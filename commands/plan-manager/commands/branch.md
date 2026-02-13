@@ -20,9 +20,9 @@ Proactively create a sub-plan when you see a problem coming.
    - If master is flat (e.g., `plans/legacy-plan.md`):
      - Create sub-plan at root: `plans/{sub-plan-name}.md`
 5. **Update the master plan FIRST**:
-   - Update the phase header icon to 🔀 (e.g., `## Phase 2: 🔀 API Layer`)
+   - Update the phase header icon to 🔀 (e.g., `## 🔀 Phase 2: API Layer`)
    - Update the Status Dashboard: change phase Status to `🔀 Branch` and add the sub-plan link to the Sub-plan column (e.g., `[branch.md](./branch.md)`)
-   - Keep the Description column link unchanged (e.g., `[Layout Engine](#phase-2--layout-engine)`)
+   - Update the Description column link anchor to match the updated phase header (e.g., `[API Layer](#-phase-2-api-layer)`)
    - Add sub-plan reference to the phase section
    - Use relative path for link if in same subdirectory (e.g., `[branch.md](./branch.md)`)
 6. Create the sub-plan file with header:

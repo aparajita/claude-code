@@ -41,7 +41,8 @@ Options:
 7. If the master plan doesn't have a Status Dashboard section, offer to add one:
    - Read all phase headings from the plan (e.g., `## Phase 1: Foundation`, `## Phase 2: Layout Engine`)
    - For each phase, extract the description/title (the part after the colon)
-   - For each phase, create an anchor link by converting the full heading to lowercase and replacing spaces with hyphens
+   - Add the ⏳ status icon to each phase header (e.g., `## Phase 1: Foundation` → `## ⏳ Phase 1: Foundation`)
+   - For each phase, create an anchor link by converting the full heading (with icon) to lowercase, stripping non-alphanumeric characters (except spaces and hyphens), and replacing spaces with hyphens
    - Create the Status Dashboard table with linked description entries:
 
 ```markdown
@@ -49,8 +50,8 @@ Options:
 
 | Phase | Description | Status | Sub-plan |
 |-------|-------------|--------|----------|
-| 1 | [Foundation](#phase-1--foundation) | ⏳ Pending | — |
-| 2 | [Layout Engine](#phase-2--layout-engine) | ⏳ Pending | — |
+| 1 | [Foundation](#-phase-1-foundation) | ⏳ Pending | — |
+| 2 | [Layout Engine](#-phase-2-layout-engine) | ⏳ Pending | — |
 ...
 ```
 

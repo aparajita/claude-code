@@ -40,12 +40,13 @@ Mark a phase or step as blocked by another phase, step, or sub-plan.
 
 6. **Update master plan**:
    - Find the phase section for the target
-   - Update the phase/step header icon to ⏸️ (e.g., `## Phase 4: ⏸️ Testing`)
+   - Update the phase/step header icon to ⏸️ (e.g., `## ⏸️ Phase 4: Testing`)
    - Update the `**BlockedBy:**` field:
      - If currently `—`, replace with blocker
      - If already has blockers, append with comma: `3, 4`
    - Update Status Dashboard:
      - Change status to `⏸️ Blocked by {blocker}`
+     - Update the Description column link anchor to match the updated phase header
    - Update the phase's `### Status:` subsection to `Blocked`
 
 7. **Update state file**:

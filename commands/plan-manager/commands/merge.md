@@ -64,7 +64,7 @@ Merge a sub-plan or branch's content into the master plan.
 
 5. **Update master plan metadata**:
    - Update Status Dashboard: remove the plan reference from the Sub-plan column
-   - Keep the Description column link unchanged
+   - Update the Description column link anchor to match the updated phase header
    - Add a note in the phase section: `✓ Merged from [{plan-name}.md](path) on {date}`
 
 6. **Update state file**: Mark the plan as merged (add `"merged": true, "mergedAt": "{date}"`)

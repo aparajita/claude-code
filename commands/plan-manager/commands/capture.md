@@ -74,7 +74,7 @@ Retroactively link an existing plan that was created during tangential discussio
 7. **Update the master plan**:
    - Update the phase header icon to match the plan type (📋 for sub-plan, 🔀 for branch)
    - Update Status Dashboard: change Status to `📋 Sub-plan` or `🔀 Branch` and add plan reference to the Sub-plan column
-   - Keep the Description column link unchanged
+   - Update the Description column link anchor to match the updated phase header
    - Update the phase section with link to the plan
 8. Update state file (set type: "sub-plan" or "branch", prePlanned: true/false for sub-plans or false for branches)
 9. Confirm based on type:

@@ -53,6 +53,7 @@ Remove blockers from a phase or step.
            Description: "Not blocked, but not ready to start yet"
        ```
      - Update the phase/step header icon based on new status (🔄 for In Progress, ⏳ for Pending)
+     - Update the Description column link anchor to match the updated phase header
    - Update the phase's `### Status:` subsection accordingly
 
 7. **Update state file**:
