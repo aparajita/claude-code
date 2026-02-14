@@ -42,10 +42,12 @@ Merge a sub-plan or branch's content into the master plan.
    Question: "How should this plan's content be merged?"
    Header: "Merge strategy"
    Options:
-     - Label: "Append to phase (Recommended)"
+     - Label: "Append to phase"
        Description: "Add plan content to the end of Phase {N} section"
-     - Label: "Replace phase content"
-       Description: "Replace Phase {N} content entirely with plan content"
+     - Label: "Inline content (Recommended)"
+       Description: "Replace Phase {N} body with plan content, then delete the sub-plan file"
+     - Label: "Reference to sub-plan"
+       Description: "Replace Phase {N} body with summary + link to sub-plan"
      - Label: "Manual review"
        Description: "Show me both and I'll decide what to keep"
    ```
@@ -55,21 +57,36 @@ Merge a sub-plan or branch's content into the master plan.
      - Extract the main content from the plan (excluding the Parent header and metadata)
      - Add a subsection to the master plan's phase: `### Merged from {plan-name}.md`
      - Append the plan content under that subsection
-   - If "Replace phase content":
-     - Replace the entire phase section with the plan content
+     - Proceed to step 5
+   - If "Inline content":
+     - Replace the entire phase section body with the plan content
      - Preserve the phase heading (`## Phase {N}: {title}`)
+     - Delete the sub-plan file immediately
+     - Skip step 7 (cleanup already handled)
+     - Proceed to step 5
+   - If "Reference to sub-plan":
+     - Generate a summary of the sub-plan (extract first paragraph or create brief overview)
+     - Replace the phase body with: `{summary}\n\nSee [[{plan-name}.md]] for detailed implementation plan.`
+     - Proceed to step 5
    - If "Manual review":
      - Display both the current phase content and plan content
      - Ask user to indicate what should be kept/combined
+     - Proceed to step 5
 
 5. **Update master plan metadata**:
-   - Update Status Dashboard: remove the plan reference from the Sub-plan column
+   - Update Status Dashboard:
+     - If "Inline content" or "Append to phase": remove the plan reference from the Sub-plan column
+     - If "Reference to sub-plan": keep the Sub-plan reference (content is still separate)
    - Update the Description column link anchor to match the updated phase header
-   - Add a note in the phase section: `✓ Merged from [{plan-name}.md](path) on {date}`
+   - Add a note in the phase section:
+     - If "Inline content" or "Append to phase": `✓ Merged from [{plan-name}.md](path) on {date}`
+     - If "Reference to sub-plan": `✓ References [{plan-name}.md](path)`
 
-6. **Update state file**: Mark the plan as merged (add `"merged": true, "mergedAt": "{date}"`)
+6. **Update state file**:
+   - If "Inline content" or "Append to phase": Mark the plan as merged (add `"merged": true, "mergedAt": "{date}"`)
+   - If "Reference to sub-plan": Keep the plan active in state (no merge flag)
 
-7. **Ask about plan cleanup** using **AskUserQuestion**:
+7. **Ask about plan cleanup** (skip if "Inline content" was selected) using **AskUserQuestion**:
    ```
    Question: "Plan merged successfully. What should happen to the plan file?"
    Header: "Plan cleanup"
@@ -102,6 +119,8 @@ Merge a sub-plan or branch's content into the master plan.
 
 ## Example
 
+### Example 1: Inline content (recommended for completed work)
+
 ```
 User: "/plan-manager merge grid-edge-cases.md"
 Claude: *Reads plan content*
@@ -110,23 +129,36 @@ Claude: *Reads plan content*
         ┌─────────────────────────────────────────────────────────┐
         │ Merge strategy                                          │
         │                                                         │
-        │ ○ Append to phase (Recommended)                         │
+        │ ○ Append to phase                                       │
         │   Add plan content to the end of Phase 2 section        │
         │                                                         │
-        │ ○ Replace phase content                                 │
-        │   Replace Phase 2 content entirely with plan content    │
+        │ ○ Inline content (Recommended)                          │
+        │   Replace Phase 2 body with plan content, then delete   │
+        │   the sub-plan file                                     │
+        │                                                         │
+        │ ○ Reference to sub-plan                                 │
+        │   Replace Phase 2 body with summary + link to sub-plan  │
         │                                                         │
         │ ○ Manual review                                         │
         │   Show me both and I'll decide what to keep             │
         └─────────────────────────────────────────────────────────┘
 
-User: *Selects "Append to phase"*
-Claude: ✓ Appended grid-edge-cases.md content to Phase 2
-
-        Plan merged successfully. What should happen to the plan file?
-        [cleanup options...]
-
-User: *Selects "Delete it"*
-Claude: ✓ Deleted grid-edge-cases.md
+User: *Selects "Inline content"*
+Claude: ✓ Replaced Phase 2 with grid-edge-cases.md content
+        ✓ Deleted grid-edge-cases.md
         ✓ Merged grid-edge-cases.md into Phase 2 of master plan
+```
+
+### Example 2: Reference to sub-plan (keep as modular documentation)
+
+```
+User: "/plan-manager merge data-pipeline.md"
+Claude: *Reads plan content*
+
+        [Same merge strategy question...]
+
+User: *Selects "Reference to sub-plan"*
+Claude: ✓ Replaced Phase 3 with summary and reference to data-pipeline.md
+        ✓ Sub-plan remains available at data-pipeline.md
+        ✓ Phase 3 now references data-pipeline.md for detailed implementation
 ```
