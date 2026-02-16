@@ -3,10 +3,10 @@
 ## Usage
 
 ```
-complete <file-or-phase-or-range>
+complete <file-or-phase-or-range> [step]
 ```
 
-Mark a sub-plan, branch, or master plan phase(s) as complete.
+Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as complete.
 
 **Accepts:**
 - Phase numbers: `3`
@@ -15,23 +15,28 @@ Mark a sub-plan, branch, or master plan phase(s) as complete.
 - Substeps: `2.3`
 - Phase ranges: `1-5`, `2-4`
 - File paths: `plans/sub-plan.md`
+- Steps within sub-plans: `plans/sub-plan.md 2` or natural language "step 2 of plans/sub-plan.md"
 
 ## Steps
 
 ### 1. Parse Input and Determine Target
 
-1. **Parse the argument**:
-   - If it contains a dash (e.g., "1-5"), treat as a range
-   - If it's a number/subphase (e.g., "3" or "4.1"), treat as single phase
-   - Otherwise, treat as file path
+1. **Parse the argument(s)**:
+   - If first argument contains a dash (e.g., "1-5"), treat as a range
+   - If first argument is a number/subphase (e.g., "3" or "4.1"), treat as single phase
+   - If first argument is a file path AND second argument is a number, treat as step within sub-plan
+   - Otherwise, treat first argument as file path
 
 2. **For phase numbers/ranges**:
    - Read state file to find active master plan
    - Check if there's a sub-plan or branch for the phase
    - If sub-plan/branch exists: proceed with **Sub-plan/Branch Completion** (Section 2)
-   - If no sub-plan/branch exists: proceed with **Direct Phase Completion** (Section 3)
+   - If no sub-plan/branch exists: proceed with **Direct Phase Completion** (Section 5)
 
-3. **For file paths**:
+3. **For file paths with step numbers**:
+   - Proceed with **Sub-plan Step Completion** (Section 3)
+
+4. **For file paths without step numbers**:
    - Read the plan file
    - Determine type from "Type:" field
    - Proceed with **Sub-plan/Branch Completion** (Section 2)
@@ -57,9 +62,57 @@ Mark a sub-plan, branch, or master plan phase(s) as complete.
    - If "Merge into master": Run the merge workflow with "Inline content" mode (see `merge` command)
    - If "Just mark complete": Continue with steps below
 
-4. Continue with **Shared Completion Steps** (Section 4)
+4. Continue with **Shared Completion Steps** (Section 5)
 
-### 3. Direct Phase Completion
+### 3. Sub-plan Step Completion
+
+Use this workflow when marking a specific step within a sub-plan as complete.
+
+1. **Read the sub-plan file** to analyze its structure
+
+2. **Detect step format**:
+   - Look for `## Step N:` headers (structured steps with icons)
+   - Look for `## Phase N:` headers (if the sub-plan has phases)
+   - Look for numbered list items under a `## Plan` or similar section
+   - If no recognizable step structure found, error: "No steps found in sub-plan. Use 'complete {file}' to mark the entire sub-plan complete."
+
+3. **Validate step number**:
+   - Check if the requested step number exists
+   - If not, error: "Step {N} not found in {file}"
+
+4. **Update the step**:
+   - **For `## Step N:` or `## Phase N:` headers**:
+     - Update the header icon to ✅ (e.g., `## ⏳ Step 2: Configure` → `## ✅ Step 2: Configure`)
+     - If the sub-plan has a Status Dashboard table, update the corresponding row to `✅ Complete`
+   - **For numbered list items**:
+     - Prepend ✅ to the list item (e.g., `2. Configure database` → `2. ✅ Configure database`)
+     - If the item already has a status icon, replace it with ✅
+
+5. **Check if all steps are complete**:
+   - Count total steps in the sub-plan
+   - Count how many are marked ✅ Complete
+   - If ALL steps are now complete, use **AskUserQuestion**:
+     ```
+     Question: "All steps in this sub-plan are now complete. Mark the entire sub-plan as complete?"
+     Header: "Sub-plan completion"
+     Options:
+       - Label: "Yes, mark complete (Recommended)"
+         Description: "Update sub-plan status to Completed and proceed with integration"
+       - Label: "No, leave in progress"
+         Description: "Keep sub-plan status as In Progress"
+     ```
+   - If "Yes, mark complete":
+     - Update the sub-plan's **Status:** header to `Completed`
+     - Proceed with **Sub-plan/Branch Completion** workflow (Section 2) starting at step 3
+   - If "No, leave in progress":
+     - Keep sub-plan status as is
+     - Skip to step 6
+
+6. **Confirm completion**:
+   - `✓ Marked step {N} complete in {file}`
+   - If sub-plan has a Status Dashboard, show progress: `({completed}/{total} steps complete)`
+
+### 4. Direct Phase Completion
 
 Use this workflow when marking master plan phases complete directly (no sub-plan exists).
 
@@ -92,9 +145,9 @@ Use this workflow when marking master plan phases complete directly (no sub-plan
    - Update phase/step header icon to ✅
    - If "Sub-plan" column exists and is empty/dash, leave unchanged
 
-4. Continue with **Shared Completion Steps** (Section 4)
+4. Continue with **Shared Completion Steps** (Section 5)
 
-### 4. Shared Completion Steps
+### 5. Shared Completion Steps
 
 After completing a sub-plan/branch OR direct phase(s), perform these steps:
 

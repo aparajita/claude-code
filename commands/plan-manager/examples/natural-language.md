@@ -53,6 +53,8 @@ The plan-manager skill responds to the following natural language phrases:
 
 ### Completion Detection
 - "Phase X is complete" / "Step Y is done" / "Phase 4.1 finished" / "completed Step 2.3"
+- "mark step 2 of plans/sub-plan.md as complete" / "step 3 of that sub-plan is complete"
+- "complete step 1 in plans/layout-engine/api-redesign.md"
 
 ## Command Reference Quick List
 
@@ -67,7 +69,7 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager sub-plan <phase>         # Create a sub-plan for implementing a phase
 /plan-manager capture [file]           # Link an existing plan to a phase
 /plan-manager add [file]               # Context-aware: add as master or link to phase
-/plan-manager complete <plan>          # Mark a sub-plan or phase as complete
+/plan-manager complete <plan> [step]   # Mark a sub-plan, phase, or step as complete
 /plan-manager merge [file]             # Merge a branch plan's content into master
 /plan-manager archive [file]           # Archive or delete a completed plan
 
