@@ -47,10 +47,10 @@ Retroactively link an existing plan that was created during tangential discussio
    Question: "Was this sub-plan pre-planned or created during execution?"
    Header: "Planning timing"
    Options:
+     - Label: "During execution (Recommended)"
+       Description: "Created just-in-time when starting work on this phase"
      - Label: "Pre-planned"
        Description: "Created upfront during initial planning phase"
-     - Label: "During execution"
-       Description: "Created just-in-time when starting work on this phase"
    ```
 6. **Detect if plan has a random/meaningless name**:
    - Check if filename matches random name patterns:

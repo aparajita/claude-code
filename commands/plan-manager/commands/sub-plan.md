@@ -29,10 +29,10 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
    Question: "Was this sub-plan pre-planned or created during execution?"
    Header: "Planning timing"
    Options:
+     - Label: "During execution (Recommended)"
+       Description: "Created just-in-time when starting work on this phase"
      - Label: "Pre-planned"
        Description: "Created upfront during initial planning phase"
-     - Label: "During execution"
-       Description: "Created just-in-time when starting work on this phase"
    ```
 6. **Determine sub-plan location**:
    - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
