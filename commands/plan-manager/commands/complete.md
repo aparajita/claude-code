@@ -45,13 +45,16 @@ Mark a sub-plan, branch, or master plan phase(s) as complete.
    Question: "This {type} is complete. How should it be integrated?"
    Header: "Integration"
    Options:
-     - Label: "Merge into master (Recommended)"
+     - Label: "Replace with summary + link (Recommended)"
+       Description: "Replace phase body with a summary and link to the {type}"
+     - Label: "Merge into master"
        Description: "Merge {type} content into the master plan's phase section"
      - Label: "Just mark complete"
        Description: "Update Status Dashboard only, keep {type} separate"
    ```
    Where {type} is replaced with "sub-plan" or "branch" based on the plan's Type field.
-   - If "Merge into master": Run the merge workflow (see `merge` command)
+   - If "Replace with summary + link": Run the merge workflow with "Reference to sub-plan" mode (see `merge` command)
+   - If "Merge into master": Run the merge workflow with "Inline content" mode (see `merge` command)
    - If "Just mark complete": Continue with steps below
 
 4. Continue with **Shared Completion Steps** (Section 4)
