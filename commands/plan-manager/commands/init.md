@@ -10,7 +10,18 @@ Initialize or add a master plan to tracking.
 
 ## Steps
 
-1. **Detect plans directory** (see Plans Directory Detection above)
+1. **Detect plans directory root**:
+   - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/plan-manager-state.json`, look for `plansDirectory` field
+   - If not found, auto-detect by checking these directories (use first that exists with .md files):
+     - `plans/` (relative to project root)
+     - `docs/plans/` (relative to project root)
+     - `.plans/` (relative to project root)
+   - If no directory found and this is a new initialization, ask user via AskUserQuestion which directory to use
+   - **CRITICAL**: All plan paths are relative to the project root, NOT to `~/.claude/`
+   - **CRITICAL**: Never create plans in `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
+   - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps and in the state file
 2. **Determine subdirectory organization**:
    - By default, new master plans use subdirectory organization (automatic)
    - Use `--flat` flag to keep the plan in the root of the plans directory (backward compatibility)
@@ -25,6 +36,8 @@ Initialize or add a master plan to tracking.
 4. Check if state file exists:
    - **First master plan**: Create `.claude/plan-manager-state.json` (create `.claude/` directory if needed), mark as active
    - **Additional master plan**: Add to `masterPlans` array
+   - **CRITICAL**: Always ensure the state file has a `plansDirectory` field set to the directory detected in step 1
+   - If the state file already exists but lacks `plansDirectory`, add it now
 5. If multiple masters exist, ask via **AskUserQuestion**:
 
 ```

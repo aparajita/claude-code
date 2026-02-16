@@ -19,9 +19,20 @@ Retroactively link an existing plan that was created during tangential discussio
 1. Validate the file exists
 
 **For both modes:**
-1. If `--phase N` not provided, ask which phase this relates to
-2. Read the state file to get master plan path (use active master, or specified via --master)
-3. **Ask plan type** using **AskUserQuestion**:
+1. **Detect plans directory root**:
+   - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/plan-manager-state.json`, look for `plansDirectory` field
+   - If not found, auto-detect by checking these directories (use first that exists with .md files):
+     - `plans/` (relative to project root)
+     - `docs/plans/` (relative to project root)
+     - `.plans/` (relative to project root)
+   - **CRITICAL**: All plan paths are relative to the project root, NOT to `~/.claude/`
+   - **CRITICAL**: Never use `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
+   - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps
+2. If `--phase N` not provided, ask which phase this relates to
+3. Read the state file to get master plan path (use active master, or specified via --master)
+4. **Ask plan type** using **AskUserQuestion**:
    ```
    Question: "What type of plan is this?"
    Header: "Plan type"
@@ -31,7 +42,7 @@ Retroactively link an existing plan that was created during tangential discussio
      - Label: "Branch"
        Description: "Handles an unexpected issue or problem discovered during execution"
    ```
-4. **If sub-plan type selected**, ask if pre-planned using **AskUserQuestion**:
+5. **If sub-plan type selected**, ask if pre-planned using **AskUserQuestion**:
    ```
    Question: "Was this sub-plan pre-planned or created during execution?"
    Header: "Planning timing"
@@ -41,10 +52,12 @@ Retroactively link an existing plan that was created during tangential discussio
      - Label: "During execution"
        Description: "Created just-in-time when starting work on this phase"
    ```
-5. **Move to subdirectory if needed**:
-   - If master plan uses subdirectory and captured plan is not in it, move the plan
+6. **Move to subdirectory if needed**:
+   - Use the plans directory detected in step 1
+   - If master plan uses subdirectory and captured plan is not in it, move the plan to the master's subdirectory
    - If master plan is flat and captured plan is in a subdirectory, ask whether to move or keep
-6. **Add parent reference to the plan** (prepend if not present):
+   - **CRITICAL**: Never move plans to or from `~/.claude/plans/` - all operations should be within the project plans directory
+7. **Add parent reference to the plan** (prepend if not present):
 
 **For sub-plans:**
 ```markdown
@@ -71,12 +84,12 @@ Retroactively link an existing plan that was created during tangential discussio
 {original content}
 ```
 
-7. **Update the master plan**:
+8. **Update the master plan**:
    - Update the phase header icon to match the plan type (📋 for sub-plan, 🔀 for branch)
    - Update Status Dashboard: change Status to `📋 Sub-plan` or `🔀 Branch` and add plan reference to the Sub-plan column
    - Update the Description column link anchor to match the updated phase header
    - Update the phase section with link to the plan
-8. Update state file (set type: "sub-plan" or "branch", prePlanned: true/false for sub-plans or false for branches)
-9. Confirm based on type:
+9. Update state file (set type: "sub-plan" or "branch", prePlanned: true/false for sub-plans or false for branches)
+10. Confirm based on type:
    - Sub-plan: `✓ Captured {file} → linked as sub-plan to Phase {N}`
    - Branch: `✓ Captured {file} → linked as branch to Phase {N}`

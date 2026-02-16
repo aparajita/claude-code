@@ -10,10 +10,21 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
 
 ## Steps
 
-1. Read the state file to get master plan path (use active master, or specified via --master)
-2. Read the master plan to verify the phase exists
-3. Ask the user for a brief description of the sub-plan topic
-4. **Ask if pre-planned** using **AskUserQuestion** (unless --pre-planned flag provided):
+1. **Detect plans directory root**:
+   - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/plan-manager-state.json`, look for `plansDirectory` field
+   - If not found, auto-detect by checking these directories (use first that exists with .md files):
+     - `plans/` (relative to project root)
+     - `docs/plans/` (relative to project root)
+     - `.plans/` (relative to project root)
+   - **CRITICAL**: All plan paths in state file and commands are relative to the project root, NOT to `~/.claude/`
+   - **CRITICAL**: Never create plans in `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
+   - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps
+2. Read the state file (`.claude/plan-manager-state.json`) to get master plan path (use active master, or specified via --master)
+3. Read the master plan to verify the phase exists
+4. Ask the user for a brief description of the sub-plan topic
+5. **Ask if pre-planned** using **AskUserQuestion** (unless --pre-planned flag provided):
    ```
    Question: "Was this sub-plan pre-planned or created during execution?"
    Header: "Planning timing"
@@ -23,19 +34,23 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
      - Label: "During execution"
        Description: "Created just-in-time when starting work on this phase"
    ```
-5. **Determine sub-plan location**:
-   - Check if master plan uses subdirectory organization (from state file)
-   - If master is in subdirectory (e.g., `plans/layout-engine/layout-engine.md`):
-     - Create sub-plan in same subdirectory: `plans/layout-engine/{sub-plan-name}.md`
+6. **Determine sub-plan location**:
+   - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
+   - Check if master plan uses subdirectory organization by examining its path
+   - If master is in subdirectory (e.g., `plans/migrations/smufl-rewrite/smufl-rewrite.md`):
+     - Extract the subdirectory path (e.g., `migrations/smufl-rewrite`)
+     - Create sub-plan in same subdirectory: `{plansDirectory}/{subdirectory}/{sub-plan-name}.md`
+     - Example: If plansDirectory is "plans", create at `plans/migrations/smufl-rewrite/{sub-plan-name}.md`
    - If master is flat (e.g., `plans/legacy-plan.md`):
-     - Create sub-plan at root: `plans/{sub-plan-name}.md`
-6. **Update the master plan FIRST**:
+     - Create sub-plan at root: `{plansDirectory}/{sub-plan-name}.md`
+   - **CRITICAL**: Path must be relative to project root, never use `~/.claude/plans/`
+7. **Update the master plan FIRST**:
    - Update the phase header icon to 📋 (e.g., `## 📋 Phase 3: Layout Engine`)
    - Update the Status Dashboard: change phase Status to `📋 Sub-plan` and add the sub-plan link to the Sub-plan column (e.g., `[sub-plan.md](./sub-plan.md)`)
    - Update the Description column link anchor to match the updated phase header (e.g., `[Layout Engine](#-phase-3-layout-engine)`)
    - Add sub-plan reference to the phase section
    - Use relative path for link if in same subdirectory (e.g., `[sub-plan.md](./sub-plan.md)`)
-7. Create the sub-plan file with header:
+8. Create the sub-plan file with header:
 
 ```markdown
 # Sub-plan: {description}
@@ -65,5 +80,5 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
 {Detailed implementation steps}
 ```
 
-8. Update state file with new sub-plan entry (set type: "sub-plan", prePlanned: true/false based on user's answer)
-9. Confirm: `✓ Created sub-plan: {path} (for Phase {N} implementation)`
+9. Update state file with new sub-plan entry (set type: "sub-plan", prePlanned: true/false based on user's answer)
+10. Confirm: `✓ Created sub-plan: {path} (for Phase {N} implementation)`
