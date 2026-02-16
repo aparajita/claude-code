@@ -55,6 +55,7 @@ Options:
    - Read all phase headings from the plan (e.g., `## Phase 1: Foundation`, `## Phase 2: Layout Engine`)
    - For each phase, extract the description/title (the part after the colon)
    - Add the ⏳ status icon to each phase header (e.g., `## Phase 1: Foundation` → `## ⏳ Phase 1: Foundation`)
+   - **CRITICAL:** Use ⏳ (hourglass) for pending status, NEVER use ⬜ (white square) or other icons
    - For each phase, create an anchor link by converting the full heading (with icon) to lowercase, stripping non-alphanumeric characters (except spaces and hyphens), and replacing spaces with hyphens
    - Create the Status Dashboard table with linked description entries:
 

@@ -31,12 +31,15 @@ The Status Dashboard should be near the top of the master plan:
 
 ### Status Icons
 
+**REQUIRED ICONS (use these exact emojis):**
 - ⏳ Pending — Not started
 - 🔄 In Progress — Active work
 - 🔀 Branch — Branch plan created for handling issues
 - 📋 Sub-plan — Sub-plan created for implementing a phase
 - ⏸️ Blocked — Waiting on another phase or sub-plan
 - ✅ Complete — Done
+
+**CRITICAL:** Always use ⏳ (hourglass) for pending status. NEVER use ⬜ (white square), ⏱ (stopwatch), or any other icon for pending states.
 
 **CRITICAL:** When updating the Status Dashboard, ALWAYS preserve the markdown links in the Description column. Each description must link to its corresponding phase section (e.g., `[Foundation](#-phase-1-foundation)`). Never write plain text descriptions without the link wrapper. When a phase header's status icon changes (especially from no icon to having one), update the anchor in the link to match the new heading.
 

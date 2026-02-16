@@ -102,3 +102,13 @@ Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
 **Subdirectories**: Master plans automatically get their own subdirectory (e.g., `plans/layout-engine/`) to organize related files.
 
 **Category Directories**: Standalone plans can be organized into category subdirectories (docs/, migrations/, designs/, etc.).
+
+## Status Icons
+
+**CRITICAL:** When working with plans, always use these exact emojis for status:
+- ⏳ Pending (not started) — NEVER use ⬜ or other icons
+- 🔄 In Progress
+- ⏸️ Blocked
+- ✅ Complete
+- 📋 Sub-plan
+- 🔀 Branch
