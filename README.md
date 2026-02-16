@@ -125,6 +125,34 @@ You can also use natural language:
 - Category organization keeps different plan types separated
 - Subdirectories keep master plans and sub-plans together
 
+## Recommended Enhancements
+
+### Auto-Initialize Plans from Plan Mode
+
+Add a PostToolUse hook to automatically convert plans created in Claude Code's plan mode into plan-manager tracked plans:
+
+**`~/.claude/hooks/init-plan-on-exit.md`**
+
+```markdown
+---
+event: PostToolUse
+matcher:
+  tool: ExitPlanMode
+model: sonnet
+---
+
+# Auto-initialize Plan Manager on Exit Plan Mode
+
+This hook automatically runs `/plan-manager:commands:init` when exiting plan mode,
+converting the plan into a structured plan-manager plan for tracking.
+
+\`\`\`bash
+claude /plan-manager:commands:init
+\`\`\`
+```
+
+This creates a seamless workflow: create a plan in plan mode, and it's automatically initialized in plan-manager when you exit, ready for phase tracking and sub-plan management.
+
 ## Documentation
 
 For detailed documentation, see:
