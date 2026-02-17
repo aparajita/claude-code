@@ -6,7 +6,7 @@
 branch <phase> [--master <path>]
 ```
 
-Proactively create a sub-plan when you see a problem coming.
+Create a branch plan for handling an unexpected issue or problem discovered during execution.
 
 ## Steps
 

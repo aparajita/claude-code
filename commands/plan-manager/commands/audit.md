@@ -29,5 +29,5 @@ Audit Results:
 
 Recommendations:
 - Run `/plan-manager capture plans/old-idea.md` to link orphan
-- Run `/plan-manager cleanup` to remove broken links
+- Manually remove the broken entry from `.claude/plan-manager-state.json` to clean up broken links
 ```

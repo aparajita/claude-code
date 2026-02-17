@@ -101,7 +101,7 @@ Claude: *Runs `/plan-manager init plans/new-feature.md`*
 User: "/plan-manager"
 Claude: *Shows text menu*
 
-User: "help" (or "13")
+User: "help" (or "19")
 Claude: *Runs `/plan-manager help` and shows command reference*
 
         Plan Manager Commands

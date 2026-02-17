@@ -192,14 +192,14 @@ This shows which settings file is active (user-wide, project-specific, or built-
    - If exists, read `plansDirectory` field
    - This was stored from previous initialization
 
-3. **Auto-detect from common locations**:
+4. **Auto-detect from common locations**:
    - Check these directories in order:
      - `plans/` (most common)
      - `docs/plans/`
      - `.plans/`
    - Use the first directory that exists and contains `.md` files
 
-4. **If no directory found**:
+5. **If no directory found**:
    - For `overview` and `organize`: Ask user via **AskUserQuestion**:
      ```
      Question: "Where are your plans stored?"
@@ -214,7 +214,7 @@ This shows which settings file is active (user-wide, project-specific, or built-
      ```
    - For other commands: Error with message "No plans directory found. Run `/plan-manager overview` first to set up."
 
-5. **Persist in state**:
+6. **Persist in state**:
    - When state file is created (via `init`), store the detected or specified `plansDirectory`
    - Users can override by setting `plansDirectory` in `.claude/settings.json`
 

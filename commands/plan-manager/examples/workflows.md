@@ -145,8 +145,8 @@ Claude: *Uses AskUserQuestion tool*
         │ Found 2 completed plans not linked to active work.      │
         │ How would you like to handle them?                      │
         │                                                         │
-        │ ○ Archive completed                                     │
-        │   Move to plans/archive/ with datestamp prefix          │
+        │ ○ Move completed                                        │
+        │   Move to plans/completed/                              │
         │                                                         │
         │ ○ Review individually                                   │
         │   Show each plan and decide one by one                  │

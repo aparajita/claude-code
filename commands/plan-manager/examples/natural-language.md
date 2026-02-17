@@ -270,11 +270,15 @@ Claude: *Reads plan content*
         ┌─────────────────────────────────────────────────────────┐
         │ Merge strategy                                          │
         │                                                         │
-        │ ○ Append to phase (Recommended)                         │
+        │ ○ Append to phase                                       │
         │   Add plan content to the end of Phase 2 section        │
         │                                                         │
-        │ ○ Replace phase content                                 │
-        │   Replace Phase 2 content entirely with plan content    │
+        │ ○ Inline content (Recommended)                          │
+        │   Replace Phase 2 body with plan content, then delete   │
+        │   the sub-plan file                                     │
+        │                                                         │
+        │ ○ Reference to sub-plan                                 │
+        │   Replace Phase 2 body with summary + link to sub-plan  │
         │                                                         │
         │ ○ Manual review                                         │
         │   Show me both and I'll decide what to keep             │
