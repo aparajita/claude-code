@@ -2,6 +2,16 @@
 
 Manage git worktrees with consistent naming and directory placement conventions. Keeps all worktrees in a sibling directory (`../<project>-worktrees/`) and enforces a standard branch naming pattern.
 
+## Features
+
+- **Consistent naming** — worktrees and branches follow a `<type>/<description>` convention, keeping things organized and predictable
+- **Sibling directory layout** — all worktrees live in `../<project>-worktrees/`, out of the project root
+- **Uncommitted change copying** — when creating a worktree, optionally copies all uncommitted changes (staged, unstaged, and untracked files) into the new worktree using `git stash`, leaving the original directory clean
+- **MCP server installation** — reads project MCP server config from `~/.claude.json` and offers to install them in the new worktree; `serena` is always auto-installed if present
+- **JetBrains IDE integration** — automatically opens the worktree in the IDE when a `.idea` directory is detected
+- **Rebase-first merge** — attempts a fast-forward merge, falls back to rebase if needed, and aborts cleanly on conflicts rather than forcing a merge
+- **Natural language triggers** — responds to phrases like "start the feature ...", "merge this worktree", "abort this worktree"
+
 ## Installation
 
 Link the worktree directory to your global commands:
