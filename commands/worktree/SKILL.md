@@ -7,7 +7,7 @@ description: |
   "switch worktree", "/worktree start", "/worktree abort", "/worktree merge",
   "/worktree list", "/worktree switch", "/worktree help", "/worktree version"
 argument-hint: "[command] [args] — Commands: start, abort, merge, list, switch, help, version"
-allowed-tools: "Bash(git:*, mkdir:*, rm:*, ls:*, realpath:*, basename:*, dirname:*), Read, Glob, AskUserQuestion"
+allowed-tools: "Bash(git:*, mkdir:*, python3:*), Read, Write, Edit, Glob, AskUserQuestion"
 ---
 
 # Worktree Skill
