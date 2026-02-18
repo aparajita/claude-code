@@ -51,7 +51,18 @@ Creates a new git worktree with a branch following the naming conventions.
      To apply manually: cd <worktree-path> && git stash pop
      ```
 
-9. **Confirm**
+9. **Offer to install project MCP servers** (only if the source project has MCP servers configured)
+   - Read `~/.claude.json` and look up `projects.<project-dir>.mcpServers` (where `<project-dir>` is the absolute path from step 1)
+   - If the `mcpServers` object is missing or empty, skip this step silently
+   - Otherwise, present the list of server names using `AskUserQuestion` with `multiSelect: true`:
+     - Question: "Which MCP servers should be installed in the new worktree?"
+     - Options: one option per server name (e.g., "serena", "4d-mcp"), with the server's command as the description
+     - If the user selects "None", skip installation
+   - For each selected server, collect its full config object from the source
+   - Write the selected servers to `<worktree-path>/.claude/worktree-settings.json` under the key `mcpServers` (create the file and directory if needed; if the file already exists, merge into it)
+   - Also write the selected servers into `~/.claude.json` under `projects.<worktree-path>.mcpServers` (merge into the existing project entry, or create one if needed)
+
+10. **Confirm**
    - Display a summary:
      ```
      Worktree created:
