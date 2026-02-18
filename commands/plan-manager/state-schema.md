@@ -19,14 +19,14 @@ This keeps tooling metadata separate from actual plan files.
       "path": "plans/layout-engine/layout-engine.md",
       "subdirectory": "layout-engine",
       "active": true,
-      "created": "2026-01-30",
+      "createdAt": "2026-01-30",
       "description": "UI layout system redesign"
     },
     {
       "path": "plans/auth-migration.md",
       "subdirectory": null,
       "active": false,
-      "created": "2026-01-29",
+      "createdAt": "2026-01-29",
       "description": "Migration to OAuth 2.0"
     }
   ],
@@ -60,7 +60,7 @@ This keeps tooling metadata separate from actual plan files.
 - **path** (string): Full path to the master plan file (e.g., `"plans/layout-engine/layout-engine.md"`)
 - **subdirectory** (string | null): Subdirectory name if using subdirectory organization (e.g., `"layout-engine"`), or `null` for flat structure
 - **active** (boolean): Whether this is the currently active master plan
-- **created** (string): ISO date when master plan was initialized (e.g., `"2026-01-30"`)
+- **createdAt** (string): ISO date when master plan was initialized (e.g., `"2026-01-30"`)
 - **description** (string): Brief description of what this master plan covers
 
 ### Sub-Plan Entry

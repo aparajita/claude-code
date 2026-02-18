@@ -145,9 +145,9 @@ Options:
     Description: "This is standalone documentation, not a sub-plan"
 ```
 
-9. **After linking, handle orphaned/completed plans** (same as `overview` step 5):
-   - Ask what to do with remaining orphans
-   - Ask what to do with completed unlinked plans
+9. **After linking, handle orphaned/completed plans**:
+   - For remaining orphans, use **AskUserQuestion** to offer: link to a phase, move to a category directory, archive, delete, or skip
+   - For completed unlinked plans, use **AskUserQuestion** to offer: move to `plans/completed/`, delete, or leave in place
 
 10. **Summary output**:
 

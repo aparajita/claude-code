@@ -204,11 +204,8 @@ Claude: *Shows current configuration*
         │   Create project-specific settings to override user     │
         │   settings                                              │
         │                                                         │
-        │ ○ Edit file directly                                    │
-        │   Open the settings file for manual editing             │
-        │                                                         │
         │ ○ Done                                                  │
-        │   Exit configuration                                    │
+        │   Exit configuration (use Other to edit file directly)  │
         └─────────────────────────────────────────────────────────┘
 ```
 

@@ -54,7 +54,7 @@ Remove blockers from a phase or step.
        ```
      - Update the phase/step header icon based on new status (🔄 for In Progress, ⏳ for Pending)
      - Update the Description column link anchor to match the updated phase header
-   - Update the phase's `### Status:` subsection accordingly
+   - Update the phase's `### Status:` subsection accordingly (create if not present)
 
 7. **Update state file**:
    - Remove blocker(s) from target's `blockedBy` array
@@ -66,6 +66,6 @@ Remove blockers from a phase or step.
 
 ## Notes
 
-- Use `unblock <phase>` without specifying a blocker to clear all blockers at once
+- Use `unblock <phase-or-step>` without specifying a blocker to clear all blockers at once
 - The `complete` command automatically offers to unblock phases when their blocker completes
 - Use `status` or `overview` to see what's currently blocking a phase

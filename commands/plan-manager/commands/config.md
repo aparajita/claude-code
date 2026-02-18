@@ -50,10 +50,8 @@ Options:
     Description: "Enable/disable category organization"
   - Label: "Create project config"
     Description: "Create project-specific settings to override user settings"
-  - Label: "Edit file directly"
-    Description: "Open the settings file for manual editing"
   - Label: "Done"
-    Description: "Exit configuration"
+    Description: "Exit configuration (use Other to edit the file directly)"
 ```
 
 ## With --edit flag (interactive editor)

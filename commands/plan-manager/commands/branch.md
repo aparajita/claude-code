@@ -23,7 +23,7 @@ Create a branch plan for handling an unexpected issue or problem discovered duri
    - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps
 2. Read the state file (`.claude/plan-manager-state.json`) to get master plan path (use active master, or specified via --master)
 3. Read the master plan to verify the phase exists
-4. Ask the user for a brief description of the sub-plan topic
+4. Ask the user for a brief description of the branch topic
 5. **Determine sub-plan location**:
    - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
    - Check if master plan uses subdirectory organization by examining its path
@@ -48,7 +48,8 @@ Create a branch plan for handling an unexpected issue or problem discovered duri
 **Type:** Branch  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Created:** {date}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 

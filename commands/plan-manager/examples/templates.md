@@ -62,8 +62,7 @@ Each phase section should have a status icon at the beginning of the header for 
 ## 🔄 Phase 3: Layout Engine
 
 **Status:** In Progress  <br>
-**BlockedBy:** —  <br>
-**Testing:** TBD
+**BlockedBy:** —
 
 ### Status: In Progress
 
@@ -91,7 +90,7 @@ The status icon in the phase header must be kept synchronized with the Status Da
 - `📋 Phase N: Title` — Sub-plan (sub-plan created)
 - `✅ Phase N: Title` — Complete (done)
 
-The same pattern applies to step headers (e.g., `## Step 2.1: ⏳ Configure Database`).
+The same pattern applies to step headers (e.g., `## ⏳ Step 2.1: Configure Database`).
 
 ## Branch Plan Template
 

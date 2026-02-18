@@ -31,7 +31,7 @@ Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as comp
    - Read state file to find active master plan
    - Check if there's a sub-plan or branch for the phase
    - If sub-plan/branch exists: proceed with **Sub-plan/Branch Completion** (Section 2)
-   - If no sub-plan/branch exists: proceed with **Direct Phase Completion** (Section 5)
+   - If no sub-plan/branch exists: proceed with **Direct Phase Completion** (Section 4)
 
 3. **For file paths with step numbers**:
    - Proceed with **Sub-plan Step Completion** (Section 3)
@@ -151,40 +151,21 @@ Use this workflow when marking master plan phases complete directly (no sub-plan
 
 After completing a sub-plan/branch OR direct phase(s), perform these steps:
 
-1. Read and update the master plan (if not already done in Section 3):
+1. Read and update the master plan (if not already done in Section 4):
    - Update Status Dashboard: change Status to `✅ Complete` and update the Sub-plan column as needed
    - Update the Description column link anchor to match the updated phase header
    - Update phase/step header icon to ✅ if marking complete
 
 2. Update state file
 
-3. **Check if entire plan is complete**:
+3. **Check if master plan is now complete**:
    - Count total phases/steps in master plan
    - Check how many are marked ✅ Complete
    - If this is the LAST phase/step AND no other phases are marked complete:
      - Use **AskUserQuestion**: "This is the last phase but no others are marked complete. Is the entire plan actually complete?"
      - Options: "Yes, all done" / "No, just this phase"
-   - If "Yes, all done", mark ALL phases as complete
-   - **If master plan is now complete** (all phases marked ✅ Complete), use **AskUserQuestion**:
-     ```
-     Question: "The master plan is complete. What should happen to it?"
-     Header: "Master plan cleanup"
-     Options:
-       - Label: "Archive it"
-         Description: "Move to plans/completed/ directory to keep it for reference"
-       - Label: "Delete it"
-         Description: "Remove the file entirely"
-       - Label: "Leave in place"
-         Description: "Keep in current location for now"
-     ```
-     - If "Archive it", move the master plan file to `plans/completed/` (mirroring subdirectory structure if nested)
-     - If "Delete it", delete the master plan file
-     - If "Leave in place", do nothing
-     - Update state file accordingly
-
-4. **Check if all phases are now complete**:
-   - After updating the phase status, check if ALL phases in the master plan are now marked ✅ Complete
-   - If yes AND we haven't already asked about master plan disposition in step 3, use **AskUserQuestion**:
+     - If "Yes, all done", mark ALL phases as complete
+   - If ALL phases are now marked ✅ Complete, use **AskUserQuestion**:
      ```
      Question: "All phases are now complete. What should happen to the master plan?"
      Header: "Master plan cleanup"
@@ -200,6 +181,20 @@ After completing a sub-plan/branch OR direct phase(s), perform these steps:
      - If "Delete it", delete the master plan file
      - If "Leave in place", do nothing
      - Update state file accordingly
+
+4. **Determine phase status** (ONLY if completing a sub-plan/branch):
+   Use **AskUserQuestion** with plan type in question:
+   ```
+   Question: "{Type} completed. What's the status of Phase {N}?"
+   Header: "Phase status"
+   Options:
+     - Label: "Phase complete"
+       Description: "All work for Phase {N} is done, mark it ✅ Complete"
+     - Label: "Still in progress"
+       Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
+     - Label: "Blocked"
+       Description: "Phase {N} is waiting on something else, mark it ⏸️ Blocked"
+   ```
 
 5. **Ask about sub-plan/branch cleanup** (ONLY if completing a sub-plan/branch):
    Use **AskUserQuestion** with plan type in question:
@@ -223,21 +218,7 @@ After completing a sub-plan/branch OR direct phase(s), perform these steps:
    - If "Leave in place", do nothing
    - Update all references in master plan and state file
 
-6. **Determine phase status** (ONLY if completing a sub-plan/branch):
-   Use **AskUserQuestion tool** with plan type in question:
-   ```
-   Question: "{Type} completed. What's the status of Phase {N}?"
-   Header: "Phase status"
-   Options:
-     - Label: "Phase complete"
-       Description: "All work for Phase {N} is done, mark it ✅ Complete"
-     - Label: "Still in progress"
-       Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
-     - Label: "Blocked"
-       Description: "Phase {N} is waiting on something else, mark it ⏸️ Blocked"
-   ```
-
-7. **Check for blocked dependencies**:
+6. **Check for blocked dependencies**:
    - Read state file to find all phases/steps that are blocked by the completed phase (check `blocks` array)
    - If any phases/steps are blocked by this completed phase:
      - For each blocked item, use **AskUserQuestion**:
@@ -257,6 +238,6 @@ After completing a sub-plan/branch OR direct phase(s), perform these steps:
        - Update Status Dashboard accordingly
      - If "No, keep it blocked", do nothing
 
-8. **Confirm completion**:
+7. **Confirm completion**:
    - If completing sub-plan/branch: `✓ Completed {type}: {path}`
    - If completing direct phase(s): `✓ Marked Phase(s) {range} as complete`

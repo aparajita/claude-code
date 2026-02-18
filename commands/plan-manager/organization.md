@@ -20,6 +20,7 @@ This document covers how plans are organized in directories, including subdirect
 - Documentation plans → `plans/docs/` (configurable)
 - Migration plans → `plans/migrations/` (configurable)
 - Design plans → `plans/designs/` (configurable)
+- Feature plans → `plans/features/` (configurable)
 - Reference docs → `plans/reference/` (configurable)
 - Miscellaneous → `plans/misc/` (configurable)
 
@@ -45,8 +46,7 @@ Priority order (later overrides earlier):
     "reference": "reference",
     "standalone": "misc"
   },
-  "enableCategoryOrganization": true,
-  "addDiv": false
+  "enableCategoryOrganization": true
 }
 ```
 
@@ -62,8 +62,7 @@ Priority order (later overrides earlier):
     "bugfix": "bug-fixes",
     "standalone": "other"
   },
-  "enableCategoryOrganization": true,
-  "addDiv": true
+  "enableCategoryOrganization": true
 }
 ```
 

@@ -26,7 +26,7 @@ WORKING WITH PLANS
   8. capture       Link an existing plan to a master plan phase
   9. add           Context-aware: add as master or link to phase
   10. complete     Mark a sub-plan or phase as complete
-  11. merge        Merge a branch plan's content into the master plan
+  11. merge        Merge a sub-plan or branch's content into the master plan
   12. archive      Archive or delete a completed plan
   13. block        Mark a phase as blocked by another phase/step/sub-plan
   14. unblock      Remove blockers from a phase
@@ -116,9 +116,10 @@ Claude: *Runs `/plan-manager help` and shows command reference*
         WORKING WITH PLANS
         ──────────────────
 
-          branch <phase>           Create a sub-plan for a phase
+          branch <phase>           Create a branch plan for handling issues
           capture [file]           Link an existing plan to a phase
-          complete <plan>          Mark a sub-plan or phase as complete
+          complete <file-or-phase-or-range> [step]
+                                   Mark a sub-plan, phase, range, or step as complete
 
         [... full command reference ...]
 ```

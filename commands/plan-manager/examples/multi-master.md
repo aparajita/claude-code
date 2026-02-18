@@ -43,12 +43,14 @@ Claude: ✓ Added master plan: plans/auth-migration.md
 User: "/plan-manager list-masters"
 Claude: Master Plans:
 
-        ● plans/layout-engine.md (ACTIVE)
+        ● plans/layout-engine/layout-engine.md (ACTIVE)
+          Subdirectory: layout-engine/
           UI layout system redesign
           Status: 3/5 phases complete
-          Sub-plans: 4 (2 in progress, 2 completed)
+          Sub-plans: 4 total (2 sub-plans, 2 branches; 2 in progress, 2 completed)
 
         ○ plans/auth-migration.md
+          Flat structure
           Migration to OAuth 2.0
           Status: 0/3 phases complete
           Sub-plans: 0

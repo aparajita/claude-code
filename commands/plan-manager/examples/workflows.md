@@ -92,7 +92,7 @@ Claude: *Uses AskUserQuestion tool*
         │   Connect this plan to a phase in the master plan       │
         │                                                         │
         │ ○ Archive it                                            │
-        │   Move to plans/archive/ to get it out of the way       │
+        │   Move to plans/completed/ to get it out of the way      │
         │                                                         │
         │ ○ Leave as-is                                           │
         │   Don't take any action right now                       │

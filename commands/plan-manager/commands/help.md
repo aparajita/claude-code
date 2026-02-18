@@ -35,7 +35,7 @@ WORKING WITH PLANS
     Options: --master <path>
     Example: /plan-manager branch 3
 
-  sub-plan <phase>
+  sub-plan <phase> (also: subplan)
     Create a sub-plan for implementing a phase
     Options: --master <path>, --pre-planned
     Example: /plan-manager sub-plan 3
@@ -50,24 +50,26 @@ WORKING WITH PLANS
     Options: --phase N, --master <path>
     Example: /plan-manager add plans/feature.md
 
-  complete <plan>
-    Mark a sub-plan or phase as complete
+  complete <file-or-phase-or-range> [step]
+    Mark a sub-plan, phase, range, or step within a sub-plan as complete
     Example: /plan-manager complete 3
+    Example: /plan-manager complete 1-5
+    Example: /plan-manager complete plans/sub-plan.md 2
 
-  merge [file]
-    Merge a branch plan's content into the master plan
+  merge [file-or-phase]
+    Merge a sub-plan or branch's content into the master plan
     Example: /plan-manager merge grid-fixes.md
 
-  archive [file]
+  archive [file-or-phase]
     Archive or delete a completed plan
     Example: /plan-manager archive completed-plan.md
 
-  block <phase> by <blocker>
-    Mark a phase as blocked by another phase/step/sub-plan
+  block <phase-or-step> by <blocker>
+    Mark a phase or step as blocked by another phase/step/sub-plan
     Example: /plan-manager block 4 by 3
 
-  unblock <phase>
-    Remove blockers from a phase
+  unblock <phase-or-step>
+    Remove blockers from a phase or step
     Options: from <blocker> (remove specific blocker)
     Example: /plan-manager unblock 4
 
@@ -75,7 +77,7 @@ VIEWING STATUS
 ──────────────
   status
     Show master plan hierarchy and status
-    Options: --all (show all masters)
+    Options: --all (show all masters), --master <path> (specific master)
     Example: /plan-manager status
 
   overview [directory]

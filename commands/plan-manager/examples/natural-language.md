@@ -70,15 +70,15 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager config --edit            # Interactive editor
 
 # Working with Plans
-/plan-manager branch <phase>           # Create a sub-plan for a phase
+/plan-manager branch <phase>           # Create a branch plan for handling issues
 /plan-manager sub-plan <phase>         # Create a sub-plan for implementing a phase
 /plan-manager capture [file]           # Link an existing plan to a phase
 /plan-manager add [file]               # Context-aware: add as master or link to phase
-/plan-manager complete <plan> [step]   # Mark a sub-plan, phase, or step as complete
-/plan-manager merge [file]             # Merge a branch plan's content into master
-/plan-manager archive [file]           # Archive or delete a completed plan
-/plan-manager block <phase> [--reason] # Mark a phase as blocked
-/plan-manager unblock <phase>          # Remove blockers from a phase
+/plan-manager complete <file-or-phase-or-range> [step]   # Mark a sub-plan, phase, range, or step as complete
+/plan-manager merge [file-or-phase]    # Merge a sub-plan or branch's content into master
+/plan-manager archive [file-or-phase]  # Archive or delete a completed plan
+/plan-manager block <phase-or-step> by <blocker>  # Mark a phase or step as blocked
+/plan-manager unblock <phase-or-step> [from <blocker>]  # Remove blockers from a phase or step
 
 # Viewing Status
 /plan-manager status                   # Show master plan hierarchy and status
@@ -127,7 +127,7 @@ Claude: *Shows text-based menu*
           8. capture       Link an existing plan to a master plan phase
           9. add           Context-aware: add as master or link to phase
           10. complete     Mark a sub-plan or phase as complete
-          11. merge        Merge a branch plan's content into the master plan
+          11. merge        Merge a sub-plan or branch's content into the master plan
           12. archive      Archive or delete a completed plan
           13. block        Mark a phase as blocked by another phase/step/sub-plan
           14. unblock      Remove blockers from a phase
@@ -171,7 +171,7 @@ Phase 3: 📋 Sub-plan
   └─ api-redesign.md (Sub-plan - In Progress)
 Phase 4: ⏳ Pending
 
-Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
+Sub-plans: 2 total (1 sub-plan, 1 branch; 2 in progress)
 ```
 
 ### Overview Command Output
@@ -191,9 +191,9 @@ ACTIVE HIERARCHIES
 │  ├── Phase 2: 🔄 In Progress
 │  │   └── 📄 grid-rethink.md (In Progress)
 │  │       └── 📄 grid-edge-cases.md (In Progress)
-│  ├── Phase 3: ⏸️ Blocked
+│  ├── Phase 3: ⏸️ Blocked by Phase 2
 │  │   └── 📄 api-redesign.md (Completed)
-│  ├── Phase 4: ⏳ Pending
+│  ├── Phase 4: ⏸️ Blocked by Phase 3, api-redesign.md
 │  └── Phase 5: ⏳ Pending
 
 📋 auth-migration.md (Master Plan, flat structure)

@@ -47,7 +47,7 @@ Mark a phase or step as blocked by another phase, step, or sub-plan.
    - Update Status Dashboard:
      - Change status to `⏸️ Blocked by {blocker}`
      - Update the Description column link anchor to match the updated phase header
-   - Update the phase's `### Status:` subsection to `Blocked`
+   - Update the phase's `### Status:` subsection to `Blocked` (create if not present)
 
 7. **Update state file**:
    - If target is a phase, find or create entry for that phase

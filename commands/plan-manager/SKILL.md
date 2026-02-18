@@ -18,7 +18,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 ## Quick Command Reference
 
 ### Viewing & Status
-- **status** [--all] — Show plan hierarchy and status
+- **status** [--all] [--master <path>] — Show plan hierarchy and status
 - **overview** — Discover all plans and their relationships
 - **list-masters** — Show all tracked master plans
 
@@ -31,13 +31,13 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 - **sub-plan** <phase> [--master <path>] [--pre-planned] — Create a sub-plan for implementing a phase
 - **capture** [file] [--phase N] [--master <path>] — Link an existing plan to a master
 - **add** [file] [--phase N] [--master <path>] — Context-aware: add as master plan or link to phase
-- **complete** <file-or-phase> — Mark a plan/phase as complete
-- **merge** [file-or-phase] — Merge a plan's content into the master
+- **complete** <file-or-phase-or-range> [step] — Mark a plan/phase/range as complete, or a step within a sub-plan
+- **merge** [file-or-phase] — Merge a sub-plan or branch's content into the master
 - **archive** [file-or-phase] — Archive or delete a completed plan
 
 ### Blocking
-- **block** <phase> [--reason <text>] — Mark a phase as blocked
-- **unblock** <phase> — Remove blockers from a phase
+- **block** <phase-or-step> by <blocker> — Mark a phase or step as blocked
+- **unblock** <phase-or-step> [from <blocker>] — Remove blockers from a phase or step
 
 ### Organization
 - **organize** — Auto-organize, link, and clean up plans

@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-switch <master-plan>
+switch [master-plan]
 ```
 
 Switch the active master plan.

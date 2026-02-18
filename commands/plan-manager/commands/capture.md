@@ -99,7 +99,8 @@ Retroactively link an existing plan that was created during tangential discussio
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Captured:** {date}  <br>
 **Pre-planned:** {Yes/No}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
@@ -111,7 +112,8 @@ Retroactively link an existing plan that was created during tangential discussio
 **Type:** Branch  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Captured:** {date}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 

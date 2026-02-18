@@ -14,7 +14,7 @@ Discover and visualize all plans in the project, regardless of whether they're t
 
 1. **Determine plans directory**:
    - If `directory` argument provided: use that path
-   - Otherwise: use **Plans Directory Detection** (see above)
+   - Otherwise: use **Plans Directory Detection** (see [organization.md](../organization.md))
    - This establishes which directory to scan
 
 2. **Scan all markdown files** in the directory and subdirectories:

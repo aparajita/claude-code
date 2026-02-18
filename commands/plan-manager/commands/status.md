@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-status [--all]
+status [--all] [--master <path>]
 ```
 
 Display the full plan hierarchy and status.
@@ -28,7 +28,7 @@ Phase 3: 📋 Sub-plan
 Phase 4: ⏸️ Blocked by Phase 3
 Phase 5: ⏸️ Blocked by Phase 3, api-redesign.md
 
-Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
+Sub-plans: 2 total (1 sub-plan, 1 branch; 2 in progress)
 ```
 
 **Blocker Display Format:**
@@ -37,6 +37,16 @@ Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
 - Step blockers: `Step 2.1`
 - Sub-plan blockers: Use filename (e.g., `api-redesign.md`)
 - Multiple blockers: Comma-separated (e.g., `Phase 3, api-redesign.md`)
+
+## With --master flag
+
+Show status for a specific master plan (without switching the active master):
+
+```
+/plan-manager status --master plans/auth-migration.md
+```
+
+This displays the same output as the default view, but for the specified master plan instead of the active one.
 
 ## With --all flag
 
@@ -53,7 +63,7 @@ Master Plans: 2
   Phase 2: 🔄 In Progress
     └─ layout-fix.md (Branch - In Progress)
   ...
-  Sub-plans: 2 total (1 sub-plan, 1 branch; 1 in progress, 1 completed)
+  Sub-plans: 2 total (1 sub-plan, 1 branch; 2 in progress)
 
 ○ plans/auth-migration.md
   Flat structure

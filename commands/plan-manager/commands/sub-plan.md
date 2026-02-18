@@ -59,7 +59,8 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Created:** {date}  <br>
 **Pre-planned:** {Yes/No}  <br>
-**Status:** In Progress
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
 ---
 
