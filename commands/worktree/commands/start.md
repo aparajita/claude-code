@@ -62,7 +62,13 @@ Creates a new git worktree with a branch following the naming conventions.
      `python3 <skill-dir>/scripts/install-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]`
    - Where `<skill-dir>` is the directory containing this command file's parent (i.e., the `commands/worktree/` directory)
 
-10. **Confirm**
+10. **Open in JetBrains IDE** (only if `.idea` directory exists at `<project-dir>`)
+   - Check for `<project-dir>/.idea` — if present, assume a JetBrains project
+   - Run `idea <worktree-path>` to open the worktree as a project in the IDE
+   - This is required for the Serena MCP plugin to connect to the worktree context
+   - If the `idea` command is not found, warn the user but continue
+
+11. **Confirm**
    - Display a summary:
      ```
      Worktree created:
