@@ -121,20 +121,23 @@ Claude: *Shows text-based menu*
           10. complete     Mark a sub-plan or phase as complete
           11. merge        Merge a branch plan's content into the master plan
           12. archive      Archive or delete a completed plan
+          13. block        Mark a phase as blocked by another phase/step/sub-plan
+          14. unblock      Remove blockers from a phase
 
         ORGANIZATION
         ────────────
-          13. organize     Auto-organize, link, and clean up plans
-          14. rename       Rename a plan and update all references
-          15. audit        Find orphaned plans and broken links
+          15. organize     Auto-organize, link, and clean up plans
+          16. rename       Rename a plan and update all references
+          17. audit        Find orphaned plans and broken links
 
         MULTI-MASTER
         ────────────
-          16. switch       Change which master plan is active
+          18. switch       Change which master plan is active
 
-        HELP
-        ────
-          17. help         Show detailed command reference and examples
+        HELP & INFO
+        ───────────
+          19. help         Show detailed command reference and examples
+          20. version      Show plan-manager version
 
         ══════════════════════════════════════════════════════════════
 
@@ -257,7 +260,7 @@ Audit Results:
 
 Recommendations:
 - Run `/plan-manager capture plans/old-idea.md` to link orphan
-- Run `/plan-manager cleanup` to remove broken links
+- Manually remove the broken entry from `.claude/plan-manager-state.json` to clean up broken links
 ```
 
 ### Merge Command Example
