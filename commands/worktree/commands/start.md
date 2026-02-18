@@ -51,14 +51,18 @@ Creates a new git worktree with a branch following the naming conventions.
      To apply manually: cd <worktree-path> && git stash pop
      ```
 
-9. **Offer to install project MCP servers** (only if the source project has MCP servers configured)
+9. **Install project MCP servers** (only if the source project has MCP servers configured)
    - Use the Read tool to read `~/.claude.json` and look up `projects.<project-dir>.mcpServers` (where `<project-dir>` is the absolute path from step 1)
    - If the `mcpServers` object is missing or empty, skip this step silently
-   - Otherwise, present the list of server names using `AskUserQuestion` with `multiSelect: true`:
+   - Separate the servers into two groups:
+     - **Auto-install**: `serena` (always installed silently if present)
+     - **Optional**: all other servers
+   - If there are optional servers, present them using `AskUserQuestion` with `multiSelect: true`:
      - Question: "Which MCP servers should be installed in the new worktree?"
-     - Options: one option per server name (e.g., "serena", "4d-mcp"), with the server's command as the description
-     - If the user selects "None", skip installation
-   - Run the install script, passing the selected server names as arguments:
+     - Options: one option per server name, with the server's command as the description
+     - If the user selects "None", only the auto-install servers are installed
+   - Collect the final list: auto-install servers + any user-selected servers
+   - Run the install script with all servers to install:
      `python3 <skill-dir>/scripts/install-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]`
    - Where `<skill-dir>` is the directory containing this command file's parent (i.e., the `commands/worktree/` directory)
 
