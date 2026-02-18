@@ -11,7 +11,7 @@ Creates a new git worktree with a branch following the naming conventions.
    - Extract the project name: `basename <project-dir>` (e.g., `claude-code`)
 
 2. **Construct paths**
-   - Worktree directory: `<project-dir>/../<project-name>-worktrees` (resolve to absolute path with `realpath --canonicalize-missing`)
+   - Worktree directory: `<project-dir>/../<project-name>-worktrees` (resolve to absolute path with `python3 -c 'import os,sys; print(os.path.abspath(os.path.expanduser(sys.argv[1])))' <path>`)
    - Slugify the description: join all description words with hyphens, lowercase, strip non-alphanumeric chars except hyphens
    - Branch name: `<type>/<slug>` (e.g., `feature/remove-update-mechanism`)
    - Worktree path: `<worktree-dir>/<type>-<slug>` (e.g., `../claude-code-worktrees/feature-remove-update-mechanism`)
