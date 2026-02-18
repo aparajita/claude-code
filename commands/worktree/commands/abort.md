@@ -11,41 +11,48 @@ Removes the current worktree and deletes its branch without merging. Use when ab
    - Parse the output to get a list of `{path, branch}` entries
    - The first entry is the main working tree
 
-2. **Check we're in a worktree**
-   - Get the current working directory (via `git rev-parse --show-toplevel` to get the worktree root)
-   - Compare against the worktree list — if the current path matches the main working tree, error out:
+2. **Check we're in the main directory**
+   - Get the current worktree root via `git rev-parse --show-toplevel`
+   - Compare against the worktree list — if the current path does **not** match the main working tree, error out:
      ```
-     Error: You are not in a worktree. Run this command from within a worktree directory.
+     Sorry, this command must be run from the main project directory, not from a worktree.
+     Main directory: <main-path>
+     ```
+   - Build a list of non-main worktrees from the parsed entries. If the list is empty, error out:
+     ```
+     No worktrees found to abort.
      ```
 
-3. **Get worktree details**
-   - Worktree path: the matched path from the worktree list
-   - Branch name: the matched branch (strip leading `refs/heads/` if present)
-   - Main project directory: the first entry's path from `git worktree list`
+3. **Select a worktree**
+   - If there are **3 or fewer** worktrees, use `AskUserQuestion` with each worktree as an option (label: branch name, description: worktree path) plus a Cancel option. If the user selects Cancel, stop.
+   - If there are **more than 3** worktrees, display a numbered list of worktrees (branch name and path for each) and ask the user to enter a number or "cancel". If the user cancels, stop.
 
-4. **Confirm with user**
+4. **Get worktree details**
+   - Worktree path: the selected worktree's path
+   - Branch name: the selected worktree's branch (strip leading `refs/heads/` if present)
+
+5. **Confirm with user**
    - Use AskUserQuestion to ask: "This will permanently delete the worktree and branch `<branch>`. Continue?"
    - Options: Yes (proceed), No (cancel)
    - If No, stop
 
-5. **Remove the worktree**
+6. **Remove the worktree**
    - Run `git worktree remove <worktree-path>` from the main project directory
    - If this fails (e.g., uncommitted changes), try `git worktree remove --force <worktree-path>`
    - If still fails, show the error and stop
 
-6. **Delete the branch**
+7. **Delete the branch**
    - Run `git branch -D <branch-name>` (force delete since we're intentionally aborting)
 
-7. **Clean up empty worktree directory**
+8. **Clean up empty worktree directory**
    - Get the worktree directory (parent of the worktree path)
    - Check if it's empty: `ls <worktree-dir>`
    - If empty, remove it: `rm -rf <worktree-dir>`
 
-8. **Confirm**
+9. **Confirm**
    - Display:
      ```
      Worktree aborted:
        Removed: <worktree-path>
        Deleted branch: <branch-name>
      ```
-   - Note: Since we removed the worktree, remind the user they are now back in the main project if they need to cd there.
