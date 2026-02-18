@@ -6,7 +6,7 @@ description: |
   "merge this worktree", "list worktrees", "show worktrees", "switch to worktree ...",
   "switch worktree", "/worktree start", "/worktree abort", "/worktree merge",
   "/worktree list", "/worktree switch"
-argument-hint: "[command] [args] — Commands: start, abort, merge, list, switch, version"
+argument-hint: "[command] [args] — Commands: start, abort, merge, list, switch, help, version"
 allowed-tools: "Bash(git:*, mkdir:*, rm:*, ls:*, realpath:*, basename:*, dirname:*), Read, Glob, AskUserQuestion"
 ---
 
@@ -35,8 +35,9 @@ Parse the first argument as the command name, find the matching command file in 
 ## Commands
 
 - `start <type> <description words...>` — Create a new worktree and branch
-- `abort` — Remove the current worktree and delete its branch (no merge)
-- `merge` — Rebase and merge the current worktree branch into the main branch, then clean up
+- `abort` — Remove a worktree and delete its branch (no merge); must run from main directory
+- `merge` — Rebase and merge a worktree branch into the main branch, then clean up; must run from main directory
 - `list` — Show all worktrees with their branches
 - `switch [partial-name]` — Switch to a different worktree
+- `help` — Display command reference
 - `version` — Display the skill version
