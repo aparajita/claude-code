@@ -23,10 +23,10 @@ Creates a new git worktree with a branch following the naming conventions.
 4. **Check for uncommitted changes**
    - Run `git status --porcelain` to detect any changes (staged, unstaged, or untracked)
    - If the output is non-empty, use `AskUserQuestion` to ask:
-     "You have uncommitted changes. Move them into the new worktree?"
-   - Options: Yes (stash and restore in worktree), No (leave them here)
-   - Store the user's answer as `stash_changes` (true/false)
-   - If `stash_changes` is true, run `git stash --include-untracked` and capture the stash ref (e.g., `stash@{0}`)
+     "You have uncommitted changes. Copy them into the new worktree?"
+   - Options: Yes (copy to worktree), No (leave them here only)
+   - Store the user's answer as `copy_changes` (true/false)
+   - If `copy_changes` is true, run `git stash --include-untracked` then immediately `git stash apply` to restore the files in the original directory (the stash remains in the reflog for the worktree to use)
 
 5. **Create worktree directory** if it doesn't exist
    - Run `mkdir -p <worktree-dir>`
@@ -40,14 +40,14 @@ Creates a new git worktree with a branch following the naming conventions.
 7. **Create the worktree and branch**
    - Run `git worktree add -b <branch-name> <worktree-path> <base-branch>`
    - If this fails:
-     - If `stash_changes` is true, restore the stash to the main project: `git stash pop`
+     - If `copy_changes` is true, drop the stash: `git stash drop`
      - Show the error and stop
 
-8. **Restore stash into worktree** (only if `stash_changes` is true)
+8. **Apply stash into worktree** (only if `copy_changes` is true)
    - Run `git -C <worktree-path> stash pop`
    - If this fails, warn the user:
      ```
-     Warning: Could not apply stashed changes to the worktree. Your changes are still in the stash.
+     Warning: Could not apply changes to the worktree. Your changes are still in the stash.
      To apply manually: cd <worktree-path> && git stash pop
      ```
 
