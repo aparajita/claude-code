@@ -44,22 +44,6 @@ def main():
         print("No matching servers found", file=sys.stderr)
         sys.exit(1)
 
-    # Write/merge worktree-settings.json
-    claude_dir = Path(worktree_path) / ".claude"
-    claude_dir.mkdir(parents=True, exist_ok=True)
-
-    settings_path = claude_dir / "worktree-settings.json"
-    if settings_path.exists():
-        with open(settings_path) as f:
-            settings = json.load(f)
-    else:
-        settings = {}
-
-    settings.setdefault("mcpServers", {}).update(servers_to_install)
-
-    with open(settings_path, "w") as f:
-        json.dump(settings, f, indent=2)
-
     # Update ~/.claude.json for the worktree project entry
     if worktree_path not in projects:
         projects[worktree_path] = {
