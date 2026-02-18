@@ -65,8 +65,6 @@ Merges the current worktree's branch into the main project branch using a rebase
 9. **Cleanup**
    - Remove the worktree: `git worktree remove <worktree-path>`
    - Delete the branch: `git branch -d <worktree-branch>`
-   - Check if the worktree directory is now empty: `ls <worktree-dir>`
-   - If empty, remove it: `rm -rf <worktree-dir>`
 
 10. **Confirm**
     - Display:

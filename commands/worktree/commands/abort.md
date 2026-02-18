@@ -44,12 +44,7 @@ Removes the current worktree and deletes its branch without merging. Use when ab
 7. **Delete the branch**
    - Run `git branch -D <branch-name>` (force delete since we're intentionally aborting)
 
-8. **Clean up empty worktree directory**
-   - Get the worktree directory (parent of the worktree path)
-   - Check if it's empty: `ls <worktree-dir>`
-   - If empty, remove it: `rm -rf <worktree-dir>`
-
-9. **Confirm**
+8. **Confirm**
    - Display:
      ```
      Worktree aborted:
