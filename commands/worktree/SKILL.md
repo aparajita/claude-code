@@ -22,8 +22,8 @@ Parse the first argument as the command name, find the matching command file in 
 
 **Worktree directory**: sibling to the project directory — `../<project-name>-worktrees/` relative to the project root (e.g., `../claude-code-worktrees/`).
 
-**Worktree path naming**: `<worktree-dir>/<project-name>-<type>-<slugified-description>`
-- Example: `../claude-code-worktrees/claude-code-feature-remove-update-mechanism`
+**Worktree path naming**: `<worktree-dir>/<type>-<slugified-description>`
+- Example: `../claude-code-worktrees/feature-remove-update-mechanism`
 
 **Branch naming**: `<type>/<slugified-description>`
 - Example: `feature/remove-update-mechanism`

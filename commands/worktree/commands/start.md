@@ -14,7 +14,7 @@ Creates a new git worktree with a branch following the naming conventions.
    - Worktree directory: `<project-dir>/../<project-name>-worktrees` (resolve to absolute path with `realpath --canonicalize-missing`)
    - Slugify the description: join all description words with hyphens, lowercase, strip non-alphanumeric chars except hyphens
    - Branch name: `<type>/<slug>` (e.g., `feature/remove-update-mechanism`)
-   - Worktree path: `<worktree-dir>/<project-name>-<type>-<slug>` (e.g., `../claude-code-worktrees/claude-code-feature-remove-update-mechanism`)
+   - Worktree path: `<worktree-dir>/<type>-<slug>` (e.g., `../claude-code-worktrees/feature-remove-update-mechanism`)
 
 3. **Validate**
    - If no type or description provided, show usage and stop
