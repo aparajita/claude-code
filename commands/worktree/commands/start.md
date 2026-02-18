@@ -7,7 +7,7 @@ Creates a new git worktree with a branch following the naming conventions.
 ## Steps
 
 1. **Get project info**
-   - Run `git rev-parse --show-toplevel` to get the project directory (absolute path)
+   - Run `git rev-parse --show-toplevel` as a separate Bash call (do not chain with other commands) to get the project directory (absolute path)
    - Extract the project name: `basename <project-dir>` (e.g., `claude-code`)
 
 2. **Construct paths**
@@ -33,7 +33,7 @@ Creates a new git worktree with a branch following the naming conventions.
 
 6. **Ask what branch to base off**
    - Use AskUserQuestion to ask: "What branch should this worktree be based on?"
-   - Options: `main`, `master`, current branch (from `git branch --show-current`), Other
+   - Options: `main`, `master`, current branch (run `git branch --show-current` as a separate Bash call to get it), Other
    - Default to `main` if it exists, otherwise `master`
    - If the user selects Other, prompt them to enter a branch name. If the branch does not exist, error out.
 

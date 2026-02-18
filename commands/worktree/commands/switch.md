@@ -7,9 +7,9 @@ Switches to a different git worktree by presenting available worktrees to choose
 ## Steps
 
 1. **Get worktree list**
-   - Run `git worktree list --porcelain` to get all worktrees
+   - Run `git worktree list --porcelain` as a separate Bash call (do not chain with other commands) to get all worktrees
    - Parse into `{path, branch}` entries
-   - Exclude the current worktree (determined by `git rev-parse --show-toplevel`)
+   - Exclude the current worktree (determined by running `git rev-parse --show-toplevel` as a separate Bash call)
 
 2. **Check available worktrees**
    - If no other worktrees exist (only the main), display:

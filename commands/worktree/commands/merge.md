@@ -7,12 +7,12 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
 ## Steps
 
 1. **Get current directory and worktree list**
-   - Run `git worktree list --porcelain` to get all worktrees
+   - Run `git worktree list --porcelain` as a separate Bash call (do not chain with other commands) to get all worktrees
    - Parse the output to get `{path, branch}` entries
    - The first entry is the main working tree
 
 2. **Check we're in the main directory**
-   - Get the current worktree root via `git rev-parse --show-toplevel`
+   - Get the current worktree root via `git rev-parse --show-toplevel` as a separate Bash call (do not chain with other commands)
    - Compare against the worktree list — if the current path does **not** match the main working tree, error out:
      ```
      Sorry, this command must be run from the main project directory, not from a worktree.
@@ -43,7 +43,7 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
      ```
 
 6. **Verify main branch is checked out**
-   - Run `git branch --show-current` from the main project directory
+   - Run `git branch --show-current` as a separate Bash call (do not chain with other commands) from the main project directory
    - If the current branch is not `<main-branch>`, error out:
      ```
      Sorry, the main project directory is not on the expected branch.
