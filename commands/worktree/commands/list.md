@@ -7,11 +7,11 @@ Shows all git worktrees with their paths and branches.
 ## Steps
 
 1. **Get worktree list**
-   - Run `git worktree list --porcelain` to get detailed worktree info
+   - Run `git worktree list --porcelain` as a separate Bash call (do not chain with other commands)
    - Parse the output into entries of `{path, head, branch, bare, locked, prunable}`
 
 2. **Get current worktree**
-   - Run `git rev-parse --show-toplevel` to find which worktree the user is currently in
+   - Run `git rev-parse --show-toplevel` as a separate Bash call (do not chain with other commands)
 
 3. **Format and display output**
 
