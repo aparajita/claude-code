@@ -56,6 +56,11 @@ The plan-manager skill responds to the following natural language phrases:
 - "mark step 2 of plans/sub-plan.md as complete" / "step 3 of that sub-plan is complete"
 - "complete step 1 in plans/layout-engine/api-redesign.md"
 
+### Blocking
+- "block phase 4 by phase 3" / "mark phase 4 as blocked by phase 3"
+- "phase X is blocked by phase Y" / "phase 4 can't start until phase 3 is done"
+- "unblock phase 4" / "remove the block on phase 4" / "phase 3 is done, unblock 4"
+
 ## Command Reference Quick List
 
 ```bash
@@ -72,6 +77,8 @@ The plan-manager skill responds to the following natural language phrases:
 /plan-manager complete <plan> [step]   # Mark a sub-plan, phase, or step as complete
 /plan-manager merge [file]             # Merge a branch plan's content into master
 /plan-manager archive [file]           # Archive or delete a completed plan
+/plan-manager block <phase> [--reason] # Mark a phase as blocked
+/plan-manager unblock <phase>          # Remove blockers from a phase
 
 # Viewing Status
 /plan-manager status                   # Show master plan hierarchy and status
@@ -89,6 +96,7 @@ The plan-manager skill responds to the following natural language phrases:
 
 # Help
 /plan-manager help                     # Show detailed command reference
+/plan-manager version                  # Show plan-manager version
 /plan-manager                          # Show interactive menu
 ```
 
