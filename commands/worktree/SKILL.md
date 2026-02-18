@@ -5,7 +5,7 @@ description: |
   Triggers: "start the feature ...", "start a fix for ...", "abort this worktree",
   "merge this worktree", "list worktrees", "show worktrees", "switch to worktree ...",
   "switch worktree", "/worktree start", "/worktree abort", "/worktree merge",
-  "/worktree list", "/worktree switch"
+  "/worktree list", "/worktree switch", "/worktree help", "/worktree version"
 argument-hint: "[command] [args] — Commands: start, abort, merge, list, switch, help, version"
 allowed-tools: "Bash(git:*, mkdir:*, rm:*, ls:*, realpath:*, basename:*, dirname:*), Read, Glob, AskUserQuestion"
 ---
@@ -16,7 +16,7 @@ Parse the first argument as the command name, find the matching command file in 
 
 ## Key Concepts
 
-**Project directory**: the git repository root (output of `git rev-parse --show-toplevel`).
+**Main project directory**: the git repository root (output of `git rev-parse --show-toplevel`).
 
 **Project name**: `basename` of the project directory (e.g., `claude-code`).
 

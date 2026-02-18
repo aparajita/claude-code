@@ -19,5 +19,5 @@ Worktree v{version}
 ## Example
 
 ```
-Worktree v1.0.0
+Worktree v{version}
 ```

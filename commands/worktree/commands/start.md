@@ -21,8 +21,8 @@ Creates a new git worktree with a branch following the naming conventions.
    - If a branch named `<type>/<slug>` already exists, error out
 
 4. **Check for uncommitted changes**
-   - Run `git status --porcelain` to detect staged and untracked files
-   - If there are any staged files (lines starting with `A`, `M`, `D`, `R`, `C`) or untracked files (lines starting with `??`), use `AskUserQuestion` to ask:
+   - Run `git status --porcelain` to detect any changes (staged, unstaged, or untracked)
+   - If the output is non-empty, use `AskUserQuestion` to ask:
      "You have uncommitted changes. Move them into the new worktree?"
    - Options: Yes (stash and restore in worktree), No (leave them here)
    - Store the user's answer as `stash_changes` (true/false)
@@ -35,6 +35,7 @@ Creates a new git worktree with a branch following the naming conventions.
    - Use AskUserQuestion to ask: "What branch should this worktree be based on?"
    - Options: `main`, `master`, current branch (from `git branch --show-current`), Other
    - Default to `main` if it exists, otherwise `master`
+   - If the user selects Other, prompt them to enter a branch name. If the branch does not exist, error out.
 
 7. **Create the worktree and branch**
    - Run `git worktree add -b <branch-name> <worktree-path> <base-branch>`

@@ -16,7 +16,7 @@ Removes the current worktree and deletes its branch without merging. Use when ab
    - Compare against the worktree list — if the current path does **not** match the main working tree, error out:
      ```
      Sorry, this command must be run from the main project directory, not from a worktree.
-     Main directory: <main-path>
+     Main project directory: <main-path>
      ```
    - Build a list of non-main worktrees from the parsed entries. If the list is empty, error out:
      ```
@@ -24,8 +24,8 @@ Removes the current worktree and deletes its branch without merging. Use when ab
      ```
 
 3. **Select a worktree**
-   - If there are **3 or fewer** worktrees, use `AskUserQuestion` with each worktree as an option (label: branch name, description: worktree path) plus a Cancel option. If the user selects Cancel, stop.
-   - If there are **more than 3** worktrees, display a numbered list of worktrees (branch name and path for each) and ask the user to enter a number or "cancel". If the user cancels, stop.
+   - If there are **3 or fewer non-main worktrees**, use `AskUserQuestion` with each worktree as an option (label: branch name, description: worktree path) plus a Cancel option. If the user selects Cancel, stop.
+   - If there are **more than 3 non-main worktrees**, display a numbered list of worktrees (branch name and path for each) and ask the user to enter a number or "cancel". If the user cancels, stop.
 
 4. **Get worktree details**
    - Worktree path: the selected worktree's path

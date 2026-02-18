@@ -25,12 +25,13 @@ Switches to a different git worktree by presenting available worktrees to choose
      ```
      No worktree matching "<partial-name>" found.
      ```
-   - Then fall through to step 4 to show all worktrees
+   - Then continue to step 4 to show all worktrees
 
 4. **Ask user to select**
-   - Use AskUserQuestion to present the list of available worktrees
+   - Use AskUserQuestion to present the list of available worktrees plus a Cancel option
    - Format each option as: `<branch-name> — <path>`
    - Question: "Which worktree do you want to switch to?"
+   - If the user selects Cancel, stop
 
 5. **Display switch instructions**
    - Since Claude Code cannot change the user's shell directory, display instructions:
