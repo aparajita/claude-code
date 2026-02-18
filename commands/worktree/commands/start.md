@@ -29,7 +29,7 @@ Creates a new git worktree with a branch following the naming conventions.
    - If `copy_changes` is true, run `git stash --include-untracked` then immediately `git stash apply` to restore the files in the original directory (the stash remains in the reflog for the worktree to use)
 
 5. **Create worktree directory** if it doesn't exist
-   - Run `mkdir -p <worktree-dir>`
+   - Run `python3 -c 'import os,sys; os.makedirs(sys.argv[1], exist_ok=True)' <worktree-dir>`
 
 6. **Ask what branch to base off**
    - Use AskUserQuestion to ask: "What branch should this worktree be based on?"
@@ -68,8 +68,9 @@ Creates a new git worktree with a branch following the naming conventions.
 
 10. **Open in JetBrains IDE** (only if `.idea` directory exists at `<project-dir>`)
    - Use the `Glob` tool with pattern `<project-dir>/.idea` to check for a JetBrains project (do NOT use a Bash test command)
-   - If the Glob returns a match, run `idea <worktree-path>` to open the worktree as a project in the IDE
-   - This is required for the Serena MCP plugin to connect to the worktree context
+   - If the Glob returns no match, skip this step
+   - If Serena was installed in step 9: run `idea <worktree-path>` automatically (required for Serena to connect)
+   - If Serena was NOT installed: use `AskUserQuestion` to ask "Open the worktree in the JetBrains IDE?" with options Yes / No. Only run `idea <worktree-path>` if the user selects Yes.
    - If the `idea` command is not found, warn the user but continue
 
 11. **Confirm**
