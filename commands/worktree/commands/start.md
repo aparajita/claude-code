@@ -32,10 +32,16 @@ Creates a new git worktree with a branch following the naming conventions.
    - Run `python3 -c 'import os,sys; os.makedirs(sys.argv[1], exist_ok=True)' <worktree-dir>`
 
 6. **Ask what branch to base off**
-   - Use AskUserQuestion to ask: "What branch should this worktree be based on?"
-   - Options: `main`, `master`, current branch (run `git branch --show-current` as a separate Bash call to get it), Other
-   - Default to `main` if it exists, otherwise `master`
-   - If the user selects Other, prompt them to enter a branch name. If the branch does not exist, error out.
+   - Run `git branch` as a separate Bash call to get the list of all local branches
+   - Parse the output: strip the leading `* ` marker and whitespace from each line to get a clean list of branch names
+   - **If exactly 1 branch**: use it automatically as `base_branch` without asking — skip to step 7
+   - **If 2–3 branches**: use `AskUserQuestion` with one option per branch (label: branch name; description: "current branch" if it matches the current branch, otherwise blank). The built-in "Other" option lets the user type a custom branch name.
+   - **If more than 3 branches**: display a numbered list of all branches, then use `AskUserQuestion` with a single "Cancel" option; instruct the user to select "Other" to type a branch number or name
+   - After the user responds:
+     - If they typed a number, look up the corresponding branch from the list
+     - Otherwise treat the value as a branch name
+     - Validate: if the branch is not in the local list, error out with "Branch not found: <name>"
+   - If the user cancels, stop
 
 7. **Create the worktree and branch**
    - Run `git worktree add -b <branch-name> <worktree-path> <base-branch>`
