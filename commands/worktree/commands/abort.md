@@ -25,11 +25,11 @@ Removes the current worktree and deletes its branch without merging. Use when ab
 
 3. **Select a worktree**
    - If there are **3 or fewer non-main worktrees**, use `AskUserQuestion` with each worktree as an option (label: branch name, description: worktree path) plus a Cancel option. If the user selects Cancel, stop.
-   - If there are **more than 3 non-main worktrees**, display a numbered list of worktrees (branch name and path for each) and ask the user to enter a number or "cancel". If the user cancels, stop.
+   - If there are **more than 3 non-main worktrees**, display a numbered list of all worktrees (branch name and path for each), then use `AskUserQuestion` with a single "Cancel" option; instruct the user to select "Other" to type a worktree number or name. If the user cancels, stop.
 
 4. **Get worktree details**
    - Worktree path: the selected worktree's path
-   - Branch name: the selected worktree's branch (strip leading `refs/heads/` if present)
+   - Branch name: the selected worktree's branch (strip leading `refs/heads/` if present). If the worktree is in detached HEAD state (no branch), set branch name to empty.
 
 5. **Confirm with user**
    - Use AskUserQuestion to ask: "This will permanently delete the worktree and branch `<branch>`. Continue?"
@@ -41,7 +41,7 @@ Removes the current worktree and deletes its branch without merging. Use when ab
    - If this fails (e.g., uncommitted changes), try `git worktree remove --force <worktree-path>`
    - If still fails, show the error and stop
 
-7. **Delete the branch**
+7. **Delete the branch** (skip if the worktree was in detached HEAD state)
    - Run `git branch -D <branch-name>` (force delete since we're intentionally aborting)
 
 8. **Confirm**

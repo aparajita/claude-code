@@ -6,8 +6,8 @@ Manage git worktrees with consistent naming and directory placement conventions.
 
 - **Consistent naming** — worktrees and branches follow a `<type>/<description>` convention, keeping things organized and predictable
 - **Sibling directory layout** — all worktrees live in `../<project>-worktrees/`, out of the project root
-- **Uncommitted change copying** — when creating a worktree, optionally copies all uncommitted changes (staged, unstaged, and untracked files) into the new worktree using `git stash`, leaving the original directory clean
-- **MCP server installation** — reads project MCP server config from `~/.claude.json` and offers to install them in the new worktree; `serena` is always auto-installed if present
+- **Uncommitted change copying** — when creating a worktree, optionally copies all uncommitted changes (staged, unstaged, and untracked files) into the new worktree using `git stash`, while keeping the original directory unchanged
+- **MCP server copying** — reads project MCP server config from `~/.claude.json` and offers to copy them to the new worktree; `serena` is always copied automatically if present
 - **JetBrains IDE integration** — automatically opens the worktree in the IDE when a `.idea` directory is detected
 - **Rebase-first merge** — attempts a fast-forward merge, falls back to rebase if needed, and aborts cleanly on conflicts rather than forcing a merge
 - **Natural language triggers** — responds to phrases like "start the feature ...", "merge this worktree", "abort this worktree"
@@ -42,7 +42,7 @@ ln -s "$(pwd)/commands/worktree" ~/.claude/commands/worktree
 **`start <type> <description words...>`**
 Create a new worktree and branch
 - Optionally copies uncommitted changes into the new worktree
-- Optionally installs project MCP servers in the new worktree
+- Optionally copies project MCP servers to the new worktree
 - Example: `/worktree start feature user authentication`
 
 ### Managing
@@ -81,7 +81,7 @@ Display the skill version
 
 - `abort` and `merge` must be run from the main project directory, not from inside a worktree
 - When starting a worktree, uncommitted changes can be copied (not moved) to the new worktree
-- Project MCP servers (from `~/.claude.json`) can optionally be installed in the new worktree
+- Project MCP servers (from `~/.claude.json`) can optionally be copied to the new worktree
 - Use natural language: "start the feature user authentication", "abort this worktree", "merge this worktree"
 
 ## Documentation

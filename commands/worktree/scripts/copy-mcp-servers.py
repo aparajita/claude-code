@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Install project MCP servers into a git worktree.
+"""Copy project MCP server config into a git worktree.
 
-Usage: install-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]
+Usage: copy-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]
 """
 
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: install-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]")
+        print("Usage: copy-mcp-servers.py <project-dir> <worktree-path> <server1> [<server2> ...]")
         sys.exit(1)
 
     project_dir = sys.argv[1]
@@ -34,13 +34,13 @@ def main():
         print(f"No MCP servers found for project: {project_dir}", file=sys.stderr)
         sys.exit(1)
 
-    servers_to_install = {
+    servers_to_copy = {
         name: config
         for name, config in source_servers.items()
         if name in selected_servers
     }
 
-    if not servers_to_install:
+    if not servers_to_copy:
         print("No matching servers found", file=sys.stderr)
         sys.exit(1)
 
@@ -58,13 +58,13 @@ def main():
             "hasClaudeMdExternalIncludesWarningShown": False,
         }
 
-    projects[worktree_path].setdefault("mcpServers", {}).update(servers_to_install)
+    projects[worktree_path].setdefault("mcpServers", {}).update(servers_to_copy)
     claude_data["projects"] = projects
 
     with open(claude_json_path, "w") as f:
         json.dump(claude_data, f, indent=2)
 
-    print(f"Installed MCP servers: {', '.join(servers_to_install)}")
+    print(f"Copied MCP servers: {', '.join(servers_to_copy)}")
 
 
 if __name__ == "__main__":

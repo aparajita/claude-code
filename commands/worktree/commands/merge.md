@@ -25,11 +25,11 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
 
 3. **Select a worktree**
    - If there are **3 or fewer non-main worktrees**, use `AskUserQuestion` with each worktree as an option (label: branch name, description: worktree path) plus a Cancel option. If the user selects Cancel, stop.
-   - If there are **more than 3 non-main worktrees**, display a numbered list of worktrees (branch name and path for each) and ask the user to enter a number or "cancel". If the user cancels, stop.
+   - If there are **more than 3 non-main worktrees**, display a numbered list of all worktrees (branch name and path for each), then use `AskUserQuestion` with a single "Cancel" option; instruct the user to select "Other" to type a worktree number or name. If the user cancels, stop.
 
 4. **Get worktree details**
    - Worktree path: the selected worktree's path
-   - Worktree branch: the selected worktree's branch (strip `refs/heads/` prefix if present)
+   - Worktree branch: the selected worktree's branch (strip `refs/heads/` prefix if present). If the worktree is in detached HEAD state (no branch), error out: "Cannot merge a worktree in detached HEAD state."
    - Main project directory: first entry's path
    - Main branch: first entry's branch (strip `refs/heads/` prefix)
 
