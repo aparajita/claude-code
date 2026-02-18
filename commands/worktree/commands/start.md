@@ -67,8 +67,8 @@ Creates a new git worktree with a branch following the naming conventions.
    - Where `<skill-dir>` is the directory containing this command file's parent (i.e., the `commands/worktree/` directory)
 
 10. **Open in JetBrains IDE** (only if `.idea` directory exists at `<project-dir>`)
-   - Check for `<project-dir>/.idea` — if present, assume a JetBrains project
-   - Run `idea <worktree-path>` to open the worktree as a project in the IDE
+   - Use the `Glob` tool with pattern `<project-dir>/.idea` to check for a JetBrains project (do NOT use a Bash test command)
+   - If the Glob returns a match, run `idea <worktree-path>` to open the worktree as a project in the IDE
    - This is required for the Serena MCP plugin to connect to the worktree context
    - If the `idea` command is not found, warn the user but continue
 
