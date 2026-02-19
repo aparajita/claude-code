@@ -35,9 +35,9 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
 
 5. **Check for uncommitted changes**
    - Run `git -C <worktree-path> status --porcelain` to check the selected worktree
-   - If there are uncommitted changes, error out:
+   - If there are uncommitted changes or untracked files, error out:
      ```
-     Sorry, the worktree has uncommitted changes. Commit or stash them before merging.
+     Sorry, the worktree has uncommitted changes or untracked files. Commit, stash, or remove them before merging.
        Worktree: <worktree-path>
        Branch:   <worktree-branch>
      ```
