@@ -161,7 +161,7 @@ worktree --step abort
 
 **`-h` / `--help`** — Display command reference
 
-**`version`** — Display the script version
+**`version` / `--version` / `-v`** — Display the script version
 
 ## Tips
 

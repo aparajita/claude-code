@@ -9,6 +9,9 @@
 # Optional settings in ~/.worktree-settings:
 #   WORKTREE_TYPES=(feature fix refactor migration chore spike)
 
+# ── Version ───────────────────────────────────────────────────────────────────
+_WT_VERSION="1.0.0"
+
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
 if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
@@ -793,7 +796,7 @@ HELP AND INFO
   -h | --help
     Show this command reference.
 
-  version
+  version | --version | -v
     Show the script version.
 
 SETUP
@@ -816,14 +819,7 @@ HELP
 # ── Command: version ──────────────────────────────────────────────────────────
 
 _wt_cmd_version() {
-  local version_file="${_WT_SCRIPT_DIR}/version.txt"
-  if [[ -f "$version_file" ]]; then
-    local version
-    version=$(cat "$version_file")
-    echo "Worktree v${version}"
-  else
-    echo "Worktree (version unknown)" >&2
-  fi
+  echo "Worktree v${_WT_VERSION}"
 }
 
 # ── Main dispatch ─────────────────────────────────────────────────────────────
@@ -849,7 +845,7 @@ case "$_wt_cmd" in
   list)    _wt_cmd_list ;;
   switch)  _wt_cmd_switch "$@" ;;
   -h|--help) _wt_cmd_help ;;
-  version) _wt_cmd_version ;;
+  version|--version|-v) _wt_cmd_version ;;
   *)
     echo "worktree: unknown command '$_wt_cmd'" >&2
     echo "Run 'worktree --help' for usage." >&2
