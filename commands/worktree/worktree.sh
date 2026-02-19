@@ -796,7 +796,7 @@ HELP AND INFO
   -h | --help
     Show this command reference.
 
-  version | --version | -v
+  --version | -v
     Show the script version.
 
 SETUP
@@ -845,7 +845,7 @@ case "$_wt_cmd" in
   list)    _wt_cmd_list ;;
   switch)  _wt_cmd_switch "$@" ;;
   -h|--help) _wt_cmd_help ;;
-  version|--version|-v) _wt_cmd_version ;;
+  --version|-v) _wt_cmd_version ;;
   *)
     echo "worktree: unknown command '$_wt_cmd'" >&2
     echo "Run 'worktree --help' for usage." >&2
