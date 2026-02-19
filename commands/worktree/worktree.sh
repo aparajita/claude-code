@@ -600,6 +600,135 @@ _wt_cmd_switch() {
   echo "  Branch: $target_branch"
 }
 
+# ── Command: cleanup ──────────────────────────────────────────────────────────
+
+_wt_cmd_cleanup() {
+  local root
+  root=$(_wt_project_root)
+  if [[ -z "$root" ]]; then
+    echo "worktree: not inside a git repository" >&2
+    return 1
+  fi
+
+  local wt_data
+  wt_data=$(_wt_worktree_data)
+  if [[ -z "$wt_data" ]]; then
+    echo "worktree: not inside a git repository" >&2
+    return 1
+  fi
+
+  local main_path main_branch
+  main_path=$(printf '%s\n' "$wt_data" | head -1 | cut -f1)
+  main_branch=$(printf '%s\n' "$wt_data" | head -1 | cut -f2)
+
+  local current_root
+  current_root=$(_wt_project_root)
+
+  local found_issues=false
+
+  # ── 1. Stale git worktree registrations (directory missing) ─────────────────
+  local prune_output
+  prune_output=$(git -C "$main_path" worktree prune --dry-run 2>/dev/null)
+  if [[ -n "$prune_output" ]]; then
+    found_issues=true
+    echo "Stale worktree registrations (directory no longer exists):"
+    printf '%s\n' "$prune_output" | sed 's/^/  /'
+    echo ""
+    if gum confirm "Run 'git worktree prune' to remove stale registrations?"; then
+      git -C "$main_path" worktree prune
+      echo "Pruned stale registrations."
+      echo ""
+    fi
+  fi
+
+  # ── 2. Registered worktrees with branches merged into main ──────────────────
+  local -a merged_entries=()
+  while IFS=$'\t' read -r wt_path branch head locked; do
+    [[ "$wt_path" == "$main_path" ]] && continue
+    [[ -z "$branch" ]] && continue  # skip detached HEAD
+    if git -C "$main_path" merge-base --is-ancestor "$branch" "$main_branch" 2>/dev/null; then
+      merged_entries+=("${branch}	${wt_path}")
+    fi
+  done <<< "$wt_data"
+
+  if [[ ${#merged_entries[@]} -gt 0 ]]; then
+    found_issues=true
+    echo "Worktrees whose branches are already merged into '$main_branch':"
+    for entry in "${merged_entries[@]}"; do
+      local b="${entry%%	*}" p="${entry##*	}"
+      echo "  $b  ($p)"
+    done
+    echo ""
+    local cwd_removed=false
+    for entry in "${merged_entries[@]}"; do
+      local branch="${entry%%	*}" wt_path="${entry##*	}"
+      if gum confirm "Remove worktree and delete branch '$branch'?"; then
+        _wt_step "Removing worktree directory $wt_path" || return 1
+        git -C "$main_path" worktree remove --force "$wt_path" 2>/dev/null
+        python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$wt_path" 2>/dev/null
+        _wt_step "Deleting branch $branch" || return 1
+        git -C "$main_path" branch -d "$branch" 2>/dev/null
+        echo "Removed: $wt_path, deleted branch: $branch"
+        echo ""
+        [[ "$wt_path" == "$current_root" ]] && cwd_removed=true
+      fi
+    done
+    if [[ "$cwd_removed" == true ]]; then
+      _wt_step "Switching to main directory ($main_path)" || return 1
+      cd "$main_path" || return 1
+    fi
+  fi
+
+  # ── 3. Orphaned directories (not registered with git) ───────────────────────
+  local project_name
+  project_name=$(basename "$main_path")
+  local worktree_base
+  worktree_base=$(python3 -c "
+import os, sys
+root, name = sys.argv[1], sys.argv[2]
+print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
+" "$main_path" "$project_name" 2>/dev/null)
+
+  if [[ -d "$worktree_base" ]]; then
+    # Collect registered worktree paths (excluding main)
+    local -a registered_paths=()
+    while IFS=$'\t' read -r wt_path branch head locked; do
+      [[ "$wt_path" == "$main_path" ]] && continue
+      registered_paths+=("$wt_path")
+    done <<< "$wt_data"
+
+    local -a orphans=()
+    while IFS= read -r dir; do
+      [[ -z "$dir" ]] && continue
+      local is_registered=false
+      for reg in "${registered_paths[@]}"; do
+        [[ "$dir" == "$reg" ]] && is_registered=true && break
+      done
+      [[ "$is_registered" == false ]] && orphans+=("$dir")
+    done < <(find "$worktree_base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)
+
+    if [[ ${#orphans[@]} -gt 0 ]]; then
+      found_issues=true
+      echo "Orphaned directories in worktree base (not registered with git):"
+      for dir in "${orphans[@]}"; do
+        echo "  ${dir##*/}  ($dir)"
+      done
+      echo ""
+      for dir in "${orphans[@]}"; do
+        if gum confirm "Remove orphaned directory '${dir##*/}'?"; then
+          python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$dir" 2>/dev/null
+          echo "Removed: $dir"
+        fi
+      done
+      echo ""
+    fi
+  fi
+
+  if [[ "$found_issues" == false ]]; then
+    echo "No worktree issues found. Everything looks clean."
+  fi
+}
+
 # ── Command: help ─────────────────────────────────────────────────────────────
 
 _wt_cmd_help() {
@@ -629,6 +758,18 @@ MANAGING
     If run from inside a worktree, uses it automatically.
     If run from main, presents a list to choose from.
     Example: worktree merge
+
+  cleanup
+    Find and remove worktree leftovers. Checks three things:
+      1. Stale git registrations — worktrees git tracks but whose
+         directories no longer exist on disk. Offers to prune them.
+      2. Merged worktrees — registered worktrees whose branches are
+         already merged into main (e.g. via a GitHub PR). Offers to
+         remove the directory and delete the branch.
+      3. Orphaned directories — directories in the worktree base
+         folder that aren't registered with git. Offers to delete.
+    Each item requires individual confirmation before removal.
+    Example: worktree cleanup
 
 NAVIGATING
 ──────────
@@ -704,6 +845,7 @@ case "$_wt_cmd" in
   create)  _wt_cmd_create "$@" ;;
   merge)   _wt_cmd_merge ;;
   abort)   _wt_cmd_abort ;;
+  cleanup) _wt_cmd_cleanup ;;
   list)    _wt_cmd_list ;;
   switch)  _wt_cmd_switch "$@" ;;
   -h|--help) _wt_cmd_help ;;

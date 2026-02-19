@@ -108,6 +108,20 @@ Rebase and merge a worktree branch into the main branch, then clean up.
 worktree merge
 ```
 
+**`cleanup`**
+
+Find and remove worktree leftovers. Checks three things:
+
+1. **Stale git registrations** — worktrees git tracks but whose directories no longer exist on disk. Offers to run `git worktree prune`.
+2. **Merged worktrees** — registered worktrees whose branches are already merged into main (e.g. merged via a GitHub PR). Offers to remove the directory and delete the branch.
+3. **Orphaned directories** — directories inside the worktree base folder (`../<project>-worktrees/`) that aren't registered with git. Offers to delete them.
+
+Each item requires individual confirmation before removal. If run from inside a worktree that gets cleaned up, automatically cds to the main directory.
+
+```bash
+worktree cleanup
+```
+
 ### Navigating
 
 **`list`**
