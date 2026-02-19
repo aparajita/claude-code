@@ -78,7 +78,7 @@ Creates a new git worktree with a branch following the naming conventions.
    - If the script exits with a non-zero code, warn the user but continue (do not abort worktree creation)
 
 10. **Open in JetBrains IDE** (only if `.idea` directory exists at `<project-dir>`)
-   - Use the `Glob` tool with pattern `<project-dir>/.idea` to check for a JetBrains project (do NOT use a Bash test command)
+   - Use the `Glob` tool with pattern `<project-dir>/.idea/*` to check for a JetBrains project (do NOT use a Bash test command)
    - If the Glob returns no match, skip this step
    - If `serena` was in the always-copy list and `mcp_copy_succeeded` is true: run `idea <worktree-path>` automatically (required for Serena to connect)
    - Otherwise (serena was not present, step 9 was skipped, or the script failed): use `AskUserQuestion` to ask "Open the worktree in the JetBrains IDE?" with options Yes / No. Only run `idea <worktree-path>` if the user selects Yes.
