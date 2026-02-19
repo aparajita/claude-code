@@ -73,7 +73,20 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
 
 10. **Cleanup**
     - Remove the worktree: `git worktree remove --force <worktree-path>`
-    - If this fails, use python3 to remove the directory: `python3 -c "import shutil; shutil.rmtree('<worktree-path>')"`
+    - Always run python3 to remove any remaining files (e.g. gitignored files like `.idea/`): `python3 -c "import shutil, os; shutil.rmtree('<worktree-path>', ignore_errors=True)"`
+    - Check if the worktree directory still exists. If it does, and it contains a `.idea` subdirectory:
+      - Use `AskUserQuestion` to prompt:
+        ```
+        The worktree directory could not be fully removed because JetBrains IDE has the project open.
+          Directory: <worktree-path>
+        Please close the project in your JetBrains IDE, then click Continue.
+        ```
+        with a single "Continue" option (no Cancel — the merge has already completed and cleanup must finish).
+      - Once the user confirms, retry the python3 removal command
+      - If the directory still exists after retrying, inform the user and continue anyway:
+        ```
+        Warning: Could not remove <worktree-path>. Please delete it manually.
+        ```
     - Delete the branch: `git branch -d <worktree-branch>`
 
 11. **Confirm**
