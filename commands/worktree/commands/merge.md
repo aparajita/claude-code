@@ -72,9 +72,8 @@ Merges a worktree's branch into the main branch using a rebase-first strategy, t
    - Stop — do not force merge
 
 10. **Cleanup**
-    - Remove the worktree: `git worktree remove <worktree-path>`
-    - If this fails (e.g., untracked or system files present), try `git worktree remove --force <worktree-path>`
-    - If still fails, use python3 to remove the directory: `python3 -c "import shutil; shutil.rmtree('<worktree-path>')"`
+    - Remove the worktree: `git worktree remove --force <worktree-path>`
+    - If this fails, use python3 to remove the directory: `python3 -c "import shutil; shutil.rmtree('<worktree-path>')"`
     - Delete the branch: `git branch -d <worktree-branch>`
 
 11. **Confirm**
