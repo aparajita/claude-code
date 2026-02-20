@@ -35,6 +35,12 @@ _wt_check_deps() {
     echo "           https://github.com/charmbracelet/gum" >&2
     ok=false
   fi
+  if ! command -v jq &>/dev/null; then
+    echo "worktree: 'jq' is required but not found." >&2
+    echo "  Install: brew install jq   (macOS/Linux via Homebrew)" >&2
+    echo "           https://jqlang.github.io/jq/" >&2
+    ok=false
+  fi
   [[ "$ok" == true ]]
 }
 
@@ -48,7 +54,8 @@ _wt_load_settings() {
   export GUM_CHOOSE_HEADER_FOREGROUND="${GUM_CHOOSE_HEADER_FOREGROUND:-5}"
   export GUM_CHOOSE_CURSOR_FOREGROUND="${GUM_CHOOSE_CURSOR_FOREGROUND:-7}"
   export GUM_CONFIRM_PROMPT_FOREGROUND="${GUM_CONFIRM_PROMPT_FOREGROUND:-5}"
-  export GUM_CONFIRM_SELECTED_FOREGROUND="${GUM_CONFIRM_SELECTED_FOREGROUND:-4}"
+  export GUM_CONFIRM_SELECTED_BACKGROUND="${GUM_CONFIRM_SELECTED_BACKGROUND:-4}"
+  export GUM_CONFIRM_SELECTED_FOREGROUND="${GUM_CONFIRM_SELECTED_FOREGROUND:-15}"
   export GUM_CONFIRM_UNSELECTED_FOREGROUND="${GUM_CONFIRM_UNSELECTED_FOREGROUND:-7}"
   export GUM_INPUT_PROMPT_FOREGROUND="${GUM_INPUT_PROMPT_FOREGROUND:-5}"
   export GUM_FILTER_HEADER_FOREGROUND="${GUM_FILTER_HEADER_FOREGROUND:-5}"
@@ -176,6 +183,59 @@ _wt_detect_context() {
   fi
 }
 
+# ── MCP server copy ───────────────────────────────────────────────────────────
+
+_wt_copy_mcp_servers() {
+  local project_dir="$1" worktree_path="$2"
+  shift 2
+  local selected_servers=("$@")
+  local claude_json="$HOME/.claude.json"
+
+  local source_count
+  source_count=$(jq --arg project "$project_dir" \
+    '.projects[$project].mcpServers // {} | length' "$claude_json")
+  if [[ "$source_count" == "0" ]]; then
+    echo "No MCP servers found for project: $project_dir" >&2
+    return 1
+  fi
+
+  local server_names
+  server_names=$(printf '%s\n' "${selected_servers[@]}" | jq -R . | jq -s .)
+
+  local servers_to_copy
+  servers_to_copy=$(jq --arg project "$project_dir" --argjson names "$server_names" \
+    '.projects[$project].mcpServers | with_entries(select([.key] | inside($names)))' \
+    "$claude_json")
+  if [[ "$servers_to_copy" == "{}" ]]; then
+    echo "No matching servers found" >&2
+    return 1
+  fi
+
+  local updated
+  updated=$(jq --arg worktree "$worktree_path" --argjson servers "$servers_to_copy" '
+    if .projects[$worktree] == null then
+      .projects[$worktree] = {
+        allowedTools: [],
+        mcpContextUris: [],
+        mcpServers: {},
+        enabledMcpjsonServers: [],
+        disabledMcpjsonServers: [],
+        hasTrustDialogAccepted: false,
+        projectOnboardingSeenCount: 0,
+        hasClaudeMdExternalIncludesApproved: false,
+        hasClaudeMdExternalIncludesWarningShown: false
+      }
+    end |
+    .projects[$worktree].mcpServers += $servers
+  ' "$claude_json")
+
+  echo "$updated" > "$claude_json"
+
+  local copied
+  copied=$(jq -r 'keys | join(", ")' <<< "$servers_to_copy")
+  echo "Copied MCP servers: $copied"
+}
+
 # ── Command: create ───────────────────────────────────────────────────────────
 
 _wt_cmd_create() {
@@ -287,13 +347,8 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
   local serena_copied=false
   if [[ -f "$HOME/.claude.json" ]]; then
     local mcp_json
-    mcp_json=$(python3 -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    data = json.load(f)
-servers = data.get('projects', {}).get(sys.argv[2], {}).get('mcpServers', {})
-print(json.dumps(servers))
-" "$HOME/.claude.json" "$root" 2>/dev/null)
+    mcp_json=$(jq --arg project "$root" '.projects[$project].mcpServers // {}' \
+      "$HOME/.claude.json" 2>/dev/null)
 
     if [[ -n "$mcp_json" && "$mcp_json" != "{}" ]]; then
       local always_copy=()
@@ -305,11 +360,7 @@ print(json.dumps(servers))
         else
           optional+=("$name")
         fi
-      done <<< "$(python3 -c "
-import json, sys
-servers = json.loads(sys.argv[1])
-for name in servers: print(name)
-" "$mcp_json" 2>/dev/null)"
+      done <<< "$(jq -r 'keys[]' <<< "$mcp_json")"
 
       local selected=("${always_copy[@]}")
       if [[ ${#optional[@]} -gt 0 ]]; then
@@ -321,9 +372,8 @@ for name in servers: print(name)
         done <<< "$chosen_str"
       fi
 
-      local mcp_script="${_WT_SCRIPT_DIR}/copy-mcp-servers.py"
-      if [[ ${#selected[@]} -gt 0 && -f "$mcp_script" ]]; then
-        if python3 "$mcp_script" "$root" "$worktree_path" "${selected[@]}"; then
+      if [[ ${#selected[@]} -gt 0 ]]; then
+        if _wt_copy_mcp_servers "$root" "$worktree_path" "${selected[@]}"; then
           mcp_copy_succeeded=true
           for s in "${selected[@]}"; do
             [[ "$s" == "serena" ]] && serena_copied=true
