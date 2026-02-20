@@ -53,13 +53,17 @@ _wt_load_settings() {
   # Prompts/headers → magenta (5), cursors/indicators → white (7)
   export GUM_CHOOSE_HEADER_FOREGROUND="${GUM_CHOOSE_HEADER_FOREGROUND:-5}"
   export GUM_CHOOSE_CURSOR_FOREGROUND="${GUM_CHOOSE_CURSOR_FOREGROUND:-7}"
+  export GUM_CHOOSE_SELECTED_FOREGROUND="${GUM_CHOOSE_SELECTED_FOREGROUND:-7}"
   export GUM_CONFIRM_PROMPT_FOREGROUND="${GUM_CONFIRM_PROMPT_FOREGROUND:-5}"
   export GUM_CONFIRM_SELECTED_BACKGROUND="${GUM_CONFIRM_SELECTED_BACKGROUND:-4}"
   export GUM_CONFIRM_SELECTED_FOREGROUND="${GUM_CONFIRM_SELECTED_FOREGROUND:-15}"
   export GUM_CONFIRM_UNSELECTED_FOREGROUND="${GUM_CONFIRM_UNSELECTED_FOREGROUND:-7}"
   export GUM_INPUT_PROMPT_FOREGROUND="${GUM_INPUT_PROMPT_FOREGROUND:-5}"
+  export GUM_INPUT_CURSOR_FOREGROUND="${GUM_INPUT_CURSOR_FOREGROUND:-7}"
   export GUM_FILTER_HEADER_FOREGROUND="${GUM_FILTER_HEADER_FOREGROUND:-5}"
   export GUM_FILTER_INDICATOR_FOREGROUND="${GUM_FILTER_INDICATOR_FOREGROUND:-7}"
+  export GUM_FILTER_SELECTED_INDICATOR_FOREGROUND="${GUM_FILTER_SELECTED_INDICATOR_FOREGROUND:-7}"
+  export GUM_FILTER_MATCH_FOREGROUND="${GUM_FILTER_MATCH_FOREGROUND:-7}"
 
   local settings="$HOME/.worktree-settings"
   # shellcheck source=/dev/null
@@ -292,12 +296,23 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
   # Check for uncommitted changes
   local copy_changes=false
   if [[ -n "$(git -C "$root" status --porcelain 2>/dev/null)" ]]; then
-    if gum confirm "You have uncommitted changes. Copy them to the new worktree?"; then
-      copy_changes=true
-      _wt_step "Stashing uncommitted changes (will restore immediately)" || return 1
-      git -C "$root" stash --include-untracked
-      git -C "$root" stash apply
-    fi
+    local changes_action
+    changes_action=$(printf '%s\n' "Copy changes to worktree" "Create without changes" "Cancel" | \
+      gum choose --header "You have uncommitted changes.")
+    case "$changes_action" in
+      "Copy changes to worktree")
+        copy_changes=true
+        _wt_step "Stashing uncommitted changes (will restore immediately)" || return 1
+        git -C "$root" stash --include-untracked
+        git -C "$root" stash apply
+        ;;
+      "Create without changes")
+        : # proceed
+        ;;
+      *)
+        return 0  # Cancel or Esc
+        ;;
+    esac
   fi
 
   # Create worktree directory if needed
@@ -390,7 +405,7 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
     local open_ide=false
     if [[ "$serena_copied" == true && "$mcp_copy_succeeded" == true ]]; then
       open_ide=true
-    elif gum confirm "Open worktree in JetBrains IDE?"; then
+    elif gum confirm "Open worktree in JetBrains IDE?" --negative "Cancel"; then
       open_ide=true
     fi
     if [[ "$open_ide" == true ]]; then
