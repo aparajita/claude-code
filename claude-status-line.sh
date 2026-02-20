@@ -2,8 +2,38 @@
 # Claude Code status line generator
 # Reads context from stdin and outputs formatted status line
 
+# Ensure jq is available; offer to install via brew if missing
+_ensure_jq() {
+  if command -v jq &>/dev/null; then
+    return 0
+  fi
+
+  if ! command -v brew &>/dev/null; then
+    echo "jq is necessary to use this utility, and brew is not available." >&2
+    echo "Install jq from: https://jqlang.github.io/jq/" >&2
+    return 1
+  fi
+
+  # Using printf for interactive prompt
+  printf "jq is necessary to use this utility. Would you like me to install it for you? (yes/no): " >&2
+  read -r response
+
+  if [[ "$response" == "yes" || "$response" == "y" ]]; then
+    brew install jq || {
+      echo "Failed to install jq." >&2
+      return 1
+    }
+    return 0
+  else
+    echo "Sorry, this script cannot be installed without jq being available."
+    return 1
+  fi
+}
+
 # Handle --install flag
 if [ "$1" = "--install" ]; then
+    _ensure_jq || exit 1
+
     script_path="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
     settings="$HOME/.claude/settings.json"
 

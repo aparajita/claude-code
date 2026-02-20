@@ -10,7 +10,7 @@
 #   WORKTREE_TYPES=(feature fix refactor migration chore spike)
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.1.0"
+_WT_VERSION="1.2.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -42,6 +42,50 @@ _wt_check_deps() {
     ok=false
   fi
   [[ "$ok" == true ]]
+}
+
+# Ensure required dependencies are available; offer to install via brew if missing
+_wt_ensure_dependencies() {
+  local required_deps=("jq" "gum")
+  local missing_deps=()
+
+  for dep in "${required_deps[@]}"; do
+    if ! command -v "$dep" &>/dev/null; then
+      missing_deps+=("$dep")
+    fi
+  done
+
+  # If all dependencies are present, return success
+  if [[ ${#missing_deps[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  # Check if brew is available
+  if ! command -v brew &>/dev/null; then
+    echo "The following tools are required but not found:" >&2
+    for dep in "${missing_deps[@]}"; do
+      echo "  - $dep" >&2
+    done
+    echo "Install them from: https://brew.sh" >&2
+    return 1
+  fi
+
+  # Ask user if they want to install missing dependencies
+  local deps_list
+  deps_list=$(printf '%s\n' "${missing_deps[@]}" | tr '\n' ' ' | sed 's/ $//')
+
+  if gum confirm "The following tools are necessary: $deps_list. Would you like me to install them for you?"; then
+    for dep in "${missing_deps[@]}"; do
+      brew install "$dep" || {
+        echo "Failed to install $dep." >&2
+        return 1
+      }
+    done
+    return 0
+  else
+    echo "Exiting, the following tools are required: $deps_list"
+    return 1
+  fi
 }
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -220,6 +264,8 @@ _wt_detect_context() {
 # ── MCP server copy ───────────────────────────────────────────────────────────
 
 _wt_copy_mcp_servers() {
+  _wt_ensure_dependencies || return 1
+
   local project_dir="$1" worktree_path="$2"
   shift 2
   local selected_servers=("$@")
@@ -405,6 +451,7 @@ _wt_cmd_create() {
   local mcp_copy_succeeded=false
   local serena_copied=false
   if [[ -f "$HOME/.claude.json" ]]; then
+    _wt_ensure_dependencies || return 1
     local mcp_json
     mcp_json=$(jq --arg project "$root" '.projects[$project].mcpServers // {}' \
       "$HOME/.claude.json" 2>/dev/null)
