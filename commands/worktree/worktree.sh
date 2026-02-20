@@ -10,7 +10,7 @@
 #   WORKTREE_TYPES=(feature fix refactor migration chore spike)
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.0.0"
+_WT_VERSION="1.1.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -70,9 +70,26 @@ _wt_load_settings() {
   [[ -f "$settings" ]] && source "$settings"
 }
 
+# ── Settings save ─────────────────────────────────────────────────────────────
+
+# Write or update a single KEY=VALUE line in ~/.worktree-settings.
+_wt_save_setting() {
+  local key="$1" value="$2"
+  local settings="$HOME/.worktree-settings"
+  if [[ -f "$settings" ]] && grep -q "^${key}=" "$settings"; then
+    local tmp
+    tmp=$(mktemp)
+    sed "s|^${key}=.*|${key}=${value}|" "$settings" > "$tmp" && mv "$tmp" "$settings"
+  else
+    printf '%s=%s\n' "$key" "$value" >> "$settings"
+  fi
+}
+
 # ── Step mode ─────────────────────────────────────────────────────────────────
 # Set by --step flag. When true, _wt_step pauses after each git operation.
 _WT_STEP=false
+# Set by --claude flag. When true, opens Claude Code after worktree creation.
+_WT_CLAUDE=false
 
 # Print what's about to happen (always), then pause if --step is active.
 # Call this BEFORE the corresponding git/cd command.
@@ -80,6 +97,7 @@ _WT_STEP=false
 _wt_step() {
   printf '\033[32m✓ %s\033[0m\n' "$1"
   [[ "$_WT_STEP" != true ]] && return 0
+  echo ""
   gum confirm "Continue?" --affirmative "Continue" --negative "Stop" || {
     echo "Stopped." >&2
     return 1
@@ -95,6 +113,18 @@ _wt_slugify() {
 
 _wt_project_root() {
   git rev-parse --show-toplevel 2>/dev/null
+}
+
+# If the given directory contains a .idea folder, prompt the user to close the
+# JetBrains project before proceeding (so the IDE doesn't lock files during
+# worktree removal).
+_wt_check_jetbrains() {
+  local dir="$1"
+  if [[ -d "$dir/.idea" ]]; then
+    local display_path="${dir/#$HOME/~}"
+    printf 'Please close the JetBrains project at %s. Press Enter when done.' "$display_path"
+    read -r
+  fi
 }
 
 # Output one tab-separated line per worktree: path<TAB>branch<TAB>head<TAB>locked
@@ -249,10 +279,14 @@ _wt_cmd_create() {
   [[ $# -gt 0 ]] && shift
   local description="$*"
 
+  local _printed_blank=false
+
   # Prompt for type if not given
   if [[ -z "$type" ]]; then
+    echo ""
+    _printed_blank=true
     local type_options=("${WORKTREE_TYPES[@]}" other)
-    type=$(printf '%s\n' "${type_options[@]}" | gum choose --header "Select worktree type")
+    type=$(printf '%s\n' "${type_options[@]}" | gum choose --header "Select worktree type:")
     [[ -z "$type" ]] && return 0
   fi
 
@@ -263,6 +297,7 @@ _wt_cmd_create() {
 
   # Prompt for description if not given
   if [[ -z "$description" ]]; then
+    [[ "$_printed_blank" == false ]] && echo ""
     description=$(gum input --placeholder "Describe the worktree")
     [[ -z "$description" ]] && return 0
   fi
@@ -280,34 +315,41 @@ _wt_cmd_create() {
   slug=$(_wt_slugify "$description")
   local branch="${type}/${slug}"
   local worktree_dir
-  worktree_dir=$(python3 -c "
-import os, sys
-root, name = sys.argv[1], sys.argv[2]
-print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
-" "$root" "$project_name")
+  worktree_dir="$(cd "$root/.." 2>/dev/null && pwd)/${project_name}-worktrees"
   local worktree_path="${worktree_dir}/${type}-${slug}"
 
-  # Validate: branch must not already exist
+  # If branch already exists, ask to overwrite
   if git -C "$root" rev-parse --verify "refs/heads/$branch" &>/dev/null; then
-    echo "worktree: branch '$branch' already exists" >&2
-    return 1
+    if ! gum confirm "Branch '$branch' already exists. Overwrite it?"; then
+      return 0
+    fi
+    git -C "$root" branch -D "$branch"
+  fi
+
+  # Check if worktree directory already exists
+  if [[ -d "$worktree_path" ]]; then
+    if ! gum confirm "Directory '${worktree_path##*/}' already exists. Overwrite it?"; then
+      return 0
+    fi
+    _wt_check_jetbrains "$worktree_path"
+    rm -rf "$worktree_path"
   fi
 
   # Check for uncommitted changes
   local copy_changes=false
   if [[ -n "$(git -C "$root" status --porcelain 2>/dev/null)" ]]; then
     local changes_action
-    changes_action=$(printf '%s\n' "Copy changes to worktree" "Create without changes" "Cancel" | \
-      gum choose --header "You have uncommitted changes.")
+    changes_action=$(printf '%s\n' "Yes" "No" "Cancel" | \
+      gum choose --header "There are untracked/uncommitted changes. Copy them to the worktree?")
     case "$changes_action" in
-      "Copy changes to worktree")
+      "Yes")
         copy_changes=true
         _wt_step "Stashing uncommitted changes (will restore immediately)" || return 1
         git -C "$root" stash --include-untracked
         git -C "$root" stash apply
         ;;
-      "Create without changes")
-        : # proceed
+      "No")
+        : # proceed without stashing
         ;;
       *)
         return 0  # Cancel or Esc
@@ -329,9 +371,11 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
     base_branch=$(printf '%s\n' "$branch_list" | tr -d ' ')
     echo "Using base branch: $base_branch"
   elif [[ "$num_branches" -le 10 ]]; then
+    echo ""
     base_branch=$(printf '%s\n' "$branch_list" | gum choose --header "Select base branch")
     [[ -z "$base_branch" ]] && { [[ "$copy_changes" == true ]] && git -C "$root" stash drop; return 0; }
   else
+    echo ""
     base_branch=$(printf '%s\n' "$branch_list" | gum filter --header "Select base branch (type to filter)")
     [[ -z "$base_branch" ]] && { [[ "$copy_changes" == true ]] && git -C "$root" stash drop; return 0; }
   fi
@@ -380,6 +424,7 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
       local selected=("${always_copy[@]}")
       if [[ ${#optional[@]} -gt 0 ]]; then
         local chosen_str
+        echo ""
         chosen_str=$(printf '%s\n' "${optional[@]}" | \
           gum choose --no-limit --header "Select MCP servers to copy to the new worktree")
         while IFS= read -r s; do
@@ -405,8 +450,16 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
     local open_ide=false
     if [[ "$serena_copied" == true && "$mcp_copy_succeeded" == true ]]; then
       open_ide=true
-    elif gum confirm "Open worktree in JetBrains IDE?" --negative "Cancel"; then
+    elif [[ "${OPEN_JETBRAINS_IDE:-}" == "true" ]]; then
       open_ide=true
+    elif [[ "${OPEN_JETBRAINS_IDE:-}" != "false" ]]; then
+      echo ""
+      if gum confirm "Open worktree in JetBrains IDE?" --affirmative "Yes" --negative "No"; then
+        open_ide=true
+      fi
+      if gum confirm "Save this choice as a preference?" --affirmative "Yes" --negative "No"; then
+        _wt_save_setting "OPEN_JETBRAINS_IDE" "$open_ide"
+      fi
     fi
     if [[ "$open_ide" == true ]]; then
       idea "$worktree_path" 2>/dev/null || echo "Warning: 'idea' command not found; open manually." >&2
@@ -422,6 +475,54 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
   echo "  Path:     $worktree_path"
   echo "  Branch:   $branch"
   echo "  Based on: $base_branch"
+
+  # Open Claude Code
+  local open_claude=false
+  if [[ "$_WT_CLAUDE" == true ]]; then
+    open_claude=true
+  elif [[ "${OPEN_CLAUDE:-}" == "true" ]]; then
+    open_claude=true
+  elif [[ "${OPEN_CLAUDE:-}" == "false" ]]; then
+    open_claude=false
+  else
+    # No saved preference — ask
+    echo ""
+    if gum confirm "Open Claude Code?" --affirmative "Yes" --negative "No"; then
+      open_claude=true
+    fi
+    if gum confirm "Save this choice as a preference?" --affirmative "Yes" --negative "No"; then
+      _wt_save_setting "OPEN_CLAUDE" "$open_claude"
+    fi
+  fi
+
+  if [[ "$open_claude" == true ]]; then
+    claude
+
+    # After Claude exits, check for new commits since the base branch
+    local commits_since_base
+    commits_since_base=$(git -C "$worktree_path" log --oneline "${base_branch}..HEAD" 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$commits_since_base" -gt 0 ]]; then
+      echo ""
+      local post_claude_action
+      post_claude_action=$(printf '%s\n' "Merge" "Abort" "Cancel" | \
+        gum choose --header "Merge changes into '$base_branch', or abort this worktree?")
+      case "$post_claude_action" in
+        "Merge") _wt_cmd_merge ;;
+        "Abort") _wt_cmd_abort ;;
+        *)       ;;  # Cancel or Esc — leave worktree as-is
+      esac
+    else
+      echo ""
+      local post_claude_action
+      post_claude_action=$(printf '%s\n' "Yes" "Leave it" | \
+        gum choose --header "No commits were made. Abort this worktree?")
+      case "$post_claude_action" in
+        "Yes") _wt_cmd_abort ;;
+        *)     ;;  # Leave it or Esc
+      esac
+    fi
+  fi
 }
 
 # ── Command: merge ────────────────────────────────────────────────────────────
@@ -435,6 +536,8 @@ _wt_cmd_merge() {
   local target_branch="$_wt_target_branch"
   local main_path="$_wt_main_path"
   local main_branch="$_wt_main_branch"
+
+  _wt_check_jetbrains "$target_path"
 
   if [[ -z "$target_branch" ]]; then
     echo "worktree: cannot merge a worktree in detached HEAD state" >&2
@@ -488,20 +591,10 @@ _wt_cmd_merge() {
   # Cleanup: remove worktree files
   _wt_step "Removing worktree directory $target_path" || return 1
   git worktree remove --force "$target_path" 2>/dev/null
-  python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$target_path" 2>/dev/null
+  rm -rf "$target_path" 2>/dev/null
 
-  # Handle JetBrains lock: prompt if directory still exists with .idea/
   if [[ -d "$target_path" ]]; then
-    if [[ -d "$target_path/.idea" ]]; then
-      if gum confirm \
-        "JetBrains has the project open. Close it in your IDE, then continue." \
-        --affirmative "Continue" --negative "Skip cleanup"; then
-        python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$target_path" 2>/dev/null
-      fi
-    fi
-    if [[ -d "$target_path" ]]; then
-      echo "Warning: Could not remove $target_path — please delete it manually." >&2
-    fi
+    echo "Warning: Could not remove $target_path — please delete it manually." >&2
   fi
 
   # Delete the branch
@@ -534,6 +627,8 @@ _wt_cmd_abort() {
   if ! gum confirm "Permanently delete worktree and branch '$branch_display'?"; then
     return 0
   fi
+
+  _wt_check_jetbrains "$target_path"
 
   # Remove worktree (try without --force first, then with)
   _wt_step "Removing worktree directory $target_path" || return 1
@@ -670,7 +765,7 @@ _wt_cmd_switch() {
 
 # ── Command: cleanup ──────────────────────────────────────────────────────────
 
-_wt_cmd_cleanup() {
+_wt_cmd_clean() {
   local root
   root=$(_wt_project_root)
   if [[ -z "$root" ]]; then
@@ -695,15 +790,27 @@ _wt_cmd_cleanup() {
   local found_issues=false
 
   # ── 1. Stale git worktree registrations (directory missing) ─────────────────
-  local prune_output
-  prune_output=$(git -C "$main_path" worktree prune --dry-run 2>/dev/null)
-  if [[ -n "$prune_output" ]]; then
+  local -a stale_entries=()
+  while IFS=$'\t' read -r wt_path branch head locked; do
+    [[ "$wt_path" == "$main_path" ]] && continue
+    [[ -d "$wt_path" ]] && continue
+    stale_entries+=("${branch}	${wt_path}")
+  done <<< "$wt_data"
+
+  if [[ ${#stale_entries[@]} -gt 0 ]]; then
     found_issues=true
     echo "Stale worktree registrations (directory no longer exists):"
-    printf '%s\n' "$prune_output" | sed 's/^/  /'
+    for entry in "${stale_entries[@]}"; do
+      local b="${entry%%	*}" p="${entry##*	}"
+      echo "  ${b:-<detached>}  ($p)"
+    done
     echo ""
-    if gum confirm "Run 'git worktree prune' to remove stale registrations?"; then
+    if gum confirm "Prune stale registrations and delete their branches?"; then
       git -C "$main_path" worktree prune
+      for entry in "${stale_entries[@]}"; do
+        local b="${entry%%	*}"
+        [[ -n "$b" ]] && git -C "$main_path" branch -D "$b" 2>/dev/null
+      done
       echo "Pruned stale registrations."
       echo ""
     fi
@@ -730,10 +837,11 @@ _wt_cmd_cleanup() {
     local cwd_removed=false
     for entry in "${merged_entries[@]}"; do
       local branch="${entry%%	*}" wt_path="${entry##*	}"
+      echo ""
       if gum confirm "Remove worktree and delete branch '$branch'?"; then
         _wt_step "Removing worktree directory $wt_path" || return 1
         git -C "$main_path" worktree remove --force "$wt_path" 2>/dev/null
-        python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$wt_path" 2>/dev/null
+        rm -rf "$wt_path" 2>/dev/null
         _wt_step "Deleting branch $branch" || return 1
         git -C "$main_path" branch -d "$branch" 2>/dev/null
         echo "Removed: $wt_path, deleted branch: $branch"
@@ -751,11 +859,7 @@ _wt_cmd_cleanup() {
   local project_name
   project_name=$(basename "$main_path")
   local worktree_base
-  worktree_base=$(python3 -c "
-import os, sys
-root, name = sys.argv[1], sys.argv[2]
-print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
-" "$main_path" "$project_name" 2>/dev/null)
+  worktree_base="$(cd "$main_path/.." 2>/dev/null && pwd)/${project_name}-worktrees"
 
   if [[ -d "$worktree_base" ]]; then
     # Collect registered worktree paths (excluding main)
@@ -783,8 +887,10 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
       done
       echo ""
       for dir in "${orphans[@]}"; do
+        echo ""
         if gum confirm "Remove orphaned directory '${dir##*/}'?"; then
-          python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$dir" 2>/dev/null
+          _wt_check_jetbrains "$dir"
+          rm -rf "$dir" 2>/dev/null
           echo "Removed: $dir"
         fi
       done
@@ -794,6 +900,7 @@ print(os.path.abspath(os.path.join(root, '..', name + '-worktrees')))
 
   if [[ "$found_issues" == false ]]; then
     echo "No worktree issues found. Everything looks clean."
+    echo ""
   fi
 }
 
@@ -827,7 +934,7 @@ MANAGING
     If run from main, presents a list to choose from.
     Example: worktree merge
 
-  cleanup
+  clean (alias: cleanup)
     Find and remove worktree leftovers. Checks three things:
       1. Stale git registrations — worktrees git tracks but whose
          directories no longer exist on disk. Offers to prune them.
@@ -837,7 +944,7 @@ MANAGING
       3. Orphaned directories — directories in the worktree base
          folder that aren't registered with git. Offers to delete.
     Each item requires individual confirmation before removal.
-    Example: worktree cleanup
+    Example: worktree clean
 
 NAVIGATING
 ──────────
@@ -856,6 +963,11 @@ FLAGS
     Useful for verifying changes step by step.
     Example: worktree --step merge
 
+  --claude
+    Open Claude Code in the new worktree immediately after creation.
+    Overrides the OPEN_CLAUDE preference in ~/.worktree-settings.
+    Example: worktree --claude create feature my-feature
+
 HELP AND INFO
 ─────────────
   -h | --help
@@ -871,6 +983,7 @@ SETUP
 
   Optional settings in ~/.worktree-settings:
     WORKTREE_TYPES=(feature fix refactor migration chore spike)
+    OPEN_CLAUDE=true|false   (set automatically when prompted after create)
 
 TIPS
 ────
@@ -892,21 +1005,26 @@ _wt_cmd_version() {
 _wt_check_deps || return 1
 
 # Parse global flags
-while [[ "${1:-}" == "--step" ]]; do
-  _WT_STEP=true; shift
+while true; do
+  case "${1:-}" in
+    --step)   _WT_STEP=true;   shift ;;
+    --claude) _WT_CLAUDE=true; shift ;;
+    *) break ;;
+  esac
 done
 
 _wt_cmd="${1:-create}"
 [[ $# -gt 0 ]] && shift
 
 # Normalize aliases
-[[ "$_wt_cmd" == "start" ]] && _wt_cmd="create"
+[[ "$_wt_cmd" == "start" ]]   && _wt_cmd="create"
+[[ "$_wt_cmd" == "cleanup" ]] && _wt_cmd="clean"
 
 case "$_wt_cmd" in
   create)  _wt_cmd_create "$@" ;;
   merge)   _wt_cmd_merge ;;
   abort)   _wt_cmd_abort ;;
-  cleanup) _wt_cmd_cleanup ;;
+  clean)   _wt_cmd_clean ;;
   list)    _wt_cmd_list ;;
   switch)  _wt_cmd_switch "$@" ;;
   -h|--help) _wt_cmd_help ;;
