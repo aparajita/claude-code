@@ -11,7 +11,7 @@ This document covers how plans are organized in directories, including subdirect
 - Master plan `layout-engine.md` → creates `plans/layout-engine/` subdirectory
 - Master and all sub-plans live in the same subdirectory: `plans/layout-engine/layout-engine.md`, `plans/layout-engine/sub-plan-1.md`, etc.
 - Completed plans mirror this structure: `plans/completed/layout-engine/sub-plan-1.md`
-- **Backward compatible**: Existing flat plans continue to work; use `--nested` flag to immediately nest new plans
+- **Backward compatible**: Existing flat plans continue to work; use `--flat` flag to create new flat plans
 
 ### Category Subdirectories
 

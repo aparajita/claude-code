@@ -4,36 +4,13 @@
 name: plan-manager
 description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
 argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, add, complete, merge, archive, block, unblock, status, audit, overview, organize, normalize, rename, config [--edit], switch, list-masters, help, version
-allowed-tools: Bash(git:*), Bash(commands/plan-manager/bin/pm-state:*), Bash(commands/plan-manager/bin/pm-files:*), Bash(commands/plan-manager/bin/pm-md:*), Bash(commands/plan-manager/bin/pm-settings:*), Read, Glob, Write, Edit, AskUserQuestion
+allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
-
-## Scripts
-
-This skill includes bash helper scripts that handle all mechanical file I/O, JSON state mutations, and markdown transformations. Claude handles natural language parsing, decisions, and user interactions; the scripts handle everything else.
-
-**Script location**: `{skill-dir}/bin/` where `{skill-dir}` is the directory containing this SKILL.md file (i.e., `commands/plan-manager/`).
-
-| Script | Purpose |
-|--------|---------|
-| `bin/pm-state` | JSON state file management (read, write, query, update) |
-| `bin/pm-files` | Filesystem operations (move, archive, scan, promote/flatten) |
-| `bin/pm-md` | Markdown operations (extract phases, update icons, dashboard) |
-| `bin/pm-settings` | Load and merge user + project settings |
-
-**Invocation**: Always invoke scripts using their relative path from the project root:
-```bash
-commands/plan-manager/bin/pm-state get-active-master
-commands/plan-manager/bin/pm-files promote-master --master plans/foo.md --plans-dir plans
-commands/plan-manager/bin/pm-md extract-phases --file plans/master.md
-commands/plan-manager/bin/pm-settings load
-```
-
-All scripts output JSON on success. Errors print to stderr and exit non-zero.
 
 ## Overview
 
 This skill maintains a single source of truth (master plan) while supporting two types of linked plans:
-- **Sub-plans**: For implementing phases that need substantial planning (either pre-planned or created during execution)
+- **Sub-plans**: For implementing phases that need substantial planning
 - **Branches**: For handling unexpected issues/problems discovered during execution
 
 All sub-plans and branches are bidirectionally linked to the master plan.
@@ -51,7 +28,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 
 ### Working with Plans
 - **branch** <phase> [--master <path>] — Create a branch for handling issues
-- **sub-plan** <phase> [--master <path>] [--pre-planned] — Create a sub-plan for implementing a phase
+- **sub-plan** <phase> [--master <path>] — Create a sub-plan for implementing a phase
 - **capture** [file] [--phase N] [--master <path>] — Link an existing plan to a master
 - **add** [file] [--phase N] [--master <path>] — Context-aware: add as master plan or link to phase
 - **complete** <file-or-phase-or-range> [step] — Mark a plan/phase/range as complete, or a step within a sub-plan

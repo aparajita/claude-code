@@ -126,7 +126,6 @@ Created for implementing a phase that needs substantial planning:
 **Type:** Sub-plan  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Created:** {date}  <br>
-**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress  <br>
 **BlockedBy:** —
 
@@ -157,7 +156,6 @@ When capturing an existing plan as a sub-plan:
 **Type:** Sub-plan  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
 **Captured:** {date}  <br>
-**Pre-planned:** {Yes/No}  <br>
 **Status:** In Progress  <br>
 **BlockedBy:** —
 

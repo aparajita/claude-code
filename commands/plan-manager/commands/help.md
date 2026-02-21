@@ -1,5 +1,15 @@
 # Command: help
 
+## Usage
+
+```
+help
+```
+
+Display command reference with descriptions and examples.
+
+## Output
+
 Output the following verbatim, with no preamble or added commentary:
 
 ```
@@ -27,7 +37,7 @@ WORKING WITH PLANS
 
   sub-plan <phase> (also: subplan)
     Create a sub-plan for implementing a phase
-    Options: --master <path>, --pre-planned
+    Options: --master <path>
     Example: /plan-manager sub-plan 3
 
   capture [file]

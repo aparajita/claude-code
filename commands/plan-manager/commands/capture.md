@@ -11,25 +11,28 @@ Retroactively link an existing plan that was created during tangential discussio
 ## Steps
 
 **Context-aware mode** (no file specified):
-1. Look at recent conversation context to identify the plan file that was just created.
-2. If multiple candidates or none found, ask the user which file to capture.
-3. Proceed to linking.
+1. Look at recent conversation context to identify the plan file that was just created
+2. If multiple candidates or none found, ask the user which file to capture
+3. Proceed to linking
 
 **Explicit mode** (file specified):
-1. Validate the file exists.
+1. Validate the file exists
 
 **For both modes:**
-
-1. **Detect plans directory and active master**:
-   ```bash
-   PLANS_DIR=$(commands/plan-manager/bin/pm-state get-plans-dir)
-   MASTER=$(commands/plan-manager/bin/pm-state get-active-master)
-   # or use --master if provided
-   ```
-
-2. **If `--phase N` not provided**, ask which phase this relates to (read phases from master via `pm-md extract-phases --file "$MASTER"`).
-
-3. **Ask plan type** using **AskUserQuestion**:
+1. **Detect plans directory root**:
+   - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field
+   - If not found, try reading `.claude/plan-manager-state.json`, look for `plansDirectory` field
+   - If not found, auto-detect by checking these directories (use first that exists with .md files):
+     - `plans/` (relative to project root)
+     - `docs/plans/` (relative to project root)
+     - `.plans/` (relative to project root)
+   - **CRITICAL**: All plan paths are relative to the project root, NOT to `~/.claude/`
+   - **CRITICAL**: Never use `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
+   - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps
+2. If `--phase N` not provided, ask which phase this relates to
+3. Read the state file to get master plan path (use active master, or specified via --master)
+4. **Ask plan type** using **AskUserQuestion**:
    ```
    Question: "What type of plan is this?"
    Header: "Plan type"
@@ -39,28 +42,21 @@ Retroactively link an existing plan that was created during tangential discussio
      - Label: "Branch"
        Description: "Handles an unexpected issue or problem discovered during execution"
    ```
-
-4. **If sub-plan type selected**, ask if pre-planned using **AskUserQuestion**:
-   ```
-   Question: "Was this sub-plan pre-planned or created during execution?"
-   Header: "Planning timing"
-   Options:
-     - Label: "During execution (Recommended)"
-       Description: "Created just-in-time when starting work on this phase"
-     - Label: "Pre-planned"
-       Description: "Created upfront during initial planning phase"
-   ```
-
 5. **Detect if plan has a random/meaningless name**:
-   ```bash
-   commands/plan-manager/bin/pm-md detect-random-name --filename "$(basename $FILE)"
-   ```
-   If `random` is true, proceed to step 6. If meaningful name, skip to step 7.
+   - Check if filename matches random name patterns:
+     - `{adjective}-{adjective}-{noun}.md` (e.g., magical-moseying-swing.md, lexical-puzzling-emerson.md)
+     - `{word}-{word}-{word}.md` with no semantic connection to content
+     - Generic names like `plan-1.md`, `new-plan.md`, `untitled.md`
+   - If random name detected, proceed to step 7
+   - If meaningful name, skip to step 8
 
-6. **Suggest meaningful rename** (only if random name detected):
-   - Read the plan content to understand what it's about.
-   - Analyze the phase description and title from the master plan.
-   - Generate 2-3 meaningful filename suggestions.
+7. **Suggest meaningful rename** (only if random name detected):
+   - Read the plan content to understand what it's about
+   - Analyze the phase description and title from the master plan
+   - Generate 2-3 meaningful filename suggestions based on:
+     - The plan's title/heading
+     - Key topics and keywords
+     - Parent phase context (e.g., `phase2-{topic}.md` or `{phase-title-slug}.md`)
    - Use **AskUserQuestion** to confirm:
      ```
      Question: "This plan has a random name. Suggest a better name?"
@@ -73,68 +69,63 @@ Retroactively link an existing plan that was created during tangential discussio
        - Label: "Keep current name"
          Description: "Don't rename, keep {current-name}.md"
      ```
-   - If user chooses to rename, store the new name for the move step.
+   - If user chooses to rename, store the new name for use in subsequent steps
+   - The rename will happen during the move in step 8
 
-7. **Move to subdirectory if needed**:
-   - Check master's `subdirectory` field in state.
-   - If master is already in a subdirectory and captured plan is not in it:
-     ```bash
-     commands/plan-manager/bin/pm-files move-to-subdir \
-       --file "$FILE" \
-       --subdirectory "$(pm-state read | jq -r '.masterPlans[] | select(.active) | .subdirectory')" \
-       --plans-dir "$PLANS_DIR" \
-       [--rename "new-name.md"]   # if user chose a rename
-     ```
-   - If master is flat — this is the first sub-plan, so promote:
-     ```bash
-     commands/plan-manager/bin/pm-files promote-master --master "$MASTER" --plans-dir "$PLANS_DIR"
-     ```
-     Then move the captured plan to the new subdirectory:
-     ```bash
-     commands/plan-manager/bin/pm-files move-to-subdir \
-       --file "$FILE" --subdirectory "<baseName>" --plans-dir "$PLANS_DIR" [--rename "new-name.md"]
-     ```
-   - Update all references to old path:
-     ```bash
-     commands/plan-manager/bin/pm-md update-links --file "$MASTER" --old "$OLD_PATH" --new "$NEW_PATH"
-     ```
+8. **Move to subdirectory if needed**:
+   - Use the plans directory detected in step 1
+   - Check master plan's `subdirectory` field in the state file
+   - If master plan is already in a subdirectory and captured plan is not in it:
+     - Move and optionally rename the plan to: `{plansDirectory}/{subdirectory}/{new-or-current-name}.md`
+     - Example: Move from `plans/magical-moseying-swing.md` to `plans/smufl-rewrite/smufl-phase2.md`
+   - If master plan is flat (`subdirectory: null`) — this is the first sub-plan, so promote:
+     - Extract base name from master filename (e.g., `legacy-plan.md` → `legacy-plan`)
+     - Create subdirectory: `{plansDirectory}/legacy-plan/`
+     - Move master plan into it: `{plansDirectory}/legacy-plan.md` → `{plansDirectory}/legacy-plan/legacy-plan.md`
+     - Move (and optionally rename) the captured plan to: `{plansDirectory}/legacy-plan/{new-or-current-name}.md`
+     - Update the state file: set master `path` to new location and `subdirectory` to `"legacy-plan"`
+   - **CRITICAL**: Never move plans to or from `~/.claude/plans/` - all operations should be within the project plans directory
+   - Update all references to the old path (in state file, master plan links, etc.)
 
-8. **Add parent reference to the plan** (prepend if not present):
-   ```bash
-   commands/plan-manager/bin/pm-md add-parent-header \
-     --file "$NEW_PATH" \
-     --type "Sub-plan"   # or "Branch"
-     --parent "$MASTER" \
-     --phase <N> \
-     [--pre-planned true]   # if sub-plan and pre-planned
-   ```
+9. **Normalize the plan and add parent reference**:
+   - Follow the **normalize command** steps with `--type {sub-plan|branch}`, `--phase N`, `--master {master-path}`
+   - Skip normalize's type-detection step (type is already known from step 4) and its tracking-offer step (capture handles linking)
+   - This ensures the file has standard `## ⏳ Step N:` or `## ⏳ Phase N:` headings and the correct header block:
 
-9. **Update the master plan**:
-   - Update phase icon:
-     ```bash
-     commands/plan-manager/bin/pm-md update-phase-icon --file "$MASTER" --phase <N> \
-       --icon "$([ "$type" = "Sub-plan" ] && echo "📋" || echo "🔀")"
-     ```
-   - Update dashboard row:
-     ```bash
-     commands/plan-manager/bin/pm-md update-dashboard-row --file "$MASTER" --phase <N> \
-       --status "$([ "$type" = "Sub-plan" ] && echo "📋 Sub-plan" || echo "🔀 Branch")" \
-       --subplan-link "[$(basename $NEW_PATH)](./$filename)"
-     ```
-   - Add link to the plan in the phase section (Edit the file directly).
+**For sub-plans:**
+```markdown
+**Type:** Sub-plan  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
 
-10. **Update state file**:
-    ```bash
-    commands/plan-manager/bin/pm-state add-subplan \
-      --path "$NEW_PATH" \
-      --parent-plan "$MASTER" \
-      --phase <N> \
-      --type "$([ "$type" = "Sub-plan" ] && echo "sub-plan" || echo "branch")" \
-      [--pre-planned]   # if sub-plan and pre-planned
-    ```
+---
 
-11. **Confirm based on type**:
-    - Sub-plan (renamed): `✓ Captured and renamed {old-file} → {new-file}, linked as sub-plan to Phase {N}`
-    - Sub-plan (not renamed): `✓ Captured {file} → linked as sub-plan to Phase {N}`
-    - Branch (renamed): `✓ Captured and renamed {old-file} → {new-file}, linked as branch to Phase {N}`
-    - Branch (not renamed): `✓ Captured {file} → linked as branch to Phase {N}`
+{original content}
+```
+
+**For branches:**
+```markdown
+**Type:** Branch  <br>
+**Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
+
+---
+
+{original content}
+```
+
+10. **Update the master plan**:
+   - Update the phase header icon to match the plan type (📋 for sub-plan, 🔀 for branch)
+   - Update Status Dashboard: change Status to `📋 Sub-plan` or `🔀 Branch` and add plan reference to the Sub-plan column (use the new filename if renamed)
+   - Update the Description column link anchor to match the updated phase header
+   - Update the phase section with link to the plan (use the new filename if renamed)
+11. Update state file (set type: "sub-plan" or "branch", use new path if renamed)
+12. Confirm based on type:
+   - Sub-plan (renamed): `✓ Captured and renamed {old-file} → {new-file}, linked as sub-plan to Phase {N}`
+   - Sub-plan (not renamed): `✓ Captured {file} → linked as sub-plan to Phase {N}`
+   - Branch (renamed): `✓ Captured and renamed {old-file} → {new-file}, linked as branch to Phase {N}`
+   - Branch (not renamed): `✓ Captured {file} → linked as branch to Phase {N}`

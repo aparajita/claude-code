@@ -16,7 +16,7 @@ ln -s "$(pwd)/commands/plan-manager" ~/.claude/commands/plan-manager
 
 - Track multiple master plans in parallel (for large projects with multiple initiatives)
 - Initialize and track master plans with phase-based structure
-- Create sub-plans for implementing complex phases (pre-planned or just-in-time)
+- Create sub-plans for implementing complex phases
 - Branch into plans when issues arise during implementation
 - Capture tangential plans created during work
 - Automatically link related plans together based on content analysis
@@ -49,7 +49,7 @@ Create a branch plan for handling issues
 
 **`sub-plan <phase>`**
 Create a sub-plan for implementing a phase (also accepts `subplan`)
-- Options: `--master <path>`, `--pre-planned`
+- Options: `--master <path>`
 - Example: `/plan-manager sub-plan 2`
 
 **`capture [file]`**
