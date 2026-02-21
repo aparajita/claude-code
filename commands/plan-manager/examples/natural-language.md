@@ -88,6 +88,7 @@ The plan-manager skill responds to the following natural language phrases:
 
 # Organization
 /plan-manager organize [directory]     # Auto-organize, link, and clean up plans
+/plan-manager normalize <file>         # Normalize any plan format to standard
 /plan-manager rename <file> [name]     # Rename a plan and update references
 /plan-manager audit                    # Find orphaned plans and broken links
 
@@ -135,17 +136,18 @@ Claude: *Shows text-based menu*
         ORGANIZATION
         ────────────
           15. organize     Auto-organize, link, and clean up plans
-          16. rename       Rename a plan and update all references
-          17. audit        Find orphaned plans and broken links
+          16. normalize    Normalize any plan format to standard format
+          17. rename       Rename a plan and update all references
+          18. audit        Find orphaned plans and broken links
 
         MULTI-MASTER
         ────────────
-          18. switch       Change which master plan is active
+          19. switch       Change which master plan is active
 
         HELP & INFO
         ───────────
-          19. help         Show detailed command reference and examples
-          20. version      Show plan-manager version
+          20. help         Show detailed command reference and examples
+          21. version      Show plan-manager version
 
         ══════════════════════════════════════════════════════════════
 
@@ -264,11 +266,17 @@ Audit Results:
 ⚠️  Orphaned sub-plan: plans/old-idea.md (not linked to master)
 ⚠️  Broken link: plans/deleted.md (in state but file missing)
 ⚠️  Missing back-reference: plans/tangent.md (no Parent header)
+⚠️  Invalid parentStep: plans/layout-engine/edge-cases.md references Step 5 in grid-rethink.md, but grid-rethink.md only has 3 steps
+⚠️  Orphaned nested: plans/layout-engine/deep-fix.md parent sub-plan (grid-rethink.md) no longer exists
+⚠️  Missing Master header: plans/layout-engine/edge-cases.md is nested but has no **Master:** field
+⚠️  masterPlan mismatch: plans/layout-engine/edge-cases.md state says masterPlan is "plans/other.md" but chain resolves to "plans/layout-engine/layout-engine.md"
 ✓  No stale phases detected
 
 Recommendations:
 - Run `/plan-manager capture plans/old-idea.md` to link orphan
 - Manually remove the broken entry from `.claude/plan-manager-state.json` to clean up broken links
+- Fix parentStep references by updating state or re-linking the sub-plan
+- Re-link orphaned nested sub-plans to a new parent or remove them
 ```
 
 ### Merge Command Example

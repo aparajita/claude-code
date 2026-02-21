@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-normalize <file> [--type master|sub-plan|branch] [--phase N] [--master <path>]
+normalize <file> [--type master|sub-plan|branch] [--phase N] [--step N] [--master <path>]
 ```
 
 Normalize a plan file from any format into the standard plan-manager format. Handles plans with phases, steps, milestones, tasks, numbered lists, checkboxes, or freeform sections.
@@ -97,10 +97,10 @@ Rewrite the file in place using the Write tool. Apply these transformations:
    ```markdown
    ## Status Dashboard
 
-   | Phase | Title | Status |
-   |-------|-------|--------|
-   | 1 | <title> | ⏳ Pending |
-   | 2 | <title> | ⏳ Pending |
+   | Phase | Description | Status | Sub-plan |
+   |-------|-------------|--------|----------|
+   | 1 | [<title>](#-phase-1-title) | ⏳ Pending | — |
+   | 2 | [<title>](#-phase-2-title) | ⏳ Pending | — |
    ```
 
    Use whatever status was detected for each phase (Pending/In Progress/Complete/Blocked).
@@ -110,13 +110,16 @@ Rewrite the file in place using the Write tool. Apply these transformations:
 1. Ensure a single `# Sub-plan: Title` or `# Branch: Title` h1
 2. If the `**Type:**` header block is missing, prepend it before the first content section:
    ```markdown
-   **Type:** Sub-plan
-   **Parent:** <master-path or "unknown — update with capture">
-   **Phase:** <N or "? — update with capture">
+   **Type:** Sub-plan  <br>
+   **Parent:** <master-path or "unknown — update with capture"> → Phase <N or "? — update with capture">  <br>
+   **Created:** <date>  <br>
+   **Status:** In Progress  <br>
+   **BlockedBy:** —
 
    ---
    ```
-   If `--master` and `--phase` weren't provided, use placeholder values and note them in the output.
+   If `--master` and `--phase`/`--step` weren't provided, use placeholder values and note them in the output.
+   If `--step` is provided instead of `--phase`, use `→ Step N` instead of `→ Phase N` and add a `**Master:**` field (for nested sub-plans).
 3. Remap structural headings to `## ⏳ Step N: Title` or `## ⏳ Phase N: Title` format with status icons
 4. Preserve all body content verbatim
 5. Ensure a `---` separator exists between the header block and body content

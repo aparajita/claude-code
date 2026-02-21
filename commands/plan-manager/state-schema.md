@@ -12,7 +12,7 @@ This keeps tooling metadata separate from actual plan files.
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "plansDirectory": "plans",
   "masterPlans": [
     {
@@ -35,12 +35,27 @@ This keeps tooling metadata separate from actual plan files.
       "path": "plans/layout-engine/sub-plan-1.md",
       "parentPlan": "plans/layout-engine/layout-engine.md",
       "parentPhase": 3,
+      "parentStep": null,
+      "masterPlan": "plans/layout-engine/layout-engine.md",
       "status": "in_progress",
       "createdAt": "2026-01-30",
       "type": "sub-plan",
 
       "blockedBy": [],
       "blocks": [4]
+    },
+    {
+      "path": "plans/layout-engine/edge-cases.md",
+      "parentPlan": "plans/layout-engine/sub-plan-1.md",
+      "parentPhase": null,
+      "parentStep": 3,
+      "masterPlan": "plans/layout-engine/layout-engine.md",
+      "status": "in_progress",
+      "createdAt": "2026-01-31",
+      "type": "sub-plan",
+
+      "blockedBy": [],
+      "blocks": []
     }
   ]
 }
@@ -50,7 +65,7 @@ This keeps tooling metadata separate from actual plan files.
 
 ### Root Level
 
-- **version** (string): State file schema version (currently `"1.0.0"`). Used for schema migrations and backward compatibility if the state file format evolves in future versions.
+- **version** (string): State file schema version (currently `"1.1.0"`). This tracks the state file format independently from the skill version in `version.txt`. Used for schema migrations and backward compatibility if the state file format evolves in future versions.
 - **plansDirectory** (string): The base directory where plans are stored (e.g., `"plans"`, `"docs/plans"`)
 - **masterPlans** (array): List of tracked master plans
 - **subPlans** (array): List of all sub-plans and branches linked to master plans
@@ -66,8 +81,10 @@ This keeps tooling metadata separate from actual plan files.
 ### Sub-Plan Entry
 
 - **path** (string): Full path to the sub-plan/branch file (e.g., `"plans/layout-engine/api-redesign.md"`)
-- **parentPlan** (string): Path to the master plan this is linked to (e.g., `"plans/layout-engine/layout-engine.md"`)
-- **parentPhase** (number): Phase number in the master plan this relates to (e.g., `3`)
+- **parentPlan** (string): Path to the parent plan (master plan or another sub-plan) (e.g., `"plans/layout-engine/layout-engine.md"`)
+- **parentPhase** (number | null): Phase number in the parent master plan this relates to (e.g., `3`). Null/absent when parent is a sub-plan.
+- **parentStep** (number | null): Step number in the parent sub-plan (e.g., `3`). Set when parent is a sub-plan; null/absent when parent is a master plan. Mutually exclusive with `parentPhase`.
+- **masterPlan** (string): Path to the root master plan. Always present. Equals `parentPlan` for direct children of a master plan; points to the root for deeper nesting.
 - **status** (string): Current status - `"in_progress"`, `"completed"`, `"blocked"`, etc.
 - **createdAt** (string): ISO date when sub-plan was created (e.g., `"2026-01-30"`)
 - **type** (string): Plan type - `"sub-plan"` or `"branch"`
@@ -81,6 +98,14 @@ This keeps tooling metadata separate from actual plan files.
 
 - **merged** (boolean): Set to `true` if the sub-plan has been merged into the master plan
 - **mergedAt** (string): ISO date when the merge occurred (e.g., `"2026-01-31"`)
+
+### Validation Rules
+
+- Exactly one of `parentPhase` or `parentStep` must be non-null; the other must be `null`
+- If `parentStep` is set, `parentPlan` must be a path found in `subPlans[]`
+- If `parentPhase` is set, `parentPlan` must be a path found in `masterPlans[]`
+- `masterPlan` must always be a path found in `masterPlans[]`
+- The `parentPlan` chain must not contain cycles
 
 ## Settings File Fields
 

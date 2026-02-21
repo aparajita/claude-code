@@ -26,7 +26,8 @@ Discover and visualize all plans in the project, regardless of whether they're t
    | Classification | Detection Criteria |
    |----------------|-------------------|
    | **Master Plan** | Has phases/steps (## Phase N or ## Step N), may have Status Dashboard |
-   | **Sub-plan (linked)** | Has `**Parent:**` header pointing to a master |
+   | **Sub-plan (linked)** | Has `**Parent:**` header pointing to a master plan (→ Phase N) |
+   | **Sub-plan (nested, linked)** | Has `**Parent:**` header pointing to another sub-plan (→ Step N) and `**Master:**` header |
    | **Sub-plan (orphaned)** | Looks like a sub-plan but no Parent reference or parent doesn't exist |
    | **Standalone Plan** | Has plan structure but no phase/step hierarchy |
    | **Completed** | Has `**Status:** Completed` or all phases/steps marked ✅ |
@@ -46,8 +47,9 @@ Discover and visualize all plans in the project, regardless of whether they're t
    | **Standalone** | Doesn't match other categories |
 
 3. **Build relationship graph**:
-   - Map parent → children relationships
-   - Identify which sub-plans link to which master plans
+   - Map parent → children relationships by following `parentPlan` chains
+   - Identify which sub-plans link to which master plans (directly or through nested parents)
+   - Build the full tree: master → sub-plans → nested sub-plans (arbitrary depth)
    - Detect circular references or broken links
    - Extract blocker information from phase sections and state file
    - For blocked phases, determine what's blocking them (phases, steps, or sub-plans)
@@ -151,7 +153,7 @@ Question: "Found 2 orphaned plans, 1 completed plan, and 5 uncategorized standal
 Header: "Cleanup"
 Options:
   - Label: "Organize all"
-    Description: "Categorize standalone plans, analyze content, suggest links for related plans, then handle completed/orphaned"
+    Description: "Fix broken state, flatten solo masters, rename, categorize, link related plans, then archive completed"
   - Label: "Review individually"
     Description: "I'll show a summary of each plan and ask what to do with it one by one"
   - Label: "Move completed"

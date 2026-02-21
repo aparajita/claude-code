@@ -19,5 +19,5 @@ Plan Manager v{version}
 ## Example
 
 ```
-Plan Manager v1.9.3
+Plan Manager v1.10.0
 ```

@@ -32,7 +32,7 @@ ln -s "$(pwd)/commands/plan-manager" ~/.claude/commands/plan-manager
 
 **`init <path>`**
 Initialize or add a master plan
-- Options: `--flat`, `--description "text"`
+- Options: `--nested`, `--description "text"`
 - Example: `/plan-manager init plans/feature.md`
 
 **`config`**
@@ -84,7 +84,13 @@ Show all tracked master plans
 
 **`organize [directory]`**
 Auto-organize, link, and clean up plans
+- Options: `--nested` (skip solo master flattening)
 - Example: `/plan-manager organize`
+
+**`normalize <file>`**
+Normalize any plan format to standard format
+- Options: `--type master|sub-plan|branch`, `--phase N`, `--step N`, `--master <path>`
+- Example: `/plan-manager normalize plans/rough-plan.md`
 
 **`rename <file> [name]`**
 Rename a plan and update references
@@ -125,25 +131,7 @@ You can also use natural language:
 
 Add a PostToolUse hook to automatically convert plans created in Claude Code's plan mode into plan-manager tracked plans:
 
-**`~/.claude/hooks/init-plan-on-exit.md`**
-
-```markdown
----
-event: PostToolUse
-matcher:
-  tool: ExitPlanMode
-model: sonnet
----
-
-# Auto-initialize Plan Manager on Exit Plan Mode
-
-This hook automatically runs `/plan-manager:commands:init` when exiting plan mode,
-converting the plan into a structured plan-manager plan for tracking.
-
-\`\`\`bash
-claude /plan-manager:commands:init
-\`\`\`
-```
+Add a PostToolUse hook that triggers on `ExitPlanMode` to automatically run `/plan-manager init` on the plan file, converting it into a tracked plan-manager plan.
 
 This creates a seamless workflow: create a plan in plan mode, and it's automatically initialized in plan-manager when you exit, ready for phase tracking and sub-plan management.
 

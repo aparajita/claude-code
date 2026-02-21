@@ -20,7 +20,7 @@ Standalone plans are automatically classified into categories for organization:
 
 ```
 User: "I have a lot of migration and design docs mixed in with my plans. Can we organize them?"
-Claude: "Absolutely! Let me run the organize command."
+Claude: "Let me run the organize command."
 
 User: "/plan-manager organize"
 Claude: *Scans plans directory*
@@ -83,7 +83,7 @@ Claude: ✓ Created plans/migrations/
 
 ```
 User: "I want my migration plans to go in 'db-migrations' instead of 'migrations'"
-Claude: "No problem! Let me open the interactive configuration editor."
+Claude: "Let me open the interactive configuration editor."
 
 User: "/plan-manager config --edit"
 Claude: *Runs config command in edit mode*
@@ -213,7 +213,7 @@ Claude: *Shows current configuration*
 
 ```
 User: "I have a lot of infrastructure plans. Can I create a custom category for them?"
-Claude: "Absolutely! Use the interactive editor to add custom categories."
+Claude: "Use the interactive editor to add custom categories."
 
 User: "/plan-manager config --edit"
 Claude: *After configuring standard categories...*

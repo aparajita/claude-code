@@ -34,17 +34,18 @@ WORKING WITH PLANS
 ORGANIZATION
 ────────────
   15. organize     Auto-organize, link, and clean up plans
-  16. rename       Rename a plan and update all references
-  17. audit        Find orphaned plans and broken links
+  16. normalize    Normalize any plan format to standard format
+  17. rename       Rename a plan and update all references
+  18. audit        Find orphaned plans and broken links
 
 MULTI-MASTER
 ────────────
-  18. switch       Change which master plan is active
+  19. switch       Change which master plan is active
 
 HELP & INFO
 ───────────
-  19. help         Show detailed command reference and examples
-  20. version      Show plan-manager version
+  20. help         Show detailed command reference and examples
+  21. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 

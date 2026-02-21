@@ -30,20 +30,23 @@ GETTING STARTED
 
 WORKING WITH PLANS
 ──────────────────
-  branch <phase>
+  branch <phase-or-step>
     Create a branch plan for handling issues
-    Options: --master <path>
+    Options: --master <path>, --parent <path>
     Example: /plan-manager branch 3
+    Example: /plan-manager branch 2 --parent plans/layout-engine/grid-rethink.md
 
-  sub-plan <phase> (also: subplan)
-    Create a sub-plan for implementing a phase
-    Options: --master <path>
+  sub-plan <phase-or-step> (also: subplan)
+    Create a sub-plan for implementing a phase or step
+    Options: --master <path>, --parent <path>
     Example: /plan-manager sub-plan 3
+    Example: /plan-manager sub-plan 3 --parent plans/layout-engine/grid-rethink.md
 
   capture [file]
-    Link an existing plan to a phase
-    Options: --phase N, --master <path>
+    Link an existing plan to a phase or step
+    Options: --phase N, --step N, --parent <path>, --master <path>
     Example: /plan-manager capture plans/fix.md --phase 2
+    Example: /plan-manager capture plans/fix.md --step 3 --parent plans/grid-rethink.md
 
   add [file]
     Context-aware: add as master plan or link to phase
@@ -92,11 +95,12 @@ ORGANIZATION
 ────────────
   normalize <file>
     Normalize any plan format (milestones, tasks, checkboxes, etc.) to standard
-    Options: --type master|sub-plan|branch, --phase N, --master <path>
+    Options: --type master|sub-plan|branch, --phase N, --step N, --master <path>
     Example: /plan-manager normalize plans/rough-plan.md
 
   organize [directory]
     Auto-organize, link, and clean up plans
+    Options: --nested (skip solo nested master flattening)
     Example: /plan-manager organize
 
   rename <file> [name]
@@ -131,4 +135,5 @@ TIPS
   • Merge branch plans back into master to consolidate updates
   • Category organization keeps different plan types separated
   • Subdirectories keep master plans and sub-plans together
+  • Sub-plans can be nested: create sub-plans for steps within sub-plans
 ```

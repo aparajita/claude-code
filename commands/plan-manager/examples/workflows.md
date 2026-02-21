@@ -167,124 +167,123 @@ Claude: ✓ Moved hotfix-login.md → plans/completed/hotfix-login.md
 
 ```
 User: "Organize my plans"
-Claude: *Runs /plan-manager organize*
+Claude: *Runs /plan-manager organize — scans everything first, then presents consolidated plan*
 
-        Plans Overview: plans/
-        ═══════════════════════════════════════════════════════════
+        Organization Plan
+        ─────────────────
 
-        [... displays hierarchy ...]
+        FLATTEN (1 solo nested master)
+          plans/layout-engine/layout-engine.md → plans/layout-engine.md
 
-        Found 1 master plan nested with no sub-plans: layout-engine/
+        RENAME (1 randomly-named file)
+          abstract-floating-jenkins.md → performance-notes.md (based on content: render performance analysis)
 
-Claude: *Uses AskUserQuestion tool*
-        ┌─────────────────────────────────────────────────────────┐
-        │ Found 1 master plan nested in a subdirectory with no   │
-        │ sub-plans. Flatten it?                                  │
-        │                                                         │
-        │ ○ Flatten all (Recommended)                             │
-        │   Move each lone master plan to the plans root          │
-        │                                                         │
-        │ ○ Review individually                                   │
-        │   Ask about each master plan separately                 │
-        │                                                         │
-        │ ○ Keep nested                                           │
-        │   Leave them in their subdirectories                    │
-        └─────────────────────────────────────────────────────────┘
+        CATEGORIZE (3 standalone plans → category subdirs)
+          database-schema-v2.md  → migrations/
+          api-v3-migration.md    → migrations/
+          onboarding-guide.md    → docs/
 
-User: *Selects "Flatten all"*
-Claude: ✓ Moved layout-engine/layout-engine.md → layout-engine.md
-        ✓ Removed empty subdirectory: plans/layout-engine/
-        ✓ Updated all references
+        LINK (2 plans → parent plans)
+          performance-notes.md → Master: layout-engine.md → Phase 4: Performance Optimization
+          edge-cases.md        → Master: layout-engine.md → Phase 2: Grid Engine
 
-        BY CATEGORY (with suggested organization)
-        ──────────────────────────────────────────
-
-        📂 migrations/ (suggested)
-           📄 database-schema-v2.md — Migration plan
-           📄 api-v3-migration.md — Migration plan
-
-        📂 docs/ (suggested)
-           📄 onboarding-guide.md — Documentation
-
-        STANDALONE PLANS
-        ────────────────
-
-        📄 performance-notes.md — mentions "caching", "render optimization"
-        📄 edge-cases.md — mentions "grid", "layout edge cases"
-        📄 random-ideas.md — miscellaneous notes
+        NO ACTION (1 plan — no clear category or phase match)
+          random-ideas.md
 
 Claude: *Uses AskUserQuestion tool*
         ┌─────────────────────────────────────────────────────────┐
-        │ Found 3 standalone plans that can be organized by       │
-        │ category. Organize them?                                │
+        │ Proceed with this organization plan?                    │
         │                                                         │
-        │ ○ Organize all (Recommended)                            │
-        │   Move plans to category subdirs (migrations/, docs/)   │
+        │ ○ Apply all (Recommended)                               │
+        │   Execute every change listed above                     │
         │                                                         │
-        │ ○ Review by category                                    │
-        │   I'll show each category and you approve or skip       │
+        │ ○ Review each section                                   │
+        │   I'll walk through each category of changes and you    │
+        │   approve or skip                                       │
         │                                                         │
-        │ ○ Skip categories                                       │
-        │   Don't organize by category, move on to linking        │
+        │ ○ Cancel                                                │
+        │   Don't make any changes                                │
         └─────────────────────────────────────────────────────────┘
 
-User: *Selects "Organize all"*
-Claude: ✓ Created category subdirectories
-        ✓ Moved 2 migration plans → plans/migrations/
-        ✓ Moved 1 documentation plan → plans/docs/
-
-Claude: *Uses AskUserQuestion tool*
-        ┌─────────────────────────────────────────────────────────┐
-        │ I found 3 unlinked plans that may relate to your       │
-        │ master plan. Review my linking suggestions?            │
-        │                                                         │
-        │ ○ Review suggestions                                    │
-        │   I'll show each suggestion and you approve or reject   │
-        │                                                         │
-        │ ○ Link all                                              │
-        │   Accept all my linking suggestions without review      │
-        │                                                         │
-        │ ○ Skip linking                                          │
-        │   Don't link anything, move on to cleanup               │
-        └─────────────────────────────────────────────────────────┘
-
-User: *Selects "Review suggestions"*
-
-Claude: *Uses AskUserQuestion tool*
-        ┌─────────────────────────────────────────────────────────┐
-        │ performance-notes.md mentions "caching" and "render     │
-        │ optimization". Link to Phase 4 (Performance)?           │
-        │                                                         │
-        │ ○ Yes, link it                                          │
-        │   Add parent reference and update master plan           │
-        │                                                         │
-        │ ○ Different phase                                       │
-        │   Link to a different phase instead                     │
-        │                                                         │
-        │ ○ Skip this one                                         │
-        │   Don't link this plan                                  │
-        │                                                         │
-        │ ○ It's not a sub-plan                                   │
-        │   This is standalone documentation, not a sub-plan      │
-        └─────────────────────────────────────────────────────────┘
-
-User: *Selects "Yes, link it"*
-Claude: ✓ Linked performance-notes.md → Phase 4
-
-        [... continues for remaining plans ...]
-
+User: *Selects "Apply all"*
 Claude: Organization Complete
         ─────────────────────
 
-        ✓ Linked 2 plans to master:
-          • performance-notes.md → Phase 4
-          • edge-cases.md → Phase 2
+        ✓ Flattened 1 solo nested master:
+          • plans/layout-engine/layout-engine.md → plans/layout-engine.md
 
-        ⚠️ 1 plan left unlinked (marked as standalone):
+        ✓ Renamed 1 plan:
+          • abstract-floating-jenkins.md → performance-notes.md
+
+        ✓ Organized by category:
+          • 2 migration plans → migrations/
+          • 1 documentation plan → docs/
+
+        ✓ Linked 2 plans to parent plans:
+          • performance-notes.md → Master: layout-engine.md → Phase 4
+          • edge-cases.md → Master: layout-engine.md → Phase 2
+
+        ⚠️ 1 plan left unchanged (no clear category or phase match):
           • random-ideas.md
 
         Current state:
-        ├── Master plans: 1 active
+        ├── Master plans: 1 active (flat)
         ├── Linked sub-plans: 5
-        └── Standalone: 1
+        ├── Category-organized: 3
+        └── Unlinked: 1
+```
+
+## Creating Nested Sub-plans
+
+```
+User: "/plan-manager sub-plan 3"
+Claude: *Creates plans/layout-engine/grid-rethink.md for Phase 3*
+        ✓ Created sub-plan: plans/layout-engine/grid-rethink.md (for Phase 3 implementation)
+
+User: *Works on grid-rethink.md, which has 4 steps*
+User: "Step 2 of the grid rethink needs its own detailed plan"
+
+User: "/plan-manager sub-plan 2 --parent plans/layout-engine/grid-rethink.md"
+Claude: What's this sub-plan about?
+User: "Edge case handling for nested grids"
+Claude: ✓ Created sub-plan: plans/layout-engine/nested-grid-edges.md (for Step 2 of grid-rethink.md)
+
+        *File created with:*
+        **Parent:** plans/layout-engine/grid-rethink.md → Step 2
+        **Master:** plans/layout-engine/layout-engine.md
+
+        *grid-rethink.md updated:*
+        2. 📋 Handle nested grid edge cases
+           > Sub-plan: [nested-grid-edges.md](./nested-grid-edges.md)
+
+User: "/plan-manager status"
+Claude: Master Plan: plans/layout-engine/layout-engine.md (ACTIVE)
+        Subdirectory: layout-engine/
+
+        Phase 1: ✅ Complete
+        Phase 2: 🔄 In Progress
+        Phase 3: 📋 Sub-plan
+          └─ grid-rethink.md (Sub-plan - In Progress)
+             Step 2: 📋 Sub-plan
+               └─ nested-grid-edges.md (Sub-plan - In Progress)
+        Phase 4: ⏳ Pending
+        Phase 5: ⏳ Pending
+
+        Sub-plans: 2 total (2 sub-plans; 2 in progress, depth: 2)
+
+User: *Completes all work in nested-grid-edges.md*
+User: "/plan-manager complete plans/layout-engine/nested-grid-edges.md"
+Claude: *Updates nested-grid-edges.md status to Completed*
+
+        This sub-plan is complete. How should it be integrated?
+        [User selects "Just mark complete"]
+
+        ✓ Updated grid-rethink.md Step 2 icon to ✅
+
+        All steps in the parent sub-plan (grid-rethink.md) are now complete.
+        Mark it as complete too?
+        [User selects "Yes, complete parent"]
+
+        ✓ Completed sub-plan: plans/layout-engine/grid-rethink.md
+        ✓ Updated master plan Phase 3 to ✅ Complete
 ```

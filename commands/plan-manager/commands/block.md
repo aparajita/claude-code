@@ -12,12 +12,13 @@ Mark a phase or step as blocked by another phase, step, or sub-plan.
 - `block 4 by 3` — Mark phase 4 as blocked by phase 3
 - `block 5.2 by 4` — Mark step 5.2 as blocked by phase 4
 - `block 3 by api-redesign.md` — Mark phase 3 as blocked by a sub-plan
+- `block 4 by 3,5` — Mark phase 4 as blocked by phases 3 and 5
 
 ## Steps
 
 1. **Parse arguments**:
    - Extract target (phase/step to be blocked)
-   - Extract blocker (what's blocking it)
+   - Extract blocker(s) (what's blocking it) — supports comma-separated list (e.g., `3,5` or `3, api-redesign.md`)
    - If arguments don't match expected format, show usage error
 
 2. **Read active master plan** to get context
@@ -54,7 +55,7 @@ Mark a phase or step as blocked by another phase, step, or sub-plan.
    - Add blocker to `blockedBy` array
    - For the blocker, add target to its `blocks` array
 
-8. **Confirm**: `✓ Phase {target} is now blocked by {blocker}`
+8. **Confirm**: `✓ {Phase|Step} {target} is now blocked by {blocker}`
 
 ## Notes
 

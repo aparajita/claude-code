@@ -44,8 +44,8 @@ Remove blockers from a phase or step.
    - Update Status Dashboard:
      - If no blockers remain, use **AskUserQuestion** to determine new status:
        ```
-       Question: "Phase {target} is no longer blocked. What's the new status?"
-       Header: "Phase status"
+       Question: "{Phase|Step} {target} is no longer blocked. What's the new status?"
+       Header: "Status"
        Options:
          - Label: "In Progress"
            Description: "Ready to start or resume work"
@@ -61,8 +61,8 @@ Remove blockers from a phase or step.
    - Remove target from blocker's `blocks` array
 
 8. **Confirm**:
-   - If removed all: `✓ All blockers removed from phase {target}`
-   - If removed specific: `✓ Removed {blocker} as blocker of phase {target}`
+   - If removed all: `✓ All blockers removed from {phase|step} {target}`
+   - If removed specific: `✓ Removed {blocker} as blocker of {phase|step} {target}`
 
 ## Notes
 
