@@ -67,6 +67,10 @@ WORKING WITH PLANS
     Archive or delete a completed plan
     Example: /plan-manager archive completed-plan.md
 
+  prune
+    Review completed plans and delete or archive them
+    Example: /plan-manager prune
+
   block <phase-or-step> by <blocker>
     Mark a phase or step as blocked by another phase/step/sub-plan
     Example: /plan-manager block 4 by 3

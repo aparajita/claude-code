@@ -28,24 +28,25 @@ WORKING WITH PLANS
   10. complete     Mark a sub-plan or phase as complete
   11. merge        Merge a sub-plan or branch's content into the master plan
   12. archive      Archive or delete a completed plan
-  13. block        Mark a phase as blocked by another phase/step/sub-plan
-  14. unblock      Remove blockers from a phase
+  13. prune        Review completed plans and delete or archive them
+  14. block        Mark a phase as blocked by another phase/step/sub-plan
+  15. unblock      Remove blockers from a phase
 
 ORGANIZATION
 ────────────
-  15. organize     Auto-organize, link, and clean up plans
-  16. normalize    Normalize any plan format to standard format
-  17. rename       Rename a plan and update all references
-  18. audit        Find orphaned plans and broken links
+  16. organize     Auto-organize, link, and clean up plans
+  17. normalize    Normalize any plan format to standard format
+  18. rename       Rename a plan and update all references
+  19. audit        Find orphaned plans and broken links
 
 MULTI-MASTER
 ────────────
-  19. switch       Change which master plan is active
+  20. switch       Change which master plan is active
 
 HELP & INFO
 ───────────
-  20. help         Show detailed command reference and examples
-  21. version      Show plan-manager version
+  21. help         Show detailed command reference and examples
+  22. version      Show plan-manager version
 
 ══════════════════════════════════════════════════════════════
 
@@ -102,7 +103,7 @@ Claude: *Runs `/plan-manager init plans/new-feature.md`*
 User: "/plan-manager"
 Claude: *Shows text menu*
 
-User: "help" (or "19")
+User: "help" (or "21")
 Claude: *Runs `/plan-manager help` and shows command reference*
 
         Plan Manager Commands
