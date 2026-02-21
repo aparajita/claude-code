@@ -23,12 +23,14 @@ Automatically analyze and link related plans together, rename poorly-named files
    - **Note**: Settings file is optional and will NOT be auto-created
    - If `enableCategoryOrganization` is false in settings, skip category organization steps
 
-3. **Detect solo nested master plans** (unless `--nested` flag is passed):
-   - Scan for master plans that are in a subdirectory (`subdirectory` field is non-null) but have **no linked sub-plans** — i.e., the master is the only file in its subdirectory and nesting serves no purpose
-   - Skip master plans that have sub-plans (nesting is justified — leave them alone)
-   - For each, compute the flatten target: move **up one directory level** (to the parent of its current subdirectory). Examples:
+3. **Detect flattenable plans** (unless `--nested` flag is passed):
+   - Scan all directories under the plans root (including `completed/`, category directories, and master plan subdirectories) for any plan file where:
+     - The file's parent directory name matches the filename without the `.md` extension (e.g., `foo/foo.md`)
+     - The file is the **only** file in that directory
+   - For each match, compute the flatten target: move up one directory level and remove the now-empty directory. Examples:
      - `plans/layout-engine/layout-engine.md` → `plans/layout-engine.md`
      - `plans/migrations/auth/auth.md` → `plans/migrations/auth.md`
+     - `plans/completed/foo/foo.md` → `plans/completed/foo.md`
 
 4. **Detect randomly-named plans**:
    - Scan for files with random/meaningless names (see `rename` command for patterns)
@@ -71,9 +73,10 @@ After scanning, present **all proposed changes in one consolidated view** before
 Organization Plan
 ─────────────────
 
-FLATTEN (2 solo nested masters)
+FLATTEN (3 solo nested plans)
   plans/layout-engine/layout-engine.md → plans/layout-engine.md
   plans/migrations/auth/auth.md        → plans/migrations/auth.md
+  plans/completed/foo/foo.md           → plans/completed/foo.md
 
 RENAME (2 randomly-named files)
   lexical-puzzling-emerson.md → grid-edge-cases.md   (based on content: grid edge case test notes)
@@ -145,7 +148,7 @@ Options:
 
 For FLATTEN:
 ```
-Question: "Flatten 2 solo nested masters (no sub-plans)?"
+Question: "Flatten 3 solo nested plans?"
 Header: "Flatten"
 Options:
   - Label: "Flatten all"
@@ -220,9 +223,10 @@ After all changes are applied:
 Organization Complete
 ─────────────────────
 
-✓ Flattened 2 solo nested masters:
+✓ Flattened 3 solo nested plans:
   • plans/layout-engine/layout-engine.md → plans/layout-engine.md
   • plans/migrations/auth/auth.md → plans/migrations/auth.md
+  • plans/completed/foo/foo.md → plans/completed/foo.md
 
 ✓ Renamed 2 plans:
   • lexical-puzzling-emerson.md → grid-edge-cases.md

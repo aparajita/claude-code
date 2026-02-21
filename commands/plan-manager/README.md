@@ -16,12 +16,14 @@ ln -s "$(pwd)/commands/plan-manager" ~/.claude/commands/plan-manager
 
 - Track multiple master plans in parallel (for large projects with multiple initiatives)
 - Initialize and track master plans with phase-based structure
+- Flexible terminology: plans can use "Phase", "Milestone", or "Step" headers — all commands adapt automatically
 - Create sub-plans for implementing complex phases or steps (nested to arbitrary depth)
 - Branch into plans when issues arise during implementation
 - Capture tangential plans created during work
 - Automatically link related plans together based on content analysis
 - Rename randomly-named plans to meaningful names
 - Archive completed plans to keep workspace clean
+- Flatten solo nested plans anywhere (plans root, completed/, category directories)
 - Visualize plan hierarchies with ASCII charts
 - Switch between master plans for multi-initiative projects
 - Organize plans with subdirectories and category directories
@@ -88,7 +90,7 @@ Show all tracked master plans
 
 **`organize [directory]`**
 Auto-organize, link, and clean up plans
-- Options: `--nested` (skip solo master flattening)
+- Options: `--nested` (skip solo nested plan flattening)
 - Example: `/plan-manager organize`
 
 **`normalize <file>`**

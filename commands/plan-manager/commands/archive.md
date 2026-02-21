@@ -14,6 +14,8 @@ Archive a completed plan that was previously left in place.
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 **Without argument (interactive mode):**
 1. Read state file to get active master plan
 2. List all completed sub-plans and branches linked to the active master that have not been archived or deleted

@@ -8,6 +8,8 @@ status [--all] [--master <path>]
 
 Display the full plan hierarchy and status.
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 ## Default (active master only)
 
 1. Read state file to get active master plan

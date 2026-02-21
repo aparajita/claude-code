@@ -12,6 +12,8 @@ Review all completed plans and bulk-clean them by deleting, archiving, or keepin
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 ### 1. Scan for Completed Plans
 
 Gather completed plans from three sources, deduplicating by file path:

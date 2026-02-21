@@ -172,7 +172,7 @@ Claude: *Runs /plan-manager organize — scans everything first, then presents c
         Organization Plan
         ─────────────────
 
-        FLATTEN (1 solo nested master)
+        FLATTEN (1 solo nested plan)
           plans/layout-engine/layout-engine.md → plans/layout-engine.md
 
         RENAME (1 randomly-named file)
@@ -209,7 +209,7 @@ User: *Selects "Apply all"*
 Claude: Organization Complete
         ─────────────────────
 
-        ✓ Flattened 1 solo nested master:
+        ✓ Flattened 1 solo nested plan:
           • plans/layout-engine/layout-engine.md → plans/layout-engine.md
 
         ✓ Renamed 1 plan:

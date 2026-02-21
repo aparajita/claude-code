@@ -82,7 +82,7 @@ This keeps tooling metadata separate from actual plan files.
 
 - **path** (string): Full path to the sub-plan/branch file (e.g., `"plans/layout-engine/api-redesign.md"`)
 - **parentPlan** (string): Path to the parent plan (master plan or another sub-plan) (e.g., `"plans/layout-engine/layout-engine.md"`)
-- **parentPhase** (number | null): Phase number in the parent master plan this relates to (e.g., `3`). Null/absent when parent is a sub-plan.
+- **parentPhase** (number | null): Phase number in the parent master plan this relates to (e.g., `3`). Null/absent when parent is a sub-plan. This field applies regardless of whether the plan uses Phase, Milestone, or Step headers.
 - **parentStep** (number | null): Step number in the parent sub-plan (e.g., `3`). Set when parent is a sub-plan; null/absent when parent is a master plan. Mutually exclusive with `parentPhase`.
 - **masterPlan** (string): Path to the root master plan. Always present. Equals `parentPlan` for direct children of a master plan; points to the root for deeper nesting.
 - **status** (string): Current status - `"in_progress"`, `"completed"`, `"blocked"`, etc.

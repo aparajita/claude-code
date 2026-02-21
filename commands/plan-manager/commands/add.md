@@ -24,8 +24,10 @@ Context-aware command that routes to either `init` or `capture` based on the use
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 1. **Determine intent from context:**
-   - If explicit phase number mentioned (e.g., "phase 2", "phase 3") → route to capture with that phase
+   - If explicit phase/milestone number mentioned (e.g., "phase 2", "milestone 2") → route to capture with that phase
    - If "master plan" mentioned without phase → need to infer phase
    - If no phase context at all → route to init
 

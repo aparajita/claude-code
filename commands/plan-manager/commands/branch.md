@@ -12,6 +12,8 @@ When `--parent <path>` is provided, the argument is a **step number** in the par
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 1. **Detect plans directory root**:
    - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
    - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field

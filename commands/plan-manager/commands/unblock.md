@@ -15,6 +15,8 @@ Remove blockers from a phase or step.
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 1. **Parse arguments**:
    - Extract target (phase/step to unblock)
    - Extract optional specific blocker (if `from <blocker>` provided)

@@ -11,6 +11,7 @@ The Status Dashboard should be near the top of the master plan:
 
 | Phase | Description | Status | Sub-plan |
 |-------|-------------|--------|----------|
+<!-- Note: The "Phase" column header adapts to match the plan's term — "Milestone" or "Step" when the plan uses those headers. Anchors in the Description column also adapt (e.g., #-milestone-1-foundation). -->
 | 1 | [Foundation](#-phase-1-foundation) | ⏳ Pending | — |
 | 2 | [Layout Engine](#-phase-2-layout-engine) | 🔄 In Progress | [layout-fix.md](./layout-fix.md) |
 | 3 | [API Redesign](#-phase-3-api-redesign) | 🔀 Branch | [api-redesign.md](./api-redesign.md) |
@@ -90,7 +91,7 @@ The status icon in the phase header must be kept synchronized with the Status Da
 - `📋 Phase N: Title` — Sub-plan (sub-plan created)
 - `✅ Phase N: Title` — Complete (done)
 
-The same pattern applies to step headers (e.g., `## ⏳ Step 2.1: Configure Database`).
+The same mapping applies when the plan uses "Milestone" or "Step" in place of "Phase" (e.g., `⏳ Milestone N: Title`, `⏳ Step N: Title`).
 
 ## Branch Plan Template
 
@@ -116,6 +117,8 @@ Created when branching from a phase to handle an issue or problem:
 {To be filled in}
 ```
 
+**Note:** `→ Phase {N}` becomes `→ Milestone {N}` or `→ Step {N}` to match the parent plan's term.
+
 ## Sub-plan Template
 
 Created for implementing a phase that needs substantial planning:
@@ -128,6 +131,8 @@ Created for implementing a phase that needs substantial planning:
 **Created:** {date}  <br>
 **Status:** In Progress  <br>
 **BlockedBy:** —
+
+<!-- Note: → Phase {N} becomes → Milestone {N} or → Step {N} to match the parent plan's term. -->
 
 ---
 
@@ -236,6 +241,8 @@ When capturing an existing plan as a sub-plan:
 
 {original content}
 ```
+
+**Note:** In all captured templates, `→ Phase {N}` becomes `→ Milestone {N}` or `→ Step {N}` to match the parent plan's term.
 
 ## Captured Nested Sub-plan Header
 

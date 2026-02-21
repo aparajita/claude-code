@@ -12,6 +12,8 @@ Discover and visualize all plans in the project, regardless of whether they're t
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 1. **Determine plans directory**:
    - If `directory` argument provided: use that path
    - Otherwise: use **Plans Directory Detection** (see [organization.md](../organization.md))
@@ -153,7 +155,7 @@ Question: "Found 2 orphaned plans, 1 completed plan, and 5 uncategorized standal
 Header: "Cleanup"
 Options:
   - Label: "Organize all"
-    Description: "Fix broken state, flatten solo masters, rename, categorize, link related plans, then archive completed"
+    Description: "Fix broken state, flatten solo nested plans, rename, categorize, link related plans, then archive completed"
   - Label: "Review individually"
     Description: "I'll show a summary of each plan and ask what to do with it one by one"
   - Label: "Move completed"

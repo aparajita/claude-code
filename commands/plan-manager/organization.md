@@ -272,16 +272,16 @@ This provides a consistent, user-friendly interface for all plan management deci
 When YOU (the assistant) state in your response that a phase or plan is complete, **immediately and automatically** invoke `/plan-manager complete <plan-or-phase>` in the same response.
 
 **Watch for YOUR OWN phrases like:**
-- "Phase 2 is now complete" / "Step 3 is done"
-- "Phase 4.1 is finished" / "Step 2.3 completed"
+- "Phase 2 is now complete" / "Step 3 is done" / "Milestone 2 is now complete"
+- "Phase 4.1 is finished" / "Step 2.3 completed" / "Milestone 3 is done"
 - "The layout-engine plan is finished"
 - "That's complete"
 - "Phase X implementation is done"
 - "Completed the [plan name] work"
 
 **Terminology support:**
-- Recognizes both "Phase" and "Step" (used interchangeably)
-- Supports subphases/substeps: "Phase 4.1", "Step 2.3", etc.
+- Recognizes "Phase", "Milestone", and "Step" (used interchangeably)
+- Supports subphases/substeps: "Phase 4.1", "Milestone 2.3", "Step 2.3", etc.
 
 **Example workflow:**
 ```

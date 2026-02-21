@@ -19,6 +19,8 @@ Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as comp
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 ### 1. Parse Input and Determine Target
 
 1. **Parse the argument(s)**:

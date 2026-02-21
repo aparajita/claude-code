@@ -2,7 +2,7 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans and branches, supporting arbitrary nesting depth. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase or step, create a nested sub-plan under another sub-plan, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master or parent sub-plan, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "create a sub-plan for step 3 of layout-fix.md", "create a sub-plan under this sub-plan", "branch from phase 2", "branch from step 2 of grid-rethink.md", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "prune completed plans", "clean up old plans", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+description: Manage hierarchical plans with linked sub-plans and branches, supporting arbitrary nesting depth. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase or step, create a nested sub-plan under another sub-plan, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master or parent sub-plan, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "create a sub-plan for step 3 of layout-fix.md", "create a sub-plan under this sub-plan", "branch from phase 2", "branch from step 2 of grid-rethink.md", "branch from milestone 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "prune completed plans", "clean up old plans", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", "milestone X is complete", "create a sub-plan for milestone 3", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
 argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch [--parent <path>], sub-plan (or subplan) [--parent <path>], capture [--step N] [--parent <path>], add, complete, merge, archive, prune, block, unblock, status, audit, overview, organize [--nested], normalize [--step N], rename, config [--user|--project] [--edit], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
@@ -98,7 +98,7 @@ Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
 
 ## Key Concepts
 
-**Master Plans**: The single source of truth for a project initiative. Contains phases/steps and links to sub-plans.
+**Master Plans**: The single source of truth for a project initiative. Contains phases (also called milestones or steps) and links to sub-plans.
 
 **Sub-plans**: Detailed implementation plans for phases or steps that need substantial planning. Marked with 📋 in status displays. Can be nested to arbitrary depth.
 
@@ -111,6 +111,20 @@ Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
 **Subdirectories**: Master plans automatically get their own subdirectory (e.g., `plans/layout-engine/`) to organize related files.
 
 **Category Directories**: Standalone plans can be organized into category subdirectories (docs/, migrations/, designs/, etc.).
+
+## Terminology: Phase, Milestone, and Step
+
+All three terms — **Phase**, **Milestone**, and **Step** — are valid section headers in any plan file. Plans may use `## Phase N:`, `## Milestone N:`, or `## Step N:` as their section headers.
+
+**Detection:** When reading a plan, scan its `##` headers to determine which term it uses. A plan that uses `## Milestone 1:`, `## Milestone 2:` is a "Milestone plan"; one that uses `## Phase 1:` is a "Phase plan".
+
+**Preservation:** When modifying a plan (completing phases, updating status, adding links), preserve the term the plan already uses. If a plan uses Milestones, keep `## Milestone N:` headers.
+
+**Normalization:** The `normalize` command is the only command that standardizes terminology — it converts to "Phase" for master plans and "Step" for sub-plans. All other commands preserve the existing term.
+
+**State file:** The `parentPhase` field in the state file applies regardless of whether the plan uses Phase, Milestone, or Step headers.
+
+**Command arguments:** Commands accept `milestone` as a keyword alongside `phase`. For example: `/plan-manager complete milestone 3`, `/plan-manager branch milestone 2`.
 
 ## Status Icons
 

@@ -104,7 +104,7 @@ ORGANIZATION
 
   organize [directory]
     Auto-organize, link, and clean up plans
-    Options: --nested (skip solo nested master flattening)
+    Options: --nested (skip solo nested plan flattening)
     Example: /plan-manager organize
 
   rename <file> [name]
@@ -140,4 +140,5 @@ TIPS
   • Category organization keeps different plan types separated
   • Subdirectories keep master plans and sub-plans together
   • Sub-plans can be nested: create sub-plans for steps within sub-plans
+  • Plans can use "Milestone" or "Step" instead of "Phase" — all commands adapt automatically
 ```

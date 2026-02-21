@@ -22,8 +22,8 @@ The plan-manager skill responds to the following natural language phrases:
 - "link this to the master plan" / "link this back to phase 3"
 
 ### Creating Plans
-- "branch from phase 3" / "we need to branch here"
-- "create a sub-plan for phase 3" / "create a subplan for phase 3"
+- "branch from phase 3" / "we need to branch here" / "branch from milestone 2"
+- "create a sub-plan for phase 3" / "create a subplan for phase 3" / "create a sub-plan for milestone 3"
 
 ### Merging
 - "merge this branch" / "merge the branch plan" / "merge into master" / "integrate this back"
@@ -54,8 +54,10 @@ The plan-manager skill responds to the following natural language phrases:
 
 ### Completion Detection
 - "Phase X is complete" / "Step Y is done" / "Phase 4.1 finished" / "completed Step 2.3"
+- "Milestone X is complete" / "Milestone 4.1 finished"
 - "mark step 2 of plans/sub-plan.md as complete" / "step 3 of that sub-plan is complete"
 - "complete step 1 in plans/layout-engine/api-redesign.md"
+- `/plan-manager complete milestone 3`
 
 ### Blocking
 - "block phase 4 by phase 3" / "mark phase 4 as blocked by phase 3"

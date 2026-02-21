@@ -14,6 +14,8 @@ Claude Code can produce plans in many formats depending on context. This command
 
 ## Steps
 
+> **Terminology:** This is the only command that standardizes terminology. It converts "Milestone" and other terms to "Phase" (master plans) or "Step" (sub-plans). All other commands preserve the plan's existing term. See SKILL.md § Terminology.
+
 ### 1. Read and Classify the File
 
 Read the file content, then determine the plan type and structural elements.
@@ -44,7 +46,7 @@ Options:
 | Pattern found | Maps to |
 |---------------|---------|
 | `## Phase N:`, `## Step N:` | Already normalized headings |
-| `## Milestone N:`, `## Milestone: Title` | → `## Phase N: Title` (master) |
+| `## Milestone N:`, `## Milestone: Title` | → `## Phase N: Title` (master) or `## Step N: Title` (sub-plan) |
 | `## Task N:`, `## Task: Title` | → `## Phase N:` or `## Step N:` depending on type |
 | `## Stage N:`, `## Stage: Title` | → `## Phase N: Title` |
 | `### N. Title`, `### Step N: Title` | → `## Step N: Title` (sub-plan) or `## Phase N:` (master) |

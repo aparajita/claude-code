@@ -16,6 +16,8 @@ Mark a phase or step as blocked by another phase, step, or sub-plan.
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 1. **Parse arguments**:
    - Extract target (phase/step to be blocked)
    - Extract blocker(s) (what's blocking it) — supports comma-separated list (e.g., `3,5` or `3, api-redesign.md`)

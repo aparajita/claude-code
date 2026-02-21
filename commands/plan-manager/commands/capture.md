@@ -12,6 +12,8 @@ When `--parent <path>` points to a sub-plan, use `--step N` to specify which ste
 
 ## Steps
 
+> **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
+
 **Context-aware mode** (no file specified):
 1. Look at recent conversation context to identify the plan file that was just created
 2. If multiple candidates or none found, ask the user which file to capture
