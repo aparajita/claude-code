@@ -1,7 +1,7 @@
 # Plan Manager Skill
 
 Manage hierarchical plans with linked sub-plans and branches. Maintains a single source of truth (master plan) while supporting two types of linked plans:
-- **Sub-plans**: For implementing phases that need substantial planning
+- **Sub-plans**: For implementing phases or steps that need substantial planning (nestable to arbitrary depth)
 - **Branches**: For handling unexpected issues during execution
 
 ## Installation
@@ -16,7 +16,7 @@ ln -s "$(pwd)/commands/plan-manager" ~/.claude/commands/plan-manager
 
 - Track multiple master plans in parallel (for large projects with multiple initiatives)
 - Initialize and track master plans with phase-based structure
-- Create sub-plans for implementing complex phases
+- Create sub-plans for implementing complex phases or steps (nested to arbitrary depth)
 - Branch into plans when issues arise during implementation
 - Capture tangential plans created during work
 - Automatically link related plans together based on content analysis
@@ -42,24 +42,28 @@ View/edit category organization settings
 
 ### Working with Plans
 
-**`branch <phase>`**
+**`branch <phase-or-step>`**
 Create a branch plan for handling issues
-- Options: `--master <path>`
+- Options: `--master <path>`, `--parent <path>` (branch from a step in a sub-plan)
 - Example: `/plan-manager branch 3`
+- Example: `/plan-manager branch 2 --parent plans/layout-engine/grid-rethink.md`
 
-**`sub-plan <phase>`**
-Create a sub-plan for implementing a phase (also accepts `subplan`)
-- Options: `--master <path>`
+**`sub-plan <phase-or-step>`**
+Create a sub-plan for implementing a phase or step (also accepts `subplan`)
+- Options: `--master <path>`, `--parent <path>` (nest under a sub-plan's step)
 - Example: `/plan-manager sub-plan 2`
+- Example: `/plan-manager sub-plan 3 --parent plans/layout-engine/grid-rethink.md`
 
 **`capture [file]`**
-Link an existing plan to a phase
-- Options: `--phase N`, `--master <path>`
+Link an existing plan to a phase or step
+- Options: `--phase N`, `--step N`, `--parent <path>`, `--master <path>`
 - Example: `/plan-manager capture plans/fix.md --phase 2`
+- Example: `/plan-manager capture plans/fix.md --step 3 --parent plans/grid-rethink.md`
 
-**`complete <plan>`**
-Mark a sub-plan or phase as complete
+**`complete <file-or-phase-or-range> [step]`**
+Mark a sub-plan, phase, range, or step within a sub-plan as complete
 - Example: `/plan-manager complete 3`
+- Example: `/plan-manager complete plans/sub-plan.md 2`
 
 **`merge [file]`**
 Merge a plan's content into the master plan
@@ -110,10 +114,13 @@ Change which master plan is active
 
 You can also use natural language:
 - "create a sub-plan for phase 3"
+- "create a sub-plan for step 2 of plans/grid-rethink.md"
 - "branch from phase 2"
+- "branch from step 3 of that sub-plan"
 - "organize my plans"
 - "capture that plan"
 - "rename that plan"
+- "normalize this plan"
 - "what plans do we have?"
 - "show plan status"
 
@@ -124,6 +131,7 @@ You can also use natural language:
 - Merge branch plans back into master to consolidate updates
 - Category organization keeps different plan types separated
 - Subdirectories keep master plans and sub-plans together
+- Sub-plans nest to arbitrary depth: steps within sub-plans can have their own sub-plans
 
 ## Recommended Enhancements
 
