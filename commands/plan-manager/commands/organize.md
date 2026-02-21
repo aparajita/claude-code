@@ -42,12 +42,19 @@ Automatically analyze and link related plans together, rename poorly-named files
 6. **Analyze relationships between unlinked plans**:
    - For each standalone or orphaned plan, analyze content
    - Look for references to phases, topics, or keywords that match master plan phases
+   - **Also consider sub-plans as potential parents**: if a plan's content matches a step in a sub-plan, suggest linking to that sub-plan's step (not just master plan phases)
    - Build a list of suggested linkages
-   - Plans in category directories can still be linked to master plan phases if appropriate
+   - Plans in category directories can still be linked to master plan phases or sub-plan steps if appropriate
 
 7. **Detect broken state entries**:
    - Scan state file for entries referencing files that no longer exist on disk
    - Scan state file for entries with invalid or inconsistent data (e.g., sub-plan listed under wrong master, circular links)
+   - **Nested reference issues**:
+     - Invalid `parentStep` references (step N doesn't exist in parent sub-plan)
+     - Invalid `parentPlan` chain (points to file not in `subPlans[]` or `masterPlans[]`)
+     - Orphaned nested sub-plans (parent sub-plan deleted but children remain)
+     - Missing `**Master:**` header in nested sub-plans
+     - `masterPlan` field mismatch vs actual chain
    - These will be listed under FIX for removal or correction
 
 8. **Identify orphaned/completed plans**:
@@ -79,9 +86,10 @@ CATEGORIZE (5 standalone plans → category subdirs)
   api-overview.md        → docs/
   architecture.md        → docs/
 
-LINK (2 plans → master plan phases)
-  performance-notes.md → Phase 4: Performance Optimization
-  grid-edge-cases.md   → Phase 2: Grid Engine
+LINK (3 plans → parent plans)
+  performance-notes.md → Master: layout-engine.md → Phase 4: Performance Optimization
+  grid-edge-cases.md   → Master: layout-engine.md → Phase 2: Grid Engine
+  grid-workaround.md   → Sub-plan: grid-rethink.md → Step 3: Edge cases
 
 FIX (2 broken state entries)
   ghost-refactor.md — file not found on disk, remove from state
@@ -176,11 +184,11 @@ Options:
 
 For LINK:
 ```
-Question: "Link 2 plans to master plan phases?"
+Question: "Link 3 plans to parent plans?"
 Header: "Link"
 Options:
   - Label: "Link all"
-    Description: "performance-notes.md → Phase 4, grid-edge-cases.md → Phase 2"
+    Description: "performance-notes.md → Phase 4, grid-edge-cases.md → Phase 2, grid-workaround.md → grid-rethink.md Step 3"
   - Label: "Review individually"
     Description: "Approve each link separately"
   - Label: "Skip linking"
@@ -200,7 +208,7 @@ Options:
 
 When reviewing individually within any section, use a per-item **AskUserQuestion** with "Yes" / "Skip" options and the specific move/rename/link shown in the description.
 
-**When executing LINK**: For each plan being linked, follow the **capture command** steps to normalize the file and add the parent header block (skipping capture's file-detection and phase-selection steps, since those are already determined). This delegates to the **normalize command** internally, same as capture does.
+**When executing LINK**: For each plan being linked, follow the **capture command** steps to normalize the file and add the parent header block (skipping capture's file-detection and phase/step-selection steps, since those are already determined). When linking to a sub-plan step, use capture's nested path: set `parentStep` in state, add `**Parent:** → Step {N}` and `**Master:**` headers, and update the parent sub-plan's step section. This delegates to the **normalize command** internally, same as capture does.
 
 ---
 
@@ -224,9 +232,10 @@ Organization Complete
   • 3 migration plans → migrations/
   • 2 documentation plans → docs/
 
-✓ Linked 2 plans to master:
-  • performance-notes.md → Phase 4: Performance Optimization
-  • grid-edge-cases.md → Phase 2: Grid Engine
+✓ Linked 3 plans to parent plans:
+  • performance-notes.md → Master: layout-engine.md → Phase 4: Performance Optimization
+  • grid-edge-cases.md → Master: layout-engine.md → Phase 2: Grid Engine
+  • grid-workaround.md → Sub-plan: grid-rethink.md → Step 3: Edge cases
 
 ✓ Fixed 2 broken state entries:
   • ghost-refactor.md — removed missing file from state

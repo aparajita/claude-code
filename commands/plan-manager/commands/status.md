@@ -12,8 +12,10 @@ Display the full plan hierarchy and status.
 
 1. Read state file to get active master plan
 2. Read master plan to extract Status Dashboard
-3. For each sub-plan linked to this master, read its status and blocker information
-4. Display formatted output with blocker details:
+3. **Build a tree from state entries** by following `parentPlan` chains:
+   - For each sub-plan linked to this master (directly or transitively), read its status and blocker information
+   - Group sub-plans by their parent: direct children under master phases, nested children under their parent sub-plan's steps
+4. **Display formatted output recursively** with increasing indentation for nested sub-plans:
 
 ```
 Master Plan: plans/layout-engine/layout-engine.md (ACTIVE)
@@ -25,11 +27,18 @@ Phase 2: 🔄 In Progress
   └─ layout-fix.md (Branch - In Progress)
 Phase 3: 📋 Sub-plan
   └─ api-redesign.md (Sub-plan - In Progress)
+     Step 3: 📋 Sub-plan
+       └─ edge-cases.md (Sub-plan - In Progress)
 Phase 4: ⏸️ Blocked by Phase 3
 Phase 5: ⏸️ Blocked by Phase 3, api-redesign.md
 
-Sub-plans: 2 total (1 sub-plan, 1 branch; 2 in progress)
+Sub-plans: 3 total (2 sub-plans, 1 branch; 3 in progress, depth: 2)
 ```
+
+**Recursive display rules:**
+- Only show steps of a sub-plan that have children (do not enumerate all steps of every sub-plan)
+- Each nesting level adds 2 more spaces of indentation
+- The summary line includes a depth indicator when nesting depth > 1
 
 **Blocker Display Format:**
 - When a phase is blocked, show `⏸️ Blocked by` followed by the blocker(s)
@@ -62,8 +71,12 @@ Master Plans: 2
   Phase 1: ✅ Complete
   Phase 2: 🔄 In Progress
     └─ layout-fix.md (Branch - In Progress)
+  Phase 3: 📋 Sub-plan
+    └─ api-redesign.md (Sub-plan - In Progress)
+       Step 3: 📋 Sub-plan
+         └─ edge-cases.md (Sub-plan - In Progress)
   ...
-  Sub-plans: 2 total (1 sub-plan, 1 branch; 2 in progress)
+  Sub-plans: 3 total (2 sub-plans, 1 branch; 3 in progress, depth: 2)
 
 ○ plans/auth-migration.md
   Flat structure

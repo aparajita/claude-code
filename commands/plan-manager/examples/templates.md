@@ -148,6 +148,79 @@ Created for implementing a phase that needs substantial planning:
 {Detailed implementation steps}
 ```
 
+## Nested Sub-plan Template
+
+Created for implementing a step within a sub-plan that needs its own detailed plan:
+
+```markdown
+# Sub-plan: {description}
+
+**Type:** Sub-plan  <br>
+**Parent:** {parent-sub-plan-path} → Step {N}  <br>
+**Master:** {master-plan-path}  <br>
+**Created:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
+
+---
+
+## Purpose
+
+{Brief description of what this step aims to accomplish}
+
+## Implementation Approach
+
+{To be filled in - how will this step be implemented}
+
+## Dependencies
+
+{Any dependencies or prerequisites}
+
+## Plan
+
+{Detailed implementation steps}
+```
+
+## Nested Branch Template
+
+Created when branching from a step in a sub-plan to handle an issue:
+
+```markdown
+# Branch: {description}
+
+**Type:** Branch  <br>
+**Parent:** {parent-sub-plan-path} → Step {N}  <br>
+**Master:** {master-plan-path}  <br>
+**Created:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
+
+---
+
+## Context
+
+{Brief description of the issue/topic that led to this branch}
+
+## Plan
+
+{To be filled in}
+```
+
+## Sub-plan with Children
+
+When a sub-plan has its own child sub-plans, display them inline with the step list:
+
+```markdown
+## Plan
+
+1. 📋 Research edge cases
+   > Sub-plan: [edge-cases.md](./edge-cases.md)
+2. ⏳ Implement fixes
+3. ⏳ Write tests
+```
+
+The 📋 icon on a step indicates a child sub-plan exists for that step, mirroring how 📋 on a master plan phase indicates a sub-plan exists for that phase.
+
 ## Captured Sub-plan Header
 
 When capturing an existing plan as a sub-plan:
@@ -164,6 +237,23 @@ When capturing an existing plan as a sub-plan:
 {original content}
 ```
 
+## Captured Nested Sub-plan Header
+
+When capturing an existing plan as a sub-plan under another sub-plan:
+
+```markdown
+**Type:** Sub-plan  <br>
+**Parent:** {parent-sub-plan-path} → Step {N}  <br>
+**Master:** {master-plan-path}  <br>
+**Captured:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
+
+---
+
+{original content}
+```
+
 ## Captured Branch Header
 
 When capturing an existing plan as a branch:
@@ -171,6 +261,23 @@ When capturing an existing plan as a branch:
 ```markdown
 **Type:** Branch  <br>
 **Parent:** {master-plan-path} → Phase {N}  <br>
+**Captured:** {date}  <br>
+**Status:** In Progress  <br>
+**BlockedBy:** —
+
+---
+
+{original content}
+```
+
+## Captured Nested Branch Header
+
+When capturing an existing plan as a branch under a sub-plan:
+
+```markdown
+**Type:** Branch  <br>
+**Parent:** {parent-sub-plan-path} → Step {N}  <br>
+**Master:** {master-plan-path}  <br>
 **Captured:** {date}  <br>
 **Status:** In Progress  <br>
 **BlockedBy:** —

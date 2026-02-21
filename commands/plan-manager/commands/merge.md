@@ -36,51 +36,60 @@ Merge a sub-plan or branch's content into the master plan.
 **Merge workflow:**
 
 1. **Read the plan content**
-2. **Identify the target phase** in the master plan (from the plan's Parent header)
+2. **Identify the target phase or step** in the parent plan (from the plan's Parent header):
+   - If `**Parent:**` references `→ Phase {N}`: target is a phase in the master plan
+   - If `**Parent:**` references `→ Step {N}`: target is a step in a parent sub-plan
 3. **Use AskUserQuestion to confirm merge approach**:
    ```
    Question: "How should this plan's content be merged?"
    Header: "Merge strategy"
    Options:
-     - Label: "Append to phase"
-       Description: "Add plan content to the end of Phase {N} section"
+     - Label: "Append to {phase/step}"
+       Description: "Add plan content to the end of {Phase/Step} {N} section"
      - Label: "Inline content (Recommended)"
-       Description: "Replace Phase {N} body with plan content, then delete the sub-plan file"
+       Description: "Replace {Phase/Step} {N} body with plan content, then delete the sub-plan file"
      - Label: "Reference to sub-plan"
-       Description: "Replace Phase {N} body with summary + link to sub-plan"
+       Description: "Replace {Phase/Step} {N} body with summary + link to sub-plan"
      - Label: "Manual review"
        Description: "Show me both and I'll decide what to keep"
    ```
+   Where {Phase/Step} adapts based on whether the target is a master plan phase or a sub-plan step.
 
 4. **Perform the merge**:
-   - If "Append to phase":
+   - If "Append to phase/step":
      - Extract the main content from the plan (excluding the Parent header and metadata)
-     - Add a subsection to the master plan's phase: `### Merged from {plan-name}.md`
+     - If target is a master plan phase: add a subsection `### Merged from {plan-name}.md` to the phase
+     - If target is a sub-plan step: add merged content below the step section
      - Append the plan content under that subsection
      - Proceed to step 5
    - If "Inline content":
-     - Replace the entire phase section body with the plan content
-     - Preserve the phase heading (`## Phase {N}: {title}`)
+     - Replace the entire phase/step section body with the plan content
+     - Preserve the phase/step heading (`## Phase {N}: {title}` or `## Step {N}: {title}`)
      - Delete the sub-plan file immediately
      - Skip step 7 (cleanup already handled)
      - Proceed to step 5
    - If "Reference to sub-plan":
      - Generate a summary of the sub-plan (extract first paragraph or create brief overview)
-     - Replace the phase body with: `{summary}\n\nSee [[{plan-name}.md]] for detailed implementation plan.`
+     - Replace the phase/step body with: `{summary}\n\nSee [[{plan-name}.md]] for detailed implementation plan.`
      - Proceed to step 5
    - If "Manual review":
      - Display both the current phase content and plan content
      - Ask user to indicate what should be kept/combined
      - Proceed to step 5
 
-5. **Update master plan metadata**:
-   - Update Status Dashboard:
-     - If "Inline content" or "Append to phase": remove the plan reference from the Sub-plan column
-     - If "Reference to sub-plan": keep the Sub-plan reference (content is still separate)
-   - Update the Description column link anchor to match the updated phase header
-   - Add a note in the phase section:
-     - If "Inline content" or "Append to phase": `✓ Merged from [{plan-name}.md](path) on {date}`
-     - If "Reference to sub-plan": `✓ References [{plan-name}.md](path)`
+5. **Update parent plan metadata**:
+   - **If parent is a master plan**:
+     - Update Status Dashboard:
+       - If "Inline content" or "Append to phase": remove the plan reference from the Sub-plan column
+       - If "Reference to sub-plan": keep the Sub-plan reference (content is still separate)
+     - Update the Description column link anchor to match the updated phase header
+     - Add a note in the phase section:
+       - If "Inline content" or "Append to phase": `✓ Merged from [{plan-name}.md](path) on {date}`
+       - If "Reference to sub-plan": `✓ References [{plan-name}.md](path)`
+   - **If parent is a sub-plan**:
+     - Update the step section in the parent sub-plan
+     - If "Inline content" or "Append to step": remove the blockquote sub-plan reference
+     - Add a note below the step: `✓ Merged from [{plan-name}.md](path) on {date}`
 
 6. **Update state file**:
    - If "Inline content" or "Append to phase": Mark the plan as merged (add `"merged": true, "mergedAt": "{date}"`)
@@ -102,20 +111,20 @@ Merge a sub-plan or branch's content into the master plan.
    - If "Archive it": Move to plans/completed/ mirroring subdirectory structure
    - If "Leave in place": Do nothing
 
-8. **Ask about phase status** using **AskUserQuestion**:
+8. **Ask about phase/step status** using **AskUserQuestion**:
    ```
-   Question: "Plan merged. What's the status of Phase {N}?"
-   Header: "Phase status"
+   Question: "Plan merged. What's the status of {Phase/Step} {N}?"
+   Header: "{Phase/Step} status"
    Options:
-     - Label: "Phase complete"
-       Description: "All work for Phase {N} is done, mark it ✅ Complete"
+     - Label: "{Phase/Step} complete"
+       Description: "All work for {Phase/Step} {N} is done, mark it ✅ Complete"
      - Label: "Still in progress"
-       Description: "More work remains on Phase {N}, keep it 🔄 In Progress"
+       Description: "More work remains on {Phase/Step} {N}, keep it 🔄 In Progress"
    ```
-   - Update the phase header icon based on selection (✅ for complete, 🔄 for in progress)
-   - Update Status Dashboard accordingly
+   - If parent is a master: update the phase header icon and Status Dashboard accordingly
+   - If parent is a sub-plan: update the step icon in the parent sub-plan
 
-9. **Confirm**: `✓ Merged {plan-name}.md into Phase {N} of master plan`
+9. **Confirm**: `✓ Merged {plan-name}.md into {Phase/Step} {N} of {parent-plan}`
 
 ## Example
 

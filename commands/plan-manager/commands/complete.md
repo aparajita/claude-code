@@ -62,7 +62,38 @@ Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as comp
    - If "Merge into master": Run the merge workflow with "Inline content" mode (see `merge` command)
    - If "Just mark complete": Continue with steps below
 
-4. Continue with **Shared Completion Steps** (Section 5)
+4. **Determine parent type** from the state entry:
+   - Read the state entry for the completed sub-plan
+   - If `parentStep` is set (parent is a sub-plan): proceed with **Nested Completion** (Section 2a)
+   - If `parentPhase` is set (parent is a master): continue with **Shared Completion Steps** (Section 5)
+
+### 2a. Nested Completion (parent is a sub-plan)
+
+When a completed sub-plan's parent is another sub-plan (not a master):
+
+1. **Update parent sub-plan's step**:
+   - Find the step in the parent sub-plan corresponding to `parentStep`
+   - Update the step's icon to ✅
+   - Remove the blockquote sub-plan/branch reference if the sub-plan was deleted/archived
+
+2. **Check if all steps in parent sub-plan are complete**:
+   - Count total steps and completed steps in the parent sub-plan
+   - If ALL steps are now complete, use **AskUserQuestion**:
+     ```
+     Question: "All steps in the parent sub-plan ({parent-name}) are now complete. Mark it as complete too?"
+     Header: "Recursive completion"
+     Options:
+       - Label: "Yes, complete parent (Recommended)"
+         Description: "Mark {parent-name} as Completed and propagate upward"
+       - Label: "No, leave in progress"
+         Description: "Keep the parent sub-plan as In Progress"
+     ```
+   - If "Yes, complete parent": recursively trigger **Sub-plan/Branch Completion** (Section 2) for the parent sub-plan
+   - If "No, leave in progress": skip
+
+3. **Ask about sub-plan cleanup** (same as Section 5, step 5) — only if the integration choice from Section 2 step 3 was "Just mark complete" (skip if merge was invoked, since the merge workflow handles cleanup internally)
+
+4. **Update state file** for the completed sub-plan
 
 ### 3. Sub-plan Step Completion
 
@@ -149,7 +180,9 @@ Use this workflow when marking master plan phases complete directly (no sub-plan
 
 ### 5. Shared Completion Steps
 
-After completing a sub-plan/branch OR direct phase(s), perform these steps:
+After completing a sub-plan/branch (whose parent is a master plan) OR direct phase(s), perform these steps.
+
+**Note:** These steps only apply when the parent is a master plan. When the parent is a sub-plan, use Section 2a instead. The "check if master plan is complete" logic (step 3) only fires when propagation reaches a master plan phase.
 
 1. Read and update the master plan (if not already done in Section 4):
    - Update Status Dashboard: change Status to `✅ Complete` and update the Sub-plan column as needed

@@ -13,6 +13,31 @@ This document covers how plans are organized in directories, including subdirect
 - Completed plans mirror this structure: `plans/completed/layout-engine/sub-plan-1.md`
 - **Backward compatible**: Existing flat plans continue to work; use `--flat` flag to create new flat plans
 
+### Nested Sub-plans
+
+**Sub-plans can be nested to arbitrary depth.** A step within a sub-plan can have its own sub-plan, just as a master plan phase can have a sub-plan.
+
+**Design principle: flat file organization, hierarchical linking.** All sub-plans at any depth live in the root master plan's subdirectory. The hierarchy exists only in metadata (state file fields and `**Parent:**`/`**Master:**` headers in plan files).
+
+**File layout example:**
+```
+plans/
+  layout-engine/
+    layout-engine.md          # Master plan
+    grid-rethink.md           # Sub-plan for Phase 2
+    edge-cases.md             # Sub-plan for Step 3 of grid-rethink.md
+    perf-branch.md            # Branch for Step 1 of edge-cases.md
+```
+
+In this example:
+- `grid-rethink.md` → parent is `layout-engine.md` (Phase 2)
+- `edge-cases.md` → parent is `grid-rethink.md` (Step 3), master is `layout-engine.md`
+- `perf-branch.md` → parent is `edge-cases.md` (Step 1), master is `layout-engine.md`
+
+All files are siblings in the same directory. The nesting relationship is tracked through:
+- **State file**: `parentPlan`, `parentStep`, and `masterPlan` fields
+- **Plan headers**: `**Parent:** {path} → Step {N}` and `**Master:** {master-path}`
+
 ### Category Subdirectories
 
 **Standalone plans can be organized by type** into category subdirectories:
