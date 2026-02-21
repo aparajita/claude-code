@@ -1,0 +1,334 @@
+#!/usr/bin/env bash
+# pm-files — Filesystem operations for plan-manager
+# Usage: pm-files <subcommand> [options]
+
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
+
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+SUBCOMMAND="${1:-}"
+shift 2>/dev/null || true
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: pm-files <subcommand> [options]
+
+Subcommands:
+  promote-master --master P --plans-dir D
+      Move flat master into its own subdirectory; update state.
+  flatten-master --master P --plans-dir D
+      Move nested master to root; remove empty subdir; update state.
+  move-to-subdir --file P --subdirectory N --plans-dir D [--rename NEW]
+      Move a file into master's subdirectory (optionally rename).
+  archive --file P --plans-dir D
+      Move file to {plans-dir}/completed/ mirroring subdirectory structure.
+  scan --plans-dir D
+      Recursively find all .md files → JSON array with path/name.
+  detect-solo-nested --plans-dir D
+      Find nested masters with no linked subplans → JSON array.
+  find-orphans --plans-dir D
+      Find .md files not tracked in state → JSON array.
+EOF
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
+# promote-master
+# Flat master (plans/foo.md) → nested (plans/foo/foo.md)
+# ---------------------------------------------------------------------------
+cmd_promote_master() {
+  local master="" plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --master)    master="$2";    shift 2 ;;
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$master" ]    && die "--master is required"
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  local root
+  root="$(project_root)"
+  local abs_master="$root/$master"
+
+  [ -f "$abs_master" ] || die "Master plan file not found: $master"
+
+  # Extract base name (filename without .md)
+  local basename
+  basename="$(basename "$master" .md)"
+
+  # New subdirectory and new path
+  local subdir="$plans_dir/$basename"
+  local new_path="$subdir/$basename.md"
+  local abs_subdir="$root/$subdir"
+  local abs_new="$root/$new_path"
+
+  # Refuse if already nested (destination == source)
+  [ "$master" = "$new_path" ] && die "Master plan is already nested: $master"
+
+  mkdir -p "$abs_subdir"
+  mv "$abs_master" "$abs_new"
+
+  # Update state: path and subdirectory
+  "$SCRIPT_DIR/pm-state" update-master --path "$master" --new-path "$new_path" --subdirectory "$basename"
+
+  echo "{\"success\":true,\"oldPath\":\"$master\",\"newPath\":\"$new_path\",\"subdirectory\":\"$basename\"}"
+}
+
+# ---------------------------------------------------------------------------
+# flatten-master
+# Nested master (plans/foo/foo.md) → flat (plans/foo.md)
+# ---------------------------------------------------------------------------
+cmd_flatten_master() {
+  local master="" plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --master)    master="$2";    shift 2 ;;
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$master" ]    && die "--master is required"
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  local root
+  root="$(project_root)"
+  local abs_master="$root/$master"
+
+  [ -f "$abs_master" ] || die "Master plan file not found: $master"
+
+  local basename
+  basename="$(basename "$master" .md)"
+  local new_path="$plans_dir/$basename.md"
+  local abs_new="$root/$new_path"
+  local abs_subdir
+  abs_subdir="$(dirname "$abs_master")"
+
+  [ "$master" = "$new_path" ] && die "Master plan is already flat: $master"
+
+  mv "$abs_master" "$abs_new"
+
+  # Remove empty subdirectory
+  rmdir "$abs_subdir" 2>/dev/null || true
+
+  # Update state: clear subdirectory
+  "$SCRIPT_DIR/pm-state" update-master --path "$master" --new-path "$new_path" --subdirectory null
+
+  echo "{\"success\":true,\"oldPath\":\"$master\",\"newPath\":\"$new_path\"}"
+}
+
+# ---------------------------------------------------------------------------
+# move-to-subdir
+# ---------------------------------------------------------------------------
+cmd_move_to_subdir() {
+  local file="" subdirectory="" plans_dir="" rename=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --file)       file="$2";       shift 2 ;;
+      --subdirectory) subdirectory="$2"; shift 2 ;;
+      --plans-dir)  plans_dir="$2";  shift 2 ;;
+      --rename)     rename="$2";     shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$file" ]        && die "--file is required"
+  [ -z "$subdirectory" ] && die "--subdirectory is required"
+  [ -z "$plans_dir" ]   && die "--plans-dir is required"
+
+  local root
+  root="$(project_root)"
+  local abs_file="$root/$file"
+  [ -f "$abs_file" ] || die "File not found: $file"
+
+  local target_name
+  if [ -n "$rename" ]; then
+    target_name="$rename"
+  else
+    target_name="$(basename "$file")"
+  fi
+
+  local new_path="$plans_dir/$subdirectory/$target_name"
+  local abs_target_dir="$root/$plans_dir/$subdirectory"
+  local abs_new="$root/$new_path"
+
+  mkdir -p "$abs_target_dir"
+  mv "$abs_file" "$abs_new"
+
+  echo "{\"success\":true,\"oldPath\":\"$file\",\"newPath\":\"$new_path\"}"
+}
+
+# ---------------------------------------------------------------------------
+# archive
+# Move file to {plans-dir}/completed/ mirroring subdirectory structure
+# ---------------------------------------------------------------------------
+cmd_archive() {
+  local file="" plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --file)      file="$2";      shift 2 ;;
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$file" ]      && die "--file is required"
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  local root
+  root="$(project_root)"
+  local abs_file="$root/$file"
+  [ -f "$abs_file" ] || die "File not found: $file"
+
+  # Strip plans_dir prefix to get relative path within plans dir
+  local rel_within
+  rel_within="${file#$plans_dir/}"
+
+  local new_path="$plans_dir/completed/$rel_within"
+  local abs_new="$root/$new_path"
+  local abs_new_dir
+  abs_new_dir="$(dirname "$abs_new")"
+
+  mkdir -p "$abs_new_dir"
+  mv "$abs_file" "$abs_new"
+
+  echo "{\"success\":true,\"oldPath\":\"$file\",\"newPath\":\"$new_path\"}"
+}
+
+# ---------------------------------------------------------------------------
+# scan
+# Recursively find all .md files and return JSON array
+# ---------------------------------------------------------------------------
+cmd_scan() {
+  local plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  local root
+  root="$(project_root)"
+  local abs_dir="$root/$plans_dir"
+  [ -d "$abs_dir" ] || die "Plans directory not found: $plans_dir"
+
+  # Find all .md files, output as JSON array
+  local files_json="[]"
+  while IFS= read -r -d '' f; do
+    # Make path relative to project root
+    local rel="${f#$root/}"
+    local name
+    name="$(basename "$f" .md)"
+    files_json="$(echo "$files_json" | jq --arg path "$rel" --arg name "$name" \
+      '. + [{"path": $path, "name": $name}]')"
+  done < <(find "$abs_dir" -name "*.md" -type f -print0 2>/dev/null | sort -z)
+
+  echo "$files_json"
+}
+
+# ---------------------------------------------------------------------------
+# detect-solo-nested
+# Masters in a subdirectory with no linked subplans
+# ---------------------------------------------------------------------------
+cmd_detect_solo_nested() {
+  local plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  local state
+  state="$(read_state)"
+
+  # Get masters that have a non-null subdirectory
+  local nested_masters
+  nested_masters="$(echo "$state" | jq '[.masterPlans[] | select(.subdirectory != null)]')"
+
+  # For each nested master, check if it has any linked subplans
+  local result="[]"
+  local count
+  count="$(echo "$nested_masters" | jq 'length')"
+
+  for i in $(seq 0 $((count - 1))); do
+    local master_path
+    master_path="$(echo "$nested_masters" | jq -r ".[$i].path")"
+    local subplan_count
+    subplan_count="$(echo "$state" | jq --arg p "$master_path" \
+      '[.subPlans[] | select(.parentPlan == $p)] | length')"
+
+    if [ "$subplan_count" -eq 0 ]; then
+      local entry
+      entry="$(echo "$nested_masters" | jq ".[$i]")"
+      result="$(echo "$result" | jq --argjson e "$entry" '. + [$e]')"
+    fi
+  done
+
+  echo "$result"
+}
+
+# ---------------------------------------------------------------------------
+# find-orphans
+# .md files not tracked in state
+# ---------------------------------------------------------------------------
+cmd_find_orphans() {
+  local plans_dir=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --plans-dir) plans_dir="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$plans_dir" ] && die "--plans-dir is required"
+
+  # Get all .md files
+  local all_files
+  all_files="$("$SCRIPT_DIR/pm-files" scan --plans-dir "$plans_dir")"
+
+  # Get all tracked paths from state
+  local state
+  state="$(read_state)"
+  local tracked
+  tracked="$(echo "$state" | jq \
+    '[.masterPlans[].path, .subPlans[].path] | map(select(. != null))')"
+
+  # Find files not in tracked list
+  local orphans="[]"
+  local count
+  count="$(echo "$all_files" | jq 'length')"
+
+  for i in $(seq 0 $((count - 1))); do
+    local file_path
+    file_path="$(echo "$all_files" | jq -r ".[$i].path")"
+    local is_tracked
+    is_tracked="$(echo "$tracked" | jq --arg p "$file_path" 'any(. == $p)')"
+
+    if [ "$is_tracked" = "false" ]; then
+      # Skip files in completed/
+      [[ "$file_path" == *"/completed/"* ]] && continue
+      local entry
+      entry="$(echo "$all_files" | jq ".[$i]")"
+      orphans="$(echo "$orphans" | jq --argjson e "$entry" '. + [$e]')"
+    fi
+  done
+
+  echo "$orphans"
+}
+
+# ---------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------
+case "$SUBCOMMAND" in
+  promote-master)     cmd_promote_master "$@" ;;
+  flatten-master)     cmd_flatten_master "$@" ;;
+  move-to-subdir)     cmd_move_to_subdir "$@" ;;
+  archive)            cmd_archive "$@" ;;
+  scan)               cmd_scan "$@" ;;
+  detect-solo-nested) cmd_detect_solo_nested "$@" ;;
+  find-orphans)       cmd_find_orphans "$@" ;;
+  ""|--help|-h)       usage ;;
+  *) die "Unknown subcommand: $SUBCOMMAND. Run 'pm-files --help' for usage." ;;
+esac

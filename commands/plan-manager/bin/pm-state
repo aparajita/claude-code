@@ -1,0 +1,476 @@
+#!/usr/bin/env bash
+# pm-state — State management for plan-manager
+# Usage: pm-state <subcommand> [options]
+
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
+
+SUBCOMMAND="${1:-}"
+shift 2>/dev/null || true
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: pm-state <subcommand> [options]
+
+Subcommands:
+  get-plans-dir                                    Detect and output plans directory
+  read                                             Output full state JSON
+  get-active-master                                Output active master plan path
+  list-masters                                     Output JSON array of master entries
+  list-subplans [--master PATH]                    Output JSON array of subplan entries
+  add-master --path P --description D [--subdirectory N]
+                                                   Add master entry, set active
+  update-master --path P [--subdirectory N|null] [--active bool]
+                                                   Update master fields
+  add-subplan --path P --parent-plan P --phase N --type T [--pre-planned]
+                                                   Add subplan entry
+  update-subplan --path P [--status S] [--merged] [--new-path P]
+                                                   Update subplan fields
+  remove-subplan --path P                          Remove subplan entry
+  switch-active --path P                           Set master as active, unset all others
+EOF
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
+# get-plans-dir
+# ---------------------------------------------------------------------------
+cmd_get_plans_dir() {
+  local root
+  root="$(project_root)"
+
+  # 1. settings.local.json
+  local local_settings="$root/.claude/settings.local.json"
+  if [ -f "$local_settings" ]; then
+    local val
+    val="$(jq -r '.plansDirectory // empty' "$local_settings" 2>/dev/null || true)"
+    if [ -n "$val" ]; then echo "$val"; return 0; fi
+  fi
+
+  # 2. settings.json
+  local settings="$root/.claude/settings.json"
+  if [ -f "$settings" ]; then
+    local val
+    val="$(jq -r '.plansDirectory // empty' "$settings" 2>/dev/null || true)"
+    if [ -n "$val" ]; then echo "$val"; return 0; fi
+  fi
+
+  # 3. state file
+  local state_file="$root/.claude/plan-manager-state.json"
+  if [ -f "$state_file" ]; then
+    local val
+    val="$(jq -r '.plansDirectory // empty' "$state_file" 2>/dev/null || true)"
+    if [ -n "$val" ]; then echo "$val"; return 0; fi
+  fi
+
+  # 4. Auto-detect from common locations
+  for candidate in plans docs/plans .plans; do
+    local dir="$root/$candidate"
+    if [ -d "$dir" ] && ls "$dir"/*.md >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  # 5. Not found
+  die "No plans directory found. Run '/plan-manager overview' first or specify via .claude/settings.json"
+}
+
+# ---------------------------------------------------------------------------
+# read
+# ---------------------------------------------------------------------------
+cmd_read() {
+  read_state
+}
+
+# ---------------------------------------------------------------------------
+# get-active-master
+# ---------------------------------------------------------------------------
+cmd_get_active_master() {
+  local path
+  path="$(read_state | jq -r '.masterPlans[] | select(.active == true) | .path' | head -1)"
+  if [ -z "$path" ]; then
+    die "No active master plan found. Run '/plan-manager init' first."
+  fi
+  echo "$path"
+}
+
+# ---------------------------------------------------------------------------
+# list-masters
+# ---------------------------------------------------------------------------
+cmd_list_masters() {
+  read_state | jq '.masterPlans'
+}
+
+# ---------------------------------------------------------------------------
+# list-subplans
+# ---------------------------------------------------------------------------
+cmd_list_subplans() {
+  local master_path=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --master) master_path="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+
+  local state
+  state="$(read_state)"
+
+  if [ -n "$master_path" ]; then
+    echo "$state" | jq --arg p "$master_path" '[.subPlans[] | select(.parentPlan == $p)]'
+  else
+    echo "$state" | jq '.subPlans'
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# add-master
+# ---------------------------------------------------------------------------
+cmd_add_master() {
+  local path="" description="" subdirectory="null"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      --description) description="$2"; shift 2 ;;
+      --subdirectory) subdirectory="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$path" ] && die "--path is required"
+  [ -z "$description" ] && die "--description is required"
+
+  local state
+  state="$(read_state)"
+
+  # Check if path already tracked
+  local exists
+  exists="$(echo "$state" | jq --arg p "$path" '.masterPlans[] | select(.path == $p)' | wc -l)"
+  if [ "$exists" -gt 0 ]; then
+    die "Master plan already tracked: $path"
+  fi
+
+  local today
+  today="$(today_iso)"
+
+  # Determine if subdirectory is null or a string
+  local sub_json
+  if [ "$subdirectory" = "null" ] || [ -z "$subdirectory" ]; then
+    sub_json="null"
+  else
+    sub_json="\"$subdirectory\""
+  fi
+
+  # Set all existing masters to inactive, add new one as active
+  local new_state
+  new_state="$(echo "$state" | jq \
+    --arg path "$path" \
+    --arg desc "$description" \
+    --arg date "$today" \
+    --argjson sub "$sub_json" \
+    '
+    .masterPlans = [.masterPlans[] | .active = false]
+    | .masterPlans += [{
+        "path": $path,
+        "subdirectory": $sub,
+        "active": true,
+        "createdAt": $date,
+        "description": $desc
+      }]
+    ')"
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# update-master
+# ---------------------------------------------------------------------------
+cmd_update_master() {
+  local path=""
+  local set_subdirectory=false
+  local subdirectory=""
+  local set_active=false
+  local active_val=""
+  local new_path=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      --subdirectory)
+        set_subdirectory=true
+        subdirectory="$2"
+        shift 2
+        ;;
+      --active)
+        set_active=true
+        active_val="$2"
+        shift 2
+        ;;
+      --new-path)
+        new_path="$2"
+        shift 2
+        ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$path" ] && die "--path is required"
+
+  local state
+  state="$(read_state)"
+
+  # Verify master exists
+  local exists
+  exists="$(echo "$state" | jq --arg p "$path" '.masterPlans[] | select(.path == $p)' | wc -c)"
+  [ "$exists" -eq 0 ] && die "Master plan not found: $path"
+
+  # Build jq update expression
+  local jq_expr='.masterPlans = [.masterPlans[] | if .path == $path then .'
+
+  local updates=()
+
+  if [ "$set_subdirectory" = true ]; then
+    if [ "$subdirectory" = "null" ] || [ -z "$subdirectory" ]; then
+      updates+=('subdirectory = null')
+    else
+      updates+=("subdirectory = \"$subdirectory\"")
+    fi
+  fi
+
+  if [ "$set_active" = true ]; then
+    if [ "$active_val" = "true" ]; then
+      updates+=('active = true')
+    else
+      updates+=('active = false')
+    fi
+  fi
+
+  if [ -n "$new_path" ]; then
+    updates+=("path = \"$new_path\"")
+  fi
+
+  if [ ${#updates[@]} -eq 0 ]; then
+    die "No fields to update. Provide --subdirectory, --active, or --new-path."
+  fi
+
+  # Build update expression
+  local update_str
+  update_str="$(printf ' | .%s' "${updates[@]}")"
+
+  local new_state
+  new_state="$(echo "$state" | jq \
+    --arg path "$path" \
+    ".masterPlans = [.masterPlans[] | if .path == \$path then .${updates[0]// | ./ | .} else . end]")"
+
+  # Use Python-style jq for multi-updates (simpler: build incrementally)
+  new_state="$(echo "$state" | jq --arg path "$path" \
+    'reduce .masterPlans[] as $m (
+      [];
+      if $m.path == $path then . + [$m] else . + [$m] end
+    )' 2>/dev/null || echo "$state")"
+
+  # Simpler approach: apply each update field separately
+  new_state="$state"
+  if [ "$set_subdirectory" = true ]; then
+    if [ "$subdirectory" = "null" ] || [ -z "$subdirectory" ]; then
+      new_state="$(echo "$new_state" | jq --arg p "$path" \
+        '.masterPlans = [.masterPlans[] | if .path == $p then .subdirectory = null else . end]')"
+    else
+      new_state="$(echo "$new_state" | jq --arg p "$path" --arg s "$subdirectory" \
+        '.masterPlans = [.masterPlans[] | if .path == $p then .subdirectory = $s else . end]')"
+    fi
+  fi
+
+  if [ "$set_active" = true ]; then
+    if [ "$active_val" = "true" ]; then
+      new_state="$(echo "$new_state" | jq --arg p "$path" \
+        '.masterPlans = [.masterPlans[] | if .path == $p then .active = true else . end]')"
+    else
+      new_state="$(echo "$new_state" | jq --arg p "$path" \
+        '.masterPlans = [.masterPlans[] | if .path == $p then .active = false else . end]')"
+    fi
+  fi
+
+  if [ -n "$new_path" ]; then
+    new_state="$(echo "$new_state" | jq --arg p "$path" --arg np "$new_path" \
+      '.masterPlans = [.masterPlans[] | if .path == $p then .path = $np else . end]')"
+    # Also update parentPlan references in subPlans
+    new_state="$(echo "$new_state" | jq --arg p "$path" --arg np "$new_path" \
+      '.subPlans = [.subPlans[] | if .parentPlan == $p then .parentPlan = $np else . end]')"
+  fi
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# add-subplan
+# ---------------------------------------------------------------------------
+cmd_add_subplan() {
+  local path="" parent_plan="" phase="" type="" pre_planned=false
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      --parent-plan) parent_plan="$2"; shift 2 ;;
+      --phase) phase="$2"; shift 2 ;;
+      --type) type="$2"; shift 2 ;;
+      --pre-planned) pre_planned=true; shift ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+
+  [ -z "$path" ] && die "--path is required"
+  [ -z "$parent_plan" ] && die "--parent-plan is required"
+  [ -z "$phase" ] && die "--phase is required"
+  [ -z "$type" ] && die "--type is required (sub-plan or branch)"
+
+  local today
+  today="$(today_iso)"
+
+  local state
+  state="$(read_state)"
+
+  local new_state
+  new_state="$(echo "$state" | jq \
+    --arg path "$path" \
+    --arg parent "$parent_plan" \
+    --argjson phase "$phase" \
+    --arg type "$type" \
+    --arg date "$today" \
+    --argjson pre "$pre_planned" \
+    '.subPlans += [{
+      "path": $path,
+      "parentPlan": $parent,
+      "parentPhase": $phase,
+      "status": "in_progress",
+      "createdAt": $date,
+      "type": $type,
+      "prePlanned": $pre,
+      "blockedBy": [],
+      "blocks": []
+    }]')"
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# update-subplan
+# ---------------------------------------------------------------------------
+cmd_update_subplan() {
+  local path="" new_status="" set_merged=false new_path=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      --status) new_status="$2"; shift 2 ;;
+      --merged) set_merged=true; shift ;;
+      --new-path) new_path="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+
+  [ -z "$path" ] && die "--path is required"
+
+  local state
+  state="$(read_state)"
+
+  local exists
+  exists="$(echo "$state" | jq --arg p "$path" '.subPlans[] | select(.path == $p)' | wc -c)"
+  [ "$exists" -eq 0 ] && die "Subplan not found: $path"
+
+  local new_state="$state"
+  local today
+  today="$(today_iso)"
+
+  if [ -n "$new_status" ]; then
+    new_state="$(echo "$new_state" | jq --arg p "$path" --arg s "$new_status" \
+      '.subPlans = [.subPlans[] | if .path == $p then .status = $s else . end]')"
+  fi
+
+  if [ "$set_merged" = true ]; then
+    new_state="$(echo "$new_state" | jq --arg p "$path" --arg d "$today" \
+      '.subPlans = [.subPlans[] | if .path == $p then .merged = true | .mergedAt = $d else . end]')"
+  fi
+
+  if [ -n "$new_path" ]; then
+    new_state="$(echo "$new_state" | jq --arg p "$path" --arg np "$new_path" \
+      '.subPlans = [.subPlans[] | if .path == $p then .path = $np else . end]')"
+  fi
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# remove-subplan
+# ---------------------------------------------------------------------------
+cmd_remove_subplan() {
+  local path=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$path" ] && die "--path is required"
+
+  local state
+  state="$(read_state)"
+
+  local new_state
+  new_state="$(echo "$state" | jq --arg p "$path" \
+    '.subPlans = [.subPlans[] | select(.path != $p)]')"
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# switch-active
+# ---------------------------------------------------------------------------
+cmd_switch_active() {
+  local path=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --path) path="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+  [ -z "$path" ] && die "--path is required"
+
+  local state
+  state="$(read_state)"
+
+  # Verify master exists
+  local exists
+  exists="$(echo "$state" | jq --arg p "$path" '[.masterPlans[] | select(.path == $p)] | length')"
+  [ "$exists" -eq 0 ] && die "Master plan not found: $path"
+
+  local new_state
+  new_state="$(echo "$state" | jq --arg p "$path" \
+    '.masterPlans = [.masterPlans[] | .active = (.path == $p)]')"
+
+  write_state "$new_state"
+  echo '{"success":true}'
+}
+
+# ---------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------
+case "$SUBCOMMAND" in
+  get-plans-dir)   cmd_get_plans_dir "$@" ;;
+  read)            cmd_read "$@" ;;
+  get-active-master) cmd_get_active_master "$@" ;;
+  list-masters)    cmd_list_masters "$@" ;;
+  list-subplans)   cmd_list_subplans "$@" ;;
+  add-master)      cmd_add_master "$@" ;;
+  update-master)   cmd_update_master "$@" ;;
+  add-subplan)     cmd_add_subplan "$@" ;;
+  update-subplan)  cmd_update_subplan "$@" ;;
+  remove-subplan)  cmd_remove_subplan "$@" ;;
+  switch-active)   cmd_switch_active "$@" ;;
+  ""|--help|-h)    usage ;;
+  *) die "Unknown subcommand: $SUBCOMMAND. Run 'pm-state --help' for usage." ;;
+esac

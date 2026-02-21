@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# pm-settings — Settings management for plan-manager
+# Usage: pm-settings <subcommand> [options]
+
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
+
+SUBCOMMAND="${1:-}"
+shift 2>/dev/null || true
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: pm-settings <subcommand> [options]
+
+Subcommands:
+  load [--project-root P]    Load and merge user + project settings → JSON
+EOF
+  exit 1
+}
+
+# Default settings
+DEFAULT_SETTINGS='{
+  "categoryDirectories": {
+    "documentation": "docs",
+    "migration": "migrations",
+    "design": "designs",
+    "feature": "features",
+    "reference": "reference",
+    "bugfix": "bug-fixes",
+    "standalone": "misc"
+  },
+  "enableCategoryOrganization": true
+}'
+
+# ---------------------------------------------------------------------------
+# load
+# ---------------------------------------------------------------------------
+cmd_load() {
+  local project_root_arg=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --project-root) project_root_arg="$2"; shift 2 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+  done
+
+  local root
+  if [ -n "$project_root_arg" ]; then
+    root="$project_root_arg"
+  else
+    root="$(project_root)"
+  fi
+
+  # Start with defaults
+  local merged="$DEFAULT_SETTINGS"
+
+  # Layer 1: User global settings (~/.claude/plan-manager-settings.json)
+  local user_settings="$HOME/.claude/plan-manager-settings.json"
+  if [ -f "$user_settings" ]; then
+    local user_json
+    user_json="$(jq '.' "$user_settings" 2>/dev/null || echo '{}')"
+    merged="$(echo "$merged" | jq --argjson user "$user_json" '. * $user')"
+  fi
+
+  # Layer 2: Project settings (.claude/plan-manager-settings.json)
+  local project_settings="$root/.claude/plan-manager-settings.json"
+  if [ -f "$project_settings" ]; then
+    local proj_json
+    proj_json="$(jq '.' "$project_settings" 2>/dev/null || echo '{}')"
+    merged="$(echo "$merged" | jq --argjson proj "$proj_json" '. * $proj')"
+  fi
+
+  # Add metadata about which files were loaded
+  local sources="[]"
+  [ -f "$user_settings" ] && sources="$(echo "$sources" | jq --arg s "user" '. + [$s]')"
+  [ -f "$project_settings" ] && sources="$(echo "$sources" | jq --arg s "project" '. + [$s]')"
+
+  echo "$merged" | jq --argjson src "$sources" '. + {"_sources": $src}'
+}
+
+# ---------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------
+case "$SUBCOMMAND" in
+  load)          cmd_load "$@" ;;
+  ""|--help|-h)  usage ;;
+  *) die "Unknown subcommand: $SUBCOMMAND. Run 'pm-settings --help' for usage." ;;
+esac

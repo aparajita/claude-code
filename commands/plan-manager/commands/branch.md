@@ -10,57 +10,71 @@ Create a branch plan for handling an unexpected issue or problem discovered duri
 
 ## Steps
 
-1. **Detect plans directory root**:
-   - Try reading `.claude/settings.local.json` in the project root, look for `plansDirectory` field
-   - If not found, try reading `.claude/settings.json` in the project root, look for `plansDirectory` field
-   - If not found, try reading `.claude/plan-manager-state.json`, look for `plansDirectory` field
-   - If not found, auto-detect by checking these directories (use first that exists with .md files):
-     - `plans/` (relative to project root)
-     - `docs/plans/` (relative to project root)
-     - `.plans/` (relative to project root)
-   - **CRITICAL**: All plan paths in state file and commands are relative to the project root, NOT to `~/.claude/`
-   - **CRITICAL**: Never create plans in `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
-   - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps
-2. Read the state file (`.claude/plan-manager-state.json`) to get master plan path (use active master, or specified via --master)
-3. Read the master plan to verify the phase exists
-4. Ask the user for a brief description of the branch topic
-5. **Determine sub-plan location**:
-   - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
-   - Check if master plan uses subdirectory organization by examining its path
-   - If master is in subdirectory (e.g., `plans/migrations/smufl-rewrite/smufl-rewrite.md`):
-     - Extract the subdirectory path (e.g., `migrations/smufl-rewrite`)
-     - Create sub-plan in same subdirectory: `{plansDirectory}/{subdirectory}/{sub-plan-name}.md`
-     - Example: If plansDirectory is "plans", create at `plans/migrations/smufl-rewrite/{sub-plan-name}.md`
-   - If master is flat (e.g., `plans/legacy-plan.md`):
-     - Create sub-plan at root: `{plansDirectory}/{sub-plan-name}.md`
-   - **CRITICAL**: Path must be relative to project root, never use `~/.claude/plans/`
-6. **Update the master plan FIRST**:
-   - Update the phase header icon to 🔀 (e.g., `## 🔀 Phase 2: API Layer`)
-   - Update the Status Dashboard: change phase Status to `🔀 Branch` and add the sub-plan link to the Sub-plan column (e.g., `[branch.md](./branch.md)`)
-   - Update the Description column link anchor to match the updated phase header (e.g., `[API Layer](#-phase-2-api-layer)`)
-   - Add sub-plan reference to the phase section
-   - Use relative path for link if in same subdirectory (e.g., `[branch.md](./branch.md)`)
-7. Create the sub-plan file with header:
+1. **Detect plans directory and active master**:
+   ```bash
+   PLANS_DIR=$(commands/plan-manager/bin/pm-state get-plans-dir)
+   MASTER=$(commands/plan-manager/bin/pm-state get-active-master)
+   # or use --master if provided
+   ```
 
-```markdown
-# Branch: {description}
+2. **Verify phase exists** in the master plan:
+   ```bash
+   commands/plan-manager/bin/pm-md extract-phases --file "$MASTER"
+   ```
+   If the phase number is not in the output, error: "Phase N not found in master plan."
 
-**Type:** Branch  <br>
-**Parent:** {master-plan-path} → Phase {N}  <br>
-**Created:** {date}  <br>
-**Status:** In Progress  <br>
-**BlockedBy:** —
+3. **Ask the user for a brief description** of the branch topic.
 
----
+4. **Determine branch location**:
+   - Check master's `subdirectory` field from state:
+     ```bash
+     commands/plan-manager/bin/pm-state read | jq -r '.masterPlans[] | select(.path == "'$MASTER'") | .subdirectory'
+     ```
+   - If master is in a subdirectory: branch goes into `{PLANS_DIR}/{subdirectory}/{slug}.md`
+   - If master is flat: branch goes at `{PLANS_DIR}/{slug}.md` (branches don't trigger promotion)
+   - **CRITICAL**: Path must be relative to project root, never `~/.claude/plans/`
 
-## Context
+5. **Update the master plan**:
+   - Update phase icon to 🔀:
+     ```bash
+     commands/plan-manager/bin/pm-md update-phase-icon --file "$MASTER" --phase <N> --icon "🔀"
+     ```
+   - Update dashboard row:
+     ```bash
+     commands/plan-manager/bin/pm-md update-dashboard-row --file "$MASTER" --phase <N> \
+       --status "🔀 Branch" --subplan-link "[{slug}.md](./{slug}.md)"
+     ```
+   - Also add a link to the branch in the phase section of the master plan (Edit the file directly).
 
-{Brief description of the issue/topic that led to this branch}
+6. **Create the branch file**:
+   Write the file with header template:
+   ```markdown
+   # Branch: {description}
 
-## Plan
+   **Type:** Branch  <br>
+   **Parent:** {master-path} → Phase {N}  <br>
+   **Created:** {date}  <br>
+   **Status:** In Progress  <br>
+   **BlockedBy:** —
 
-{To be filled in}
-```
+   ---
 
-8. Update state file with new sub-plan entry (set type: "branch", prePlanned: false)
-9. Confirm: `✓ Created branch: {path} (branched from Phase {N})`
+   ## Context
+
+   {Brief description of the issue/topic that led to this branch}
+
+   ## Plan
+
+   {To be filled in}
+   ```
+
+7. **Update state file**:
+   ```bash
+   commands/plan-manager/bin/pm-state add-subplan \
+     --path "$BRANCH_PATH" \
+     --parent-plan "$MASTER" \
+     --phase <N> \
+     --type "branch"
+   ```
+
+8. **Confirm**: `✓ Created branch: {path} (branched from Phase {N})`
