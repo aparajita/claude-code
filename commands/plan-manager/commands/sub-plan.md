@@ -36,13 +36,18 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
    ```
 6. **Determine sub-plan location**:
    - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
-   - Check if master plan uses subdirectory organization by examining its path
-   - If master is in subdirectory (e.g., `plans/migrations/smufl-rewrite/smufl-rewrite.md`):
-     - Extract the subdirectory path (e.g., `migrations/smufl-rewrite`)
+   - Check if master plan uses subdirectory organization by examining its state entry (`subdirectory` field)
+   - If master is already in a subdirectory (e.g., `plans/smufl-rewrite/smufl-rewrite.md`):
+     - Extract the subdirectory path (e.g., `smufl-rewrite`)
      - Create sub-plan in same subdirectory: `{plansDirectory}/{subdirectory}/{sub-plan-name}.md`
-     - Example: If plansDirectory is "plans", create at `plans/migrations/smufl-rewrite/{sub-plan-name}.md`
-   - If master is flat (e.g., `plans/legacy-plan.md`):
-     - Create sub-plan at root: `{plansDirectory}/{sub-plan-name}.md`
+   - If master is flat (e.g., `plans/legacy-plan.md`, `subdirectory: null` in state):
+     - **Promote master plan to subdirectory** (this is the first sub-plan, so nesting is now needed):
+       - Extract base name from master filename (e.g., `legacy-plan.md` → `legacy-plan`)
+       - Create subdirectory: `{plansDirectory}/legacy-plan/`
+       - Move master plan into it: `{plansDirectory}/legacy-plan.md` → `{plansDirectory}/legacy-plan/legacy-plan.md`
+       - Update the state file: set `path` to new location and `subdirectory` to `"legacy-plan"`
+       - Update any existing links in the master plan itself to use relative paths
+     - Create sub-plan in the new subdirectory: `{plansDirectory}/legacy-plan/{sub-plan-name}.md`
    - **CRITICAL**: Path must be relative to project root, never use `~/.claude/plans/`
 7. **Update the master plan FIRST**:
    - Update the phase header icon to 📋 (e.g., `## 📋 Phase 3: Layout Engine`)
@@ -82,4 +87,6 @@ Create a sub-plan for implementing a phase that needs substantial planning. Both
 ```
 
 9. Update state file with new sub-plan entry (set type: "sub-plan", prePlanned: true/false based on user's answer)
-10. Confirm: `✓ Created sub-plan: {path} (for Phase {N} implementation)`
+10. Confirm:
+    - If master was promoted from flat: `✓ Promoted master plan to subdirectory: {plansDirectory}/{baseName}/`
+    - `✓ Created sub-plan: {path} (for Phase {N} implementation)`

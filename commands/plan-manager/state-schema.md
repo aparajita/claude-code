@@ -106,10 +106,12 @@ Only one master plan can be active at a time. Use the `switch` command to change
 
 ## Subdirectory Organization
 
-**Subdirectory organization** is supported for better organization:
-- New master plans automatically get their own subdirectory (e.g., `plans/layout-engine/`)
-- Sub-plans are created in the same subdirectory as their master plan
-- Flat structure (no subdirectory) is still supported for backward compatibility
+**Subdirectory organization** is used when a master plan has sub-plans:
+- New master plans are created flat in the plans directory root by default (e.g., `plans/layout-engine.md`)
+- When the first sub-plan is added to a flat master, the master is automatically promoted into a subdirectory:
+  - Master moves from `plans/layout-engine.md` → `plans/layout-engine/layout-engine.md`
+  - Sub-plans are created alongside it in `plans/layout-engine/`
+- Use `--nested` flag on `init` to immediately create a subdirectory without waiting for a sub-plan
 - The `subdirectory` field tracks whether a master uses subdirectory organization (`null` = flat)
 - **Category organization**: Standalone plans can be organized into category subdirectories (migrations/, docs/, designs/, features/, etc.)
   - Category-organized plans are not tracked in state file (they're not linked to any master)

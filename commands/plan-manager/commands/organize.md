@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-organize [directory]
+organize [directory] [--nested]
 ```
 
 Automatically analyze and link related plans together, rename poorly-named files, then handle orphaned/completed plans.
@@ -21,38 +21,39 @@ Automatically analyze and link related plans together, rename poorly-named files
    - **Note**: Settings file is optional and will NOT be auto-created
    - If `enableCategoryOrganization` is false in settings, skip category organization steps
 
-3. **Detect flat master plans and offer subdirectory migration**:
-   - Scan for master plans at the root of plans directory (not in subdirectories)
-   - If found, use **AskUserQuestion tool**:
+3. **Detect solo nested master plans and offer flattening** (unless `--nested` flag is passed):
+   - Scan for master plans that are in a subdirectory (`subdirectory` field is non-null) but have **no linked sub-plans** — i.e., the master is the only file in its subdirectory and nesting serves no purpose
+   - Skip master plans that have sub-plans (nesting is justified — leave them alone)
+   - If `--nested` flag is passed, skip this step entirely
+   - If solo nested masters found, use **AskUserQuestion tool**:
 
 ```
-Question: "Found 2 master plans using flat structure. Migrate them to subdirectories?"
-Header: "Subdirectories"
+Question: "Found 2 master plans nested in subdirectories with no sub-plans. Flatten them?"
+Header: "Structure"
 Options:
-  - Label: "Migrate all"
-    Description: "Move each master plan and its sub-plans into a subdirectory"
+  - Label: "Flatten all (Recommended)"
+    Description: "Move each lone master plan to the plans root and remove its empty subdirectory"
   - Label: "Review individually"
     Description: "I'll ask about each master plan separately"
-  - Label: "Leave flat"
-    Description: "Keep current flat structure, skip migration"
+  - Label: "Keep nested"
+    Description: "Leave them in their subdirectories"
 ```
 
-   - **If "Migrate all"**: For each flat master plan:
-     - Create subdirectory: `plans/{master-basename}/`
-     - Move master plan: `plans/layout-engine.md` → `plans/layout-engine/layout-engine.md`
-     - Move all linked sub-plans to the same subdirectory
+   - **If "Flatten all"**: For each solo nested master plan:
+     - Move master plan to root: `plans/layout-engine/layout-engine.md` → `plans/layout-engine.md`
+     - Remove now-empty subdirectory
      - Update all references (state file, links in plans)
-     - Update state file `subdirectory` field
+     - Set state file `subdirectory` field to `null`
 
-   - **If "Review individually"**: For each flat master, use **AskUserQuestion**:
+   - **If "Review individually"**: For each, use **AskUserQuestion**:
      ```
-     Question: "Migrate 'layout-engine.md' and its 3 sub-plans to a subdirectory?"
-     Header: "Migrate master"
+     Question: "Flatten 'layout-engine' to the plans root? (no sub-plans)"
+     Header: "Flatten master"
      Options:
-       - Label: "Yes, migrate"
-         Description: "Create plans/layout-engine/ and move master + sub-plans"
-       - Label: "Leave flat"
-         Description: "Keep this master plan in flat structure"
+       - Label: "Yes, flatten"
+         Description: "Move plans/layout-engine/layout-engine.md → plans/layout-engine.md"
+       - Label: "Keep nested"
+         Description: "Leave this master plan in its subdirectory"
      ```
 
 4. **Detect and offer to rename randomly-named plans**:
@@ -155,8 +156,8 @@ Options:
 Organization Complete
 ─────────────────────
 
-✓ Migrated to subdirectories:
-  • layout-engine.md → layout-engine/layout-engine.md (+ 3 sub-plans)
+✓ Flattened solo nested masters:
+  • layout-engine/layout-engine.md → layout-engine.md
 
 ✓ Organized by category (using defaults):
   • 3 migration plans → migrations/
@@ -178,7 +179,7 @@ Organization Complete
   • random-ideas.md
 
 Current state:
-├── Master plans: 1 active (using subdirectory)
+├── Master plans: 1 active (flat)
 ├── Linked sub-plans: 5
 ├── Category-organized: 6
 └── Unlinked: 1

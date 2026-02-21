@@ -9,9 +9,7 @@ User: "Let's implement the new layout engine"
 Claude: *Creates plans/layout-engine.md with 5 phases*
 
 User: "/plan-manager init plans/layout-engine.md"
-Claude: ✓ Created subdirectory: plans/layout-engine/
-        ✓ Moved plans/layout-engine.md → plans/layout-engine/layout-engine.md
-        ✓ Initialized master plan: plans/layout-engine/layout-engine.md
+Claude: ✓ Initialized master plan: plans/layout-engine.md (flat)
         ✓ Added Status Dashboard with 5 phases
 
         Configure category organization for standalone plans?
@@ -37,12 +35,15 @@ Claude: ✓ Will use default category directories
 
 User: *Working on Phase 2...*
 User: "Wait, we need to rethink the grid system"
-Claude: *Creates plans/layout-engine/grid-rethink.md*
+Claude: *Creates plans/grid-rethink.md*
 
 User: "/plan-manager capture"
-Claude: I see you just created plans/layout-engine/grid-rethink.md. Which phase does this relate to?
+Claude: I see you just created plans/grid-rethink.md. Which phase does this relate to?
 User: "Phase 2"
-Claude: ✓ Captured plans/layout-engine/grid-rethink.md → linked to Phase 2
+Claude: ✓ Promoted master plan to subdirectory: plans/layout-engine/
+        ✓ Moved plans/layout-engine.md → plans/layout-engine/layout-engine.md
+        ✓ Moved plans/grid-rethink.md → plans/layout-engine/grid-rethink.md
+        ✓ Captured plans/layout-engine/grid-rethink.md → linked to Phase 2
         ✓ Updated master plan Status Dashboard
 
 User: "/plan-manager status"
@@ -113,19 +114,21 @@ User: *Selects "Phase 4: Performance Optimization"*
 Claude: ✓ Captured performance-notes.md → linked to Phase 4
 ```
 
-## Using Flat Structure (Backward Compatibility)
+## Using Nested Structure (Opt-in)
 
 ```
-User: "I prefer to keep my plans flat in the plans directory"
-Claude: "No problem! Use the --flat flag to skip subdirectory creation"
+User: "I want this plan organized in its own folder from the start"
+Claude: "Use the --nested flag to immediately create a subdirectory"
 
-User: "/plan-manager init plans/simple-feature.md --flat"
-Claude: ✓ Initialized master plan: plans/simple-feature.md (flat structure)
+User: "/plan-manager init plans/simple-feature.md --nested"
+Claude: ✓ Created subdirectory: plans/simple-feature/
+        ✓ Moved plans/simple-feature.md → plans/simple-feature/simple-feature.md
+        ✓ Initialized master plan: plans/simple-feature/simple-feature.md (nested)
         ✓ Added Status Dashboard with 3 phases
 
 User: "/plan-manager branch 2"
-Claude: *Creates plans/feature-branch.md (in root, not in subdirectory)*
-        ✓ Created branch: plans/feature-branch.md (branched from Phase 2)
+Claude: *Creates plans/simple-feature/feature-branch.md (in subdirectory)*
+        ✓ Created branch: plans/simple-feature/feature-branch.md (branched from Phase 2)
 ```
 
 ## Cleaning Up After Long Work Session
@@ -171,27 +174,26 @@ Claude: *Runs /plan-manager organize*
 
         [... displays hierarchy ...]
 
-        Found 1 master plan using flat structure: layout-engine.md
+        Found 1 master plan nested with no sub-plans: layout-engine/
 
 Claude: *Uses AskUserQuestion tool*
         ┌─────────────────────────────────────────────────────────┐
-        │ Found 1 master plan using flat structure. Migrate to   │
-        │ subdirectories?                                         │
+        │ Found 1 master plan nested in a subdirectory with no   │
+        │ sub-plans. Flatten it?                                  │
         │                                                         │
-        │ ○ Migrate all                                           │
-        │   Move each master plan and its sub-plans to subdir     │
+        │ ○ Flatten all (Recommended)                             │
+        │   Move each lone master plan to the plans root          │
         │                                                         │
         │ ○ Review individually                                   │
         │   Ask about each master plan separately                 │
         │                                                         │
-        │ ○ Leave flat                                            │
-        │   Keep current flat structure, skip migration           │
+        │ ○ Keep nested                                           │
+        │   Leave them in their subdirectories                    │
         └─────────────────────────────────────────────────────────┘
 
-User: *Selects "Migrate all"*
-Claude: ✓ Created subdirectory: plans/layout-engine/
-        ✓ Moved layout-engine.md → layout-engine/layout-engine.md
-        ✓ Moved 3 sub-plans to layout-engine/ subdirectory
+User: *Selects "Flatten all"*
+Claude: ✓ Moved layout-engine/layout-engine.md → layout-engine.md
+        ✓ Removed empty subdirectory: plans/layout-engine/
         ✓ Updated all references
 
         BY CATEGORY (with suggested organization)

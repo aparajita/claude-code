@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-init <path> [--description "text"] [--flat]
+init <path> [--description "text"] [--nested]
 ```
 
 Initialize or add a master plan to tracking.
@@ -23,10 +23,10 @@ Initialize or add a master plan to tracking.
    - **CRITICAL**: Never create plans in `~/.claude/plans/` - that's a fallback location only for plans mode, not for plan-manager
    - Store the detected directory (e.g., "plans", "docs/plans") for use in subsequent steps and in the state file
 2. **Determine subdirectory organization**:
-   - By default, new master plans use subdirectory organization (automatic)
-   - Use `--flat` flag to keep the plan in the root of the plans directory (backward compatibility)
+   - By default, new master plans are placed flat in the root of the plans directory (no subdirectory)
+   - Use `--nested` flag to immediately create a subdirectory and place the plan inside it
    - If the plan file already exists, preserve its current location
-3. **Set up subdirectory structure** (if not using --flat):
+3. **Set up subdirectory structure** (only if `--nested` flag was provided):
    - Extract base name from plan filename (e.g., `layout-engine.md` → `layout-engine`)
    - Create subdirectory: `{plansDirectory}/{baseName}/`
    - If plan file exists at root level, move it to subdirectory:
@@ -70,8 +70,8 @@ Options:
 ```
 
 8. Record subdirectory usage in state:
-   - If using subdirectory: `"subdirectory": "layout-engine"`
-   - If flat structure: `"subdirectory": null`
+   - If using `--nested` flag: `"subdirectory": "layout-engine"`
+   - If flat (default): `"subdirectory": null`
 
 9. **Offer configuration setup** (only if this is the first master plan and no settings exist):
    - Check if `~/.claude/plan-manager-settings.json` or `.claude/plan-manager-settings.json` exists

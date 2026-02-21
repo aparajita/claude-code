@@ -84,10 +84,16 @@ Retroactively link an existing plan that was created during tangential discussio
 
 8. **Move to subdirectory if needed**:
    - Use the plans directory detected in step 1
-   - If master plan uses subdirectory and captured plan is not in it:
+   - Check master plan's `subdirectory` field in the state file
+   - If master plan is already in a subdirectory and captured plan is not in it:
      - Move and optionally rename the plan to: `{plansDirectory}/{subdirectory}/{new-or-current-name}.md`
-     - Example: Move from `plans/magical-moseying-swing.md` to `plans/migrations/smufl-rewrite/smufl-phase2.md`
-   - If master plan is flat and captured plan is in a subdirectory, ask whether to move or keep
+     - Example: Move from `plans/magical-moseying-swing.md` to `plans/smufl-rewrite/smufl-phase2.md`
+   - If master plan is flat (`subdirectory: null`) — this is the first sub-plan, so promote:
+     - Extract base name from master filename (e.g., `legacy-plan.md` → `legacy-plan`)
+     - Create subdirectory: `{plansDirectory}/legacy-plan/`
+     - Move master plan into it: `{plansDirectory}/legacy-plan.md` → `{plansDirectory}/legacy-plan/legacy-plan.md`
+     - Move (and optionally rename) the captured plan to: `{plansDirectory}/legacy-plan/{new-or-current-name}.md`
+     - Update the state file: set master `path` to new location and `subdirectory` to `"legacy-plan"`
    - **CRITICAL**: Never move plans to or from `~/.claude/plans/` - all operations should be within the project plans directory
    - Update all references to the old path (in state file, master plan links, etc.)
 
