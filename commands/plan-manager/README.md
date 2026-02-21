@@ -1,5 +1,7 @@
 # Plan Manager Skill
 
+> **Recommended model:** Sonnet (except where noted)
+
 Manage hierarchical plans with linked sub-plans and branches. Maintains a single source of truth (master plan) while supporting two types of linked plans:
 - **Sub-plans**: For implementing phases or steps that need substantial planning (nestable to arbitrary depth)
 - **Branches**: For handling unexpected issues during execution
@@ -110,12 +112,12 @@ Show all tracked master plans
 
 ### Organization
 
-**`organize [directory]`**
+**`organize [directory]`** *(Opus recommended)*
 Auto-organize, link, and clean up plans
 - Options: `--nested` (skip solo nested plan flattening)
 - Example: `/plan-manager organize`
 
-**`normalize <file>`**
+**`normalize <file>`** *(Opus recommended)*
 Normalize any plan format to standard format
 - Options: `--type master|sub-plan|branch`, `--phase N`, `--step N`, `--master <path>`
 - Example: `/plan-manager normalize plans/rough-plan.md`
