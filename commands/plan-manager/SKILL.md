@@ -2,8 +2,8 @@
 
 ---
 name: plan-manager
-description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "rename that plan", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, add, complete, merge, archive, block, unblock, status, audit, overview, organize, rename, config [--edit], switch, list-masters, help, version
+description: Manage hierarchical plans with linked sub-plans and branches. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "branch from phase 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch, sub-plan (or subplan), capture, add, complete, merge, archive, block, unblock, status, audit, overview, organize, normalize, rename, config [--edit], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Bash(commands/plan-manager/bin/pm-state:*), Bash(commands/plan-manager/bin/pm-files:*), Bash(commands/plan-manager/bin/pm-md:*), Bash(commands/plan-manager/bin/pm-settings:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
 
@@ -63,6 +63,7 @@ All sub-plans and branches are bidirectionally linked to the master plan.
 - **unblock** <phase-or-step> [from <blocker>] — Remove blockers from a phase or step
 
 ### Organization
+- **normalize** <file> [--type master|sub-plan|branch] — Normalize any plan format to standard
 - **organize** — Auto-organize, link, and clean up plans
 - **rename** <old-path> <new-path> — Rename a plan and update references
 - **audit** — Find orphaned plans and broken links
@@ -81,7 +82,7 @@ For detailed command documentation, see `commands/<command-name>.md`:
 - [init](commands/init.md), [branch](commands/branch.md), [sub-plan](commands/sub-plan.md), [capture](commands/capture.md), [add](commands/add.md)
 - [complete](commands/complete.md), [merge](commands/merge.md), [archive](commands/archive.md), [status](commands/status.md)
 - [audit](commands/audit.md), [overview](commands/overview.md), [organize](commands/organize.md)
-- [rename](commands/rename.md), [config](commands/config.md), [switch](commands/switch.md), [list-masters](commands/list-masters.md)
+- [normalize](commands/normalize.md), [rename](commands/rename.md), [config](commands/config.md), [switch](commands/switch.md), [list-masters](commands/list-masters.md)
 - [block](commands/block.md), [unblock](commands/unblock.md)
 - [help](commands/help.md), [version](commands/version.md)
 
@@ -107,7 +108,7 @@ When invoked with arguments (e.g., `/plan-manager <command> [args]`):
 3. **If the command file exists**: Read it and follow its instructions exactly
 4. **If the command file does not exist**: Show an error message listing valid commands
 
-**Valid commands**: init, branch, sub-plan (subplan), capture, add, complete, merge, archive, status, audit, overview, organize, rename, block, unblock, config, switch, list-masters, help, version
+**Valid commands**: init, branch, sub-plan (subplan), capture, add, complete, merge, archive, status, audit, overview, organize, normalize, rename, block, unblock, config, switch, list-masters, help, version
 
 **Special cases**:
 - No arguments: Show the interactive menu (see commands/interactive-menu.md)

@@ -1,16 +1,6 @@
 # Command: help
 
-## Usage
-
-```
-help
-```
-
-Display command reference with descriptions and examples.
-
-## Output
-
-Show a formatted list of all available commands:
+Output the following verbatim, with no preamble or added commentary:
 
 ```
 Plan Manager Commands
@@ -20,7 +10,7 @@ GETTING STARTED
 ───────────────
   init <path>
     Initialize or add a master plan
-    Options: --flat, --description "text"
+    Options: --nested, --description "text"
     Example: /plan-manager init plans/feature.md
 
   config
@@ -90,6 +80,11 @@ VIEWING STATUS
 
 ORGANIZATION
 ────────────
+  normalize <file>
+    Normalize any plan format (milestones, tasks, checkboxes, etc.) to standard
+    Options: --type master|sub-plan|branch, --phase N, --master <path>
+    Example: /plan-manager normalize plans/rough-plan.md
+
   organize [directory]
     Auto-organize, link, and clean up plans
     Example: /plan-manager organize
@@ -126,6 +121,4 @@ TIPS
   • Merge branch plans back into master to consolidate updates
   • Category organization keeps different plan types separated
   • Subdirectories keep master plans and sub-plans together
-
-For detailed documentation, see the full plan-manager guide.
 ```

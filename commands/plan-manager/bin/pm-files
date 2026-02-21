@@ -100,10 +100,14 @@ cmd_flatten_master() {
 
   local basename
   basename="$(basename "$master" .md)"
-  local new_path="$plans_dir/$basename.md"
-  local abs_new="$root/$new_path"
+  # Flatten to the parent of the master's current subdirectory, not necessarily
+  # the plans root. e.g. plans/migrations/foo/foo.md → plans/migrations/foo.md
   local abs_subdir
   abs_subdir="$(dirname "$abs_master")"
+  local abs_category_dir
+  abs_category_dir="$(dirname "$abs_subdir")"
+  local new_path="${abs_category_dir#$root/}/$basename.md"
+  local abs_new="$root/$new_path"
 
   [ "$master" = "$new_path" ] && die "Master plan is already flat: $master"
 
@@ -244,9 +248,9 @@ cmd_detect_solo_nested() {
   local state
   state="$(read_state)"
 
-  # Get masters that have a non-null subdirectory
+  # Get masters that have a non-null subdirectory and are NOT in the completed/ directory
   local nested_masters
-  nested_masters="$(echo "$state" | jq '[.masterPlans[] | select(.subdirectory != null)]')"
+  nested_masters="$(echo "$state" | jq '[.masterPlans[] | select(.subdirectory != null and (.path | contains("/completed/") | not))]')"
 
   # For each nested master, check if it has any linked subplans
   local result="[]"
