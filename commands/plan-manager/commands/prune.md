@@ -26,13 +26,18 @@ For each plan in `plans/completed/` (one at a time), using **AskUserQuestion**:
 
 1. **Read the plan file** to get its title/heading
 
-2. **Completeness check**: Verify all phases/steps are actually marked ✅ in the file content
+2. **Get creation date** (if available):
+   - Check the plan file for a `**Created:**` or `**Captured:**` header field
+   - If not in the file, check the state file entry's `createdAt` field
+   - Format as a human-readable date if found (e.g., "Created: 2026-01-15")
+
+3. **Completeness check**: Verify all phases/steps are actually marked ✅ in the file content
    - Count total phases/steps and how many are marked ✅
    - If not fully complete, include a warning in the question text
 
-3. **Ask using AskUserQuestion**:
+4. **Ask using AskUserQuestion**:
    ```
-   Question: "{plan-name} (archived)\n{warning-if-applicable}\nWhat should happen to this plan?"
+   Question: "{plan-name} (archived)\n{created-date-if-available}\n{warning-if-applicable}\nWhat should happen to this plan?"
    Header: "Prune plan"
    Options:
      - Label: "Delete"
@@ -41,7 +46,7 @@ For each plan in `plans/completed/` (one at a time), using **AskUserQuestion**:
        Description: "Leave in plans/completed/"
    ```
 
-   Where `{warning-if-applicable}` is included only when the plan is not fully complete, e.g.:
+   Where `{created-date-if-available}` is e.g. `"Created: 2026-01-15"` or omitted if unknown, and `{warning-if-applicable}` is included only when the plan is not fully complete, e.g.:
    `"Note: This plan has 2/5 phases marked complete but is listed as Completed."`
 
 ### 3. Offer to Prune Active Completed Plans
@@ -79,11 +84,13 @@ For each active completed plan (one at a time), using **AskUserQuestion**:
 
 1. **Read the plan file** to get its title/heading
 
-2. **Completeness check**: same as Step 2.2 above
+2. **Get creation date**: same as Step 2.2 above
 
-3. **Ask using AskUserQuestion**:
+3. **Completeness check**: same as Step 2.3 above
+
+4. **Ask using AskUserQuestion**:
    ```
-   Question: "{plan-name} ({path})\n{warning-if-applicable}\nWhat should happen to this plan?"
+   Question: "{plan-name} ({path})\n{created-date-if-available}\n{warning-if-applicable}\nWhat should happen to this plan?"
    Header: "Prune plan"
    Options:
      - Label: "Archive"
