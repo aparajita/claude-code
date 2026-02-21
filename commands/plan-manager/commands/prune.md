@@ -6,34 +6,23 @@
 prune
 ```
 
-Review all completed plans and bulk-clean them by deleting, archiving, or keeping each one.
+Review completed plans and bulk-clean them by deleting or keeping each one.
 
-**Purpose**: Scan for completed plans across all locations — archived plans in `plans/completed/`, completed sub-plans/branches in the state file, and fully-complete master plans — then present each one for disposition. Unlike `archive` (which handles one plan at a time), `prune` lets you review and clean up all completed plans in one pass.
+**Purpose**: First handle already-archived plans in `plans/completed/` (delete or keep), then optionally review active completed plans still in their working locations. Unlike `archive` (which handles one plan at a time), `prune` lets you review and clean up all completed plans in one pass.
 
 ## Steps
 
 > **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
 
-### 1. Scan for Completed Plans
+### 1. Scan for Plans in `plans/completed/`
 
-Gather completed plans from three sources, deduplicating by file path:
+Scan the `plans/completed/` directory recursively for all `.md` files.
 
-1. **State file — sub-plans/branches**: All entries with `status: "completed"`
-2. **State file — master plans**: Master plans where ALL phases in the file are marked ✅ Complete
-3. **Filesystem — archived plans**: All `.md` files in `plans/completed/` directory (recursively)
+If none found, skip to Step 3.
 
-Deduplicate: a plan may appear in both the state file and `plans/completed/`. Use the resolved file path as the dedup key.
+### 2. Present Each Archived Plan for Review
 
-### 2. If No Completed Plans Found
-
-Report and exit:
-```
-No completed plans found. Nothing to prune.
-```
-
-### 3. Present Each Plan for Review
-
-For each completed plan (one at a time), using **AskUserQuestion**:
+For each plan in `plans/completed/` (one at a time), using **AskUserQuestion**:
 
 1. **Read the plan file** to get its title/heading
 
@@ -41,13 +30,7 @@ For each completed plan (one at a time), using **AskUserQuestion**:
    - Count total phases/steps and how many are marked ✅
    - If not fully complete, include a warning in the question text
 
-3. **Determine location**:
-   - **In `plans/completed/`**: The plan is already archived
-   - **In working location**: The plan is still in its original location
-
-4. **Ask using AskUserQuestion** with options based on location:
-
-   For plans in `plans/completed/` (already archived):
+3. **Ask using AskUserQuestion**:
    ```
    Question: "{plan-name} (archived)\n{warning-if-applicable}\nWhat should happen to this plan?"
    Header: "Prune plan"
@@ -58,7 +41,47 @@ For each completed plan (one at a time), using **AskUserQuestion**:
        Description: "Leave in plans/completed/"
    ```
 
-   For plans in working locations:
+   Where `{warning-if-applicable}` is included only when the plan is not fully complete, e.g.:
+   `"Note: This plan has 2/5 phases marked complete but is listed as Completed."`
+
+### 3. Offer to Prune Active Completed Plans
+
+After finishing with archived plans (or immediately if none were found), ask:
+
+```
+Question: "Review active completed plans (still in their working location)?"
+Header: "Active completed plans"
+Options:
+  - Label: "Yes, scan for them"
+    Description: "Find completed sub-plans/branches in state file and fully-complete master plans"
+  - Label: "No, stop here"
+    Description: "Done pruning"
+```
+
+If "No, stop here": skip to Step 6 (Summary).
+
+### 4. Scan for Active Completed Plans
+
+Gather from the state file, deduplicating by file path:
+
+1. **Sub-plans/branches**: All entries with `status: "completed"` whose file is NOT in `plans/completed/`
+2. **Master plans**: Master plans where ALL phases in the file are marked ✅ Complete and the file is NOT in `plans/completed/`
+
+If none found:
+```
+No active completed plans found.
+```
+Then skip to Step 6 (Summary).
+
+### 5. Present Each Active Completed Plan for Review
+
+For each active completed plan (one at a time), using **AskUserQuestion**:
+
+1. **Read the plan file** to get its title/heading
+
+2. **Completeness check**: same as Step 2.2 above
+
+3. **Ask using AskUserQuestion**:
    ```
    Question: "{plan-name} ({path})\n{warning-if-applicable}\nWhat should happen to this plan?"
    Header: "Prune plan"
@@ -71,10 +94,7 @@ For each completed plan (one at a time), using **AskUserQuestion**:
        Description: "Leave in current location"
    ```
 
-   Where `{warning-if-applicable}` is included only when the plan is not fully complete, e.g.:
-   `"Note: This plan has 2/5 phases marked complete but is listed as Completed."`
-
-### 4. Perform Chosen Action
+### 6. Perform Chosen Actions
 
 For each plan, perform the action the user selected:
 
@@ -97,7 +117,7 @@ For each plan, perform the action the user selected:
 
 Track each action for the summary.
 
-### 5. Summary
+### 7. Summary
 
 After all plans have been reviewed, report what was done:
 
@@ -114,7 +134,7 @@ No changes made. All {total} completed plans kept as-is.
 
 ```
 User: "/plan-manager prune"
-Claude: *Scans for completed plans, finds 4*
+Claude: *Scans plans/completed/, finds 2 archived plans*
 
         api-redesign.md (plans/completed/layout-engine/api-redesign.md)
         What should happen to this plan?
@@ -129,7 +149,24 @@ Claude: *Scans for completed plans, finds 4*
         └─────────────────────────────────────────────────────────┘
 
 User: *Selects "Delete"*
-Claude: *Presents next plan*
+Claude: *Presents second archived plan, user selects "Keep"*
+
+        *All archived plans reviewed. Now asks about active completed plans:*
+
+        Review active completed plans (still in their working location)?
+        ┌─────────────────────────────────────────────────────────┐
+        │ Active completed plans                                  │
+        │                                                         │
+        │ ○ Yes, scan for them                                    │
+        │   Find completed sub-plans/branches in state file and   │
+        │   fully-complete master plans                           │
+        │                                                         │
+        │ ○ No, stop here                                         │
+        │   Done pruning                                          │
+        └─────────────────────────────────────────────────────────┘
+
+User: *Selects "Yes, scan for them"*
+Claude: *Finds 1 active completed plan*
 
         old-migration.md (plans/old-migration.md)
         Note: This plan has 3/5 phases marked complete but is listed as Completed.
@@ -148,9 +185,7 @@ Claude: *Presents next plan*
         └─────────────────────────────────────────────────────────┘
 
 User: *Selects "Archive"*
-Claude: *Continues through remaining plans...*
-
-        Pruned 4 plans: 1 deleted, 1 archived, 2 kept
+Claude: Pruned 3 plans: 1 deleted, 1 archived, 1 kept
 ```
 
 ## Notes

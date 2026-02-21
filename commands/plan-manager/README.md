@@ -81,7 +81,7 @@ Archive or delete a completed plan
 - Example: `/plan-manager archive completed-plan.md`
 
 **`prune`**
-Review all completed plans and bulk-delete or archive them
+Review archived plans in `plans/completed/`, then optionally review active completed plans
 - Example: `/plan-manager prune`
 
 **`block <phase-or-step> by <blocker>`**
