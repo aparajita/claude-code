@@ -62,6 +62,11 @@ Link an existing plan to a phase or step
 - Example: `/plan-manager capture plans/fix.md --phase 2`
 - Example: `/plan-manager capture plans/fix.md --step 3 --parent plans/grid-rethink.md`
 
+**`add [file]`**
+Context-aware: add as master plan or link to a phase
+- Options: `--phase N`, `--master <path>`
+- Example: `/plan-manager add plans/feature.md`
+
 **`complete <file-or-phase-or-range> [step]`**
 Mark a sub-plan, phase, range, or step within a sub-plan as complete
 - Example: `/plan-manager complete 3`
@@ -70,6 +75,23 @@ Mark a sub-plan, phase, range, or step within a sub-plan as complete
 **`merge [file]`**
 Merge a plan's content into the master plan
 - Example: `/plan-manager merge grid-fixes.md`
+
+**`archive [file-or-phase]`**
+Archive or delete a completed plan
+- Example: `/plan-manager archive completed-plan.md`
+
+**`prune`**
+Review all completed plans and bulk-delete or archive them
+- Example: `/plan-manager prune`
+
+**`block <phase-or-step> by <blocker>`**
+Mark a phase or step as blocked
+- Example: `/plan-manager block 4 by 3`
+
+**`unblock <phase-or-step>`**
+Remove blockers from a phase or step
+- Options: `from <blocker>` (remove specific blocker)
+- Example: `/plan-manager unblock 4`
 
 ### Viewing Status
 
