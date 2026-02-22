@@ -68,6 +68,7 @@ Priority order (later overrides earlier):
     "migration": "migrations",
     "design": "designs",
     "feature": "features",
+    "bugfix": "fixes",
     "reference": "reference",
     "standalone": "misc"
   },
@@ -111,7 +112,7 @@ To disable category organization:
 
 **The settings file is optional.** Commands work fine without it using built-in defaults:
 
-- If no settings file exists, commands use default category directories (docs, migrations, designs, features, etc.)
+- If no settings file exists, commands use default category directories (docs, migrations, designs, features, fixes, etc.)
 - Commands will NOT automatically create the settings file
 - Category organization is enabled by default (can be disabled in settings)
 

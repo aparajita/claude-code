@@ -19,7 +19,7 @@ Automatically analyze and link related plans together, rename poorly-named files
 2. **Load category organization settings**:
    - Check for `~/.claude/plan-manager-settings.json` (user global)
    - Check for `<project>/.claude/plan-manager-settings.json` (project-specific, overrides user)
-   - If neither exists, use default category directories (docs, migrations, designs, features, reference, misc)
+   - If neither exists, use default category directories (docs, migrations, designs, features, fixes, reference, misc)
    - **Note**: Settings file is optional and will NOT be auto-created
    - If `enableCategoryOrganization` is false in settings, skip category organization steps
 
