@@ -3,7 +3,7 @@
 ---
 name: plan-manager
 description: Manage hierarchical plans with linked sub-plans and branches, supporting arbitrary nesting depth. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase or step, create a nested sub-plan under another sub-plan, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master or parent sub-plan, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "create a sub-plan for step 3 of layout-fix.md", "create a sub-plan under this sub-plan", "branch from phase 2", "branch from step 2 of grid-rethink.md", "branch from milestone 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "prune completed plans", "clean up old plans", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", "milestone X is complete", "create a sub-plan for milestone 3", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch [--parent <path>], sub-plan (or subplan) [--parent <path>], capture [--step N] [--parent <path>], add, complete, merge, archive, prune, block, unblock, status, audit, overview, organize [--nested], normalize [--step N], rename, config [--user|--project] [--edit] [--no-categories] [--categories], switch, list-masters, help, version
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch [--parent <path>], sub-plan (or subplan) [--parent <path>], capture [--step N] [--parent <path>], add, complete, merge, archive, delete (remove, rm) <file>, prune, block, unblock, status, audit, overview, organize [--nested], normalize [--step N], rename, config [--user|--project] [--edit] [--no-categories] [--categories], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
 
@@ -34,6 +34,7 @@ All sub-plans and branches are bidirectionally linked to their parent plan. **Ne
 - **complete** <file-or-phase-or-range> [step] — Mark a plan/phase/range as complete, or a step within a sub-plan
 - **merge** [file-or-phase] — Merge a sub-plan or branch's content into the master
 - **archive** [file-or-phase] — Archive or delete a completed plan
+- **delete** <file> (aliases: **remove**, **rm**) — Permanently delete any plan with confirmation
 - **prune** — Review completed plans and delete or archive them
 
 ### Blocking
@@ -58,7 +59,7 @@ All sub-plans and branches are bidirectionally linked to their parent plan. **Ne
 ### Command Specifications
 For detailed command documentation, see `commands/<command-name>.md`:
 - [init](commands/init.md), [branch](commands/branch.md), [sub-plan](commands/sub-plan.md), [capture](commands/capture.md), [add](commands/add.md)
-- [complete](commands/complete.md), [merge](commands/merge.md), [archive](commands/archive.md), [prune](commands/prune.md), [status](commands/status.md)
+- [complete](commands/complete.md), [merge](commands/merge.md), [archive](commands/archive.md), [delete](commands/delete.md), [prune](commands/prune.md), [status](commands/status.md)
 - [audit](commands/audit.md), [overview](commands/overview.md), [organize](commands/organize.md)
 - [normalize](commands/normalize.md), [rename](commands/rename.md), [config](commands/config.md), [switch](commands/switch.md), [list-masters](commands/list-masters.md)
 - [block](commands/block.md), [unblock](commands/unblock.md)
@@ -86,11 +87,12 @@ When invoked with arguments (e.g., `/plan-manager <command> [args]`):
 3. **If the command file exists**: Read it and follow its instructions exactly
 4. **If the command file does not exist**: Show an error message listing valid commands
 
-**Valid commands**: init, branch, sub-plan (subplan), capture, add, complete, merge, archive, prune, status, audit, overview, organize, normalize, rename, block, unblock, config, switch, list-masters, help, version
+**Valid commands**: init, branch, sub-plan (subplan), capture, add, complete, merge, archive, delete (remove, rm), prune, status, audit, overview, organize, normalize, rename, block, unblock, config, switch, list-masters, help, version
 
 **Special cases**:
 - No arguments: Show the interactive menu (see commands/interactive-menu.md)
 - Natural language: Match against patterns in examples/natural-language.md
+- `remove` and `rm` are aliases for `delete` — route them to commands/delete.md
 
 ## Interactive Menu
 

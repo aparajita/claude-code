@@ -67,6 +67,11 @@ WORKING WITH PLANS
     Archive or delete a completed plan
     Example: /plan-manager archive completed-plan.md
 
+  delete <file> (also: remove, rm)
+    Permanently delete any plan with confirmation
+    Example: /plan-manager delete someplan.md
+    Example: /plan-manager rm someplan.md
+
   prune
     Review completed plans and delete or archive them
     Example: /plan-manager prune
