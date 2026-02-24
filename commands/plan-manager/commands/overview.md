@@ -14,6 +14,12 @@ Discover and visualize all plans in the project, regardless of whether they're t
 
 > **Terminology:** Throughout this document, "Phase" also includes "Milestone" or "Step" when used as section headers. Detect which term the plan uses and preserve it. See SKILL.md § Terminology.
 
+0. **Load settings**: Read `enableCategoryOrganization` from settings using the standard lookup order:
+   - `~/.claude/plan-manager-settings.json` (user-wide)
+   - `.claude/plan-manager-settings.json` (project-specific, overrides user)
+   - Built-in default: `true`
+   - The resolved value of `enableCategoryOrganization` governs all category-related behavior in steps below.
+
 1. **Determine plans directory**:
    - If `directory` argument provided: use that path
    - Otherwise: use **Plans Directory Detection** (see [organization.md](../organization.md))
@@ -36,7 +42,7 @@ Discover and visualize all plans in the project, regardless of whether they're t
    | **Abandoned** | Old modification date, marked as abandoned, or superseded |
    | **Reference Doc** | Not a plan — just documentation |
 
-   **Additionally, classify standalone plans by category** for organization:
+   **Additionally, if `enableCategoryOrganization` is true, classify standalone plans by category** for organization. If `enableCategoryOrganization` is false, skip this classification — standalone plans are simply "Standalone Plan" with no category label.
 
    | Category | Detection Criteria |
    |----------|-------------------|
@@ -64,6 +70,9 @@ Discover and visualize all plans in the project, regardless of whether they're t
      - Step blockers: `Step N.M`
      - Sub-plan blockers: filename only (e.g., `api-redesign.md`)
      - Multiple blockers: comma-separated
+   - **If `enableCategoryOrganization` is false**: omit the `BY CATEGORY` and `UNCATEGORIZED STANDALONE` sections entirely. Also omit the `├── Category-organized: N` line from the SUMMARY.
+
+**When `enableCategoryOrganization` is true (default):**
 
 ```
 Plans Overview: plans/
@@ -146,9 +155,61 @@ Total plans: 16
 
 ```
 
+**When `enableCategoryOrganization` is false:**
+
+```
+Plans Overview: plans/
+═══════════════════════════════════════════════════════════
+
+ACTIVE HIERARCHIES
+──────────────────
+
+📋 layout-engine/ (Subdirectory)
+│  └── layout-engine.md (Master Plan)
+│      Status: 3/5 phases complete
+│
+│  ├── Phase 1: ✅ Complete
+│  ├── Phase 2: 🔄 In Progress
+│  └── Phase 3: ⏳ Pending
+
+STANDALONE
+──────────
+
+📄 database-schema-v2.md — Standalone plan
+📄 quick-fix-notes.md — Standalone plan
+📄 random-ideas.md — Standalone plan
+
+
+ORPHANED / UNLINKED
+───────────────────
+
+⚠️  experimental-cache.md
+    No parent reference, looks like abandoned sub-plan
+    Last modified: 45 days ago
+
+
+COMPLETED (not linked to active work)
+─────────────────────────────────────
+
+✅ v1-migration.md — Completed master plan (all phases done)
+
+
+SUMMARY
+───────
+
+Total plans: 12
+├── Master plans: 2 (1 active, 1 completed)
+├── Linked sub-plans: 3
+├── Standalone: 3
+└── Orphaned/Unlinked: 1
+
+```
+
 5. **Interactive cleanup for orphaned/completed**:
 
-If orphaned, unlinked completed, or uncategorized standalone plans are found, use the **AskUserQuestion tool** with descriptive options:
+If orphaned, unlinked completed, or (when `enableCategoryOrganization` is true) uncategorized standalone plans are found, use the **AskUserQuestion tool** with descriptive options.
+
+When `enableCategoryOrganization` is **true**, include uncategorized standalone in the prompt and offer "Organize all":
 
 ```
 Question: "Found 2 orphaned plans, 1 completed plan, and 5 uncategorized standalone plans. How would you like to handle them?"
@@ -164,9 +225,23 @@ Options:
     Description: "Just show the report, don't take any action"
 ```
 
+When `enableCategoryOrganization` is **false**, omit uncategorized standalone from the prompt and omit "Organize all" (since the main reason to organize would be categorization):
+
+```
+Question: "Found 2 orphaned plans and 1 completed plan. How would you like to handle them?"
+Header: "Cleanup"
+Options:
+  - Label: "Review individually"
+    Description: "I'll show a summary of each plan and ask what to do with it one by one"
+  - Label: "Move completed"
+    Description: "Move completed unlinked plans to plans/completed/ directory"
+  - Label: "Leave as-is"
+    Description: "Just show the report, don't take any action"
+```
+
 Based on selection:
 - **Organize all**: Switch to the `organize` workflow — organize by category, analyze relationships, suggest links, then cleanup
-- **Review individually**: For each plan, show content summary and use AskUserQuestion again: Organize by category? Link to phase? Move to completed? Delete? Skip?
+- **Review individually**: For each plan, show content summary and use AskUserQuestion again: Organize by category? Link to phase? Move to completed? Delete? Skip? (When `enableCategoryOrganization` is false, omit the "Organize by category?" option)
 - **Move completed**: Move completed unlinked plans to `plans/completed/` (sibling to plans directory)
 - **Leave as-is**: Just report, no action
 

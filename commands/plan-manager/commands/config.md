@@ -3,14 +3,32 @@
 ## Usage
 
 ```
-config [--user|--project] [--edit]
+config [--user|--project] [--edit] [--no-categories] [--categories]
 ```
 
 Display and configure category organization settings interactively.
 
+## With --no-categories flag
+
+Set `enableCategoryOrganization: false` in user settings (`~/.claude/plan-manager-settings.json`) without running the interactive wizard.
+
+- If no user settings file exists, create it with `{"enableCategoryOrganization": false}`
+- If a user settings file exists, merge `enableCategoryOrganization: false` into it (preserve other keys)
+- Confirm with: `✓ Category organization disabled in user settings (~/.claude/plan-manager-settings.json)`
+
+## With --categories flag
+
+Set `enableCategoryOrganization: true` in user settings (`~/.claude/plan-manager-settings.json`) without running the interactive wizard.
+
+- If no user settings file exists, create it with `{"enableCategoryOrganization": true}`
+- If a user settings file exists, merge `enableCategoryOrganization: true` into it (preserve other keys)
+- Confirm with: `✓ Category organization enabled in user settings (~/.claude/plan-manager-settings.json)`
+
 ## Without flags (show current configuration)
 
-1. Load and display current configuration from all sources:
+1. Load and display current configuration from all sources.
+
+2. When `enableCategoryOrganization` is **true** (or default), display:
 
 ```
 Plan Manager Configuration
@@ -38,7 +56,27 @@ Category Directories:
 File Location: ~/.claude/plan-manager-settings.json
 ```
 
-2. Use **AskUserQuestion** to offer actions:
+3. When `enableCategoryOrganization` is **false**, suppress the `Category Directories:` block entirely — showing disabled directories is misleading. Show instead:
+
+```
+Plan Manager Configuration
+══════════════════════════
+
+Source Priority (highest to lowest):
+  1. Project settings: .claude/plan-manager-settings.json [NOT FOUND]
+  2. User settings: ~/.claude/plan-manager-settings.json [ACTIVE]
+  3. Built-in defaults [FALLBACK]
+
+Active Configuration (from user settings):
+──────────────────────────────────────────
+
+Category Organization: DISABLED
+  (category directories are not used)
+
+File Location: ~/.claude/plan-manager-settings.json
+```
+
+4. Use **AskUserQuestion** to offer actions:
 
 ```
 Question: "What would you like to do?"
@@ -136,8 +174,10 @@ Options:
 ## Examples
 
 ```bash
-/plan-manager config              # Show current config
-/plan-manager config --edit       # Interactive editor
-/plan-manager config --user       # Show user-wide config
-/plan-manager config --project --edit  # Edit project config
+/plan-manager config                    # Show current config
+/plan-manager config --edit             # Interactive editor
+/plan-manager config --user             # Show user-wide config
+/plan-manager config --project --edit   # Edit project config
+/plan-manager config --no-categories    # Disable category organization (user settings)
+/plan-manager config --categories       # Enable category organization (user settings)
 ```

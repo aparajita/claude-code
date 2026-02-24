@@ -108,6 +108,16 @@ To disable category organization:
 
 **Migration**: The `organize` command can migrate existing plans to subdirectories.
 
+### When categories are disabled
+
+When `enableCategoryOrganization` is set to `false` in settings, the following changes apply per command:
+
+- **`overview`**: The `BY CATEGORY` section and `UNCATEGORIZED STANDALONE` section are omitted entirely. The `Category-organized: N` line is omitted from the SUMMARY. Standalone plans are listed without a category label.
+- **`organize`**: The CATEGORIZE section is skipped; no category detection or directory suggestions are made. Standalone plans remain in the plans root directory.
+- **`config`**: The `Category Directories:` block is suppressed. Shows `Category Organization: DISABLED` with a note `(category directories are not used)`.
+- **`init`** first-run prompt: If a settings file already exists with `enableCategoryOrganization: false`, the setup prompt (Step 9) is skipped since the setting is already recorded.
+- **Standalone plans**: Always placed in the plans root directory, never in category subdirectories.
+
 ### Settings File Behavior
 
 **The settings file is optional.** Commands work fine without it using built-in defaults:

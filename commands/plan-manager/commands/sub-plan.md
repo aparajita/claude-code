@@ -33,6 +33,11 @@ When `--parent <path>` is provided, the argument is a **step number** in the par
    - If parent is a sub-plan: look up `masterPlan` in the state file for that sub-plan, or walk the `parentPlan` chain until reaching a master plan
 4. Read the parent plan to verify the phase/step exists
 5. Ask the user for a brief description of the sub-plan topic
+5a. **Determine a meaningful filename** for the new sub-plan:
+   - Derive a descriptive kebab-case filename from the description and phase/step context
+   - Examples: `auth-token-refresh.md`, `phase3-layout-refactor.md`, `grid-edge-cases.md`
+   - **Never use random-sounding or auto-generated names** (see `rename.md` § Detecting random/meaningless names)
+   - If unsure, prefer `{topic-slug}.md` over `phase{N}-{something}.md` for readability
 6. **Determine sub-plan location**:
    - **Always use the root master plan's subdirectory** for the sub-plan file location, regardless of nesting depth
    - Use the plans directory detected in step 1 (e.g., "plans" or "docs/plans")
@@ -121,6 +126,7 @@ When `--parent <path>` is provided, the argument is a **step number** in the par
    {Detailed implementation steps}
    ```
 
+8a. **Post-creation rename check**: If the filename of the newly-created sub-plan matches random/meaningless name patterns (see `rename.md` § Detecting random/meaningless names), immediately offer to rename it using the rename suggest mode before updating the state file and parent plan references. Apply the rename before proceeding so that all subsequent references (state file, parent plan links) use the correct name.
 9. **Update state file** with new sub-plan entry:
    - Set `type: "sub-plan"`
    - Set `parentPlan` to the parent plan path (master or sub-plan)

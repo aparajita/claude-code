@@ -3,7 +3,7 @@
 ---
 name: plan-manager
 description: Manage hierarchical plans with linked sub-plans and branches, supporting arbitrary nesting depth. Use when the user wants to initialize a master plan, create a sub-plan for implementing a phase or step, create a nested sub-plan under another sub-plan, branch for handling issues, capture an existing tangential plan, add a plan to the project, merge branch plans back into master or parent sub-plan, mark sub-plans or steps within sub-plans complete, archive completed plans, check plan status, audit for orphaned plans, get an overview of all plans, organize/link related plans together, normalize a plan from any format to standard format, or rename plans to meaningful names. Responds to "/plan-manager" commands and natural language like "create a sub-plan for phase 3", "create a subplan for phase 3", "create a sub-plan for step 3 of layout-fix.md", "create a sub-plan under this sub-plan", "branch from phase 2", "branch from step 2 of grid-rethink.md", "branch from milestone 2", "capture that plan", "add this plan", "add this to phase X", "add this to the master plan", "link this to the master plan", "merge this branch", "archive that plan", "prune completed plans", "clean up old plans", "show plan status", "audit the plans", "overview of plans", "what plans do we have", "organize my plans", "normalize this plan", "normalize plans/foo.md", "convert this plan to the standard format", "rename that plan", "Phase X is complete", "milestone X is complete", "create a sub-plan for milestone 3", "Phase X is complete", or "mark step 2 of plans/sub-plan.md as complete". **Interactive menu**: Invoke with no arguments (`/plan-manager`) to show a menu of available commands.
-argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch [--parent <path>], sub-plan (or subplan) [--parent <path>], capture [--step N] [--parent <path>], add, complete, merge, archive, prune, block, unblock, status, audit, overview, organize [--nested], normalize [--step N], rename, config [--user|--project] [--edit], switch, list-masters, help, version
+argument-hint: [command] [args] — Interactive menu if no command. Commands: init, branch [--parent <path>], sub-plan (or subplan) [--parent <path>], capture [--step N] [--parent <path>], add, complete, merge, archive, prune, block, unblock, status, audit, overview, organize [--nested], normalize [--step N], rename, config [--user|--project] [--edit] [--no-categories] [--categories], switch, list-masters, help, version
 allowed-tools: Bash(git:*), Read, Glob, Write, Edit, AskUserQuestion
 ---
 
@@ -24,7 +24,7 @@ All sub-plans and branches are bidirectionally linked to their parent plan. **Ne
 
 ### Getting Started
 - **init** <file> [--nested] — Initialize a master plan
-- **config** [--user|--project] [--edit] — View/edit category organization settings
+- **config** [--user|--project] [--edit] [--no-categories] [--categories] — View/edit category organization settings
 
 ### Working with Plans
 - **branch** <phase-or-step> [--master <path>] [--parent <path>] — Create a branch for handling issues
