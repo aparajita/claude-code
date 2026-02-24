@@ -4,9 +4,10 @@ Manage git worktrees with consistent naming and directory placement conventions.
 
 ## Features
 
-- **Consistent naming** — worktrees and branches follow a `<type>/<description>` convention
+- **Consistent naming** — worktrees and branches follow a `<slugified-name>` convention
 - **Sibling directory layout** — all worktrees live in `../<project>-worktrees/`, out of the project root
-- **Interactive menus** — `gum`-powered type/branch selection, confirmations, and fuzzy filtering
+- **Interactive menus** — numbered shell menus and Y/n prompts, no external dependencies beyond `git` and `jq`
+- **Uniqueness validation** — rejects names that conflict with an existing worktree or branch
 - **Uncommitted change copying** — optionally copies all uncommitted changes into the new worktree via `git stash`, while leaving the original directory unchanged
 - **MCP server copying** — reads project MCP server config from `~/.claude.json` and offers to copy servers to the new worktree; `serena` is always copied automatically if present
 - **JetBrains IDE integration** — automatically opens the worktree in the IDE when a `.idea` directory is detected
@@ -16,7 +17,7 @@ Manage git worktrees with consistent naming and directory placement conventions.
 ## Requirements
 
 - `git`
-- [`gum`](https://github.com/charmbracelet/gum) — `brew install gum`
+- `jq` — `brew install jq`
 
 ## Installation
 
@@ -34,49 +35,49 @@ Manage git worktrees with consistent naming and directory placement conventions.
    source ~/.zshrc   # or ~/.bashrc
    ```
 
-### Optional: custom types
+### Optional preferences
 
-Create `~/.worktree-settings` to override the default type list:
+Create `~/.worktree-settings` to set persistent preferences:
 
 ```bash
 # ~/.worktree-settings
-WORKTREE_TYPES=(feature fix refactor migration chore spike)
+OPEN_CLAUDE=true         # always open Claude Code after creating a worktree
+OPEN_JETBRAINS_IDE=true  # always open JetBrains IDE after creating a worktree
 ```
 
-The `other` option is always appended to this list regardless of the setting.
+These are also set automatically when you answer the post-create prompts.
 
 ## Key Concepts
 
 **Worktree directory**: a sibling to the project root — `../<project-name>-worktrees/`
 - Example: `../claude-code-worktrees/`
 
-**Worktree path**: `<worktree-dir>/<type>-<slugified-description>`
-- Example: `../claude-code-worktrees/feature-user-authentication`
+**Worktree path**: `<worktree-dir>/<slugified-name>`
+- Example: `../claude-code-worktrees/user-authentication`
 
-**Branch name**: `<type>/<slugified-description>`
-- Example: `feature/user-authentication`
+**Branch name**: `<slugified-name>`
+- Example: `user-authentication`
 
-**Slugification**: description joined with hyphens, lowercased, non-alphanumeric characters (except hyphens) stripped.
+**Slugification**: name joined with hyphens, lowercased, non-alphanumeric characters (except hyphens) stripped.
 
 ## Command Reference
 
 ### Creating
 
-**`create [type] [description...]`** (alias: `start`; default when no command given)
+**`create [name...]`** (alias: `start`; default when no command given)
 
-Create a new worktree and branch. Prompts interactively for any missing arguments.
+Create a new worktree and branch. Prompts interactively for a name if not provided on the command line.
 
-- Prompts for type via `gum choose` if not provided; `other` allows arbitrary input
-- Prompts for description via `gum input` if not provided
+- Validates that the name is unique before proceeding
 - Optionally copies uncommitted changes into the new worktree
-- Selects base branch automatically (1 branch), via `gum choose` (2–10), or `gum filter` (>10)
+- Selects base branch automatically when only one exists; shows a numbered menu otherwise
 - Optionally copies project MCP servers to the new worktree
 - **cds into the new worktree on completion**
 
 ```bash
-worktree create feature user-authentication
-worktree feature user-authentication   # same — create is the default
-worktree create                        # fully interactive
+worktree create user-authentication
+worktree user-authentication   # same — create is the default
+worktree create                # fully interactive
 ```
 
 ### Managing
@@ -153,7 +154,7 @@ Pause after each git operation and ask whether to continue. Pass it before the c
 
 ```bash
 worktree --step merge
-worktree --step create feature my-feature
+worktree --step create my-feature
 worktree --step abort
 ```
 

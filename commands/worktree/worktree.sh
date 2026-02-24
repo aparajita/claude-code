@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# worktree.sh — Git worktree manager with gum-based interactive menus
+# worktree.sh — Git worktree manager with interactive shell menus
 #
 # IMPORTANT: This script must be sourced (not executed) so that `cd` affects
 # the calling shell. Add to ~/.zshrc or ~/.bashrc:
 #
 #   worktree() { source /path/to/worktree.sh "$@"; }
-#
-# Optional settings in ~/.worktree-settings:
-#   WORKTREE_TYPES=(feature fix refactor migration chore spike)
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.2.0"
+_WT_VERSION="1.3.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -29,12 +26,6 @@ _wt_check_deps() {
     echo "  Install: https://git-scm.com" >&2
     ok=false
   fi
-  if ! command -v gum &>/dev/null; then
-    echo "worktree: 'gum' is required but not found." >&2
-    echo "  Install: brew install gum   (macOS/Linux via Homebrew)" >&2
-    echo "           https://github.com/charmbracelet/gum" >&2
-    ok=false
-  fi
   if ! command -v jq &>/dev/null; then
     echo "worktree: 'jq' is required but not found." >&2
     echo "  Install: brew install jq   (macOS/Linux via Homebrew)" >&2
@@ -46,7 +37,7 @@ _wt_check_deps() {
 
 # Ensure required dependencies are available; offer to install via brew if missing
 _wt_ensure_dependencies() {
-  local required_deps=("jq" "gum")
+  local required_deps=("jq")
   local missing_deps=()
 
   for dep in "${required_deps[@]}"; do
@@ -74,7 +65,7 @@ _wt_ensure_dependencies() {
   local deps_list
   deps_list=$(printf '%s\n' "${missing_deps[@]}" | tr '\n' ' ' | sed 's/ $//')
 
-  if gum confirm "The following tools are necessary: $deps_list. Would you like me to install them for you?"; then
+  if _wt_confirm "The following tools are necessary: $deps_list. Install them?"; then
     for dep in "${missing_deps[@]}"; do
       brew install "$dep" || {
         echo "Failed to install $dep." >&2
@@ -91,27 +82,47 @@ _wt_ensure_dependencies() {
 # ── Settings ──────────────────────────────────────────────────────────────────
 
 _wt_load_settings() {
-  WORKTREE_TYPES=(feature refactor migration chore)
-
-  # Gum color defaults (ANSI color numbers; override in ~/.worktree-settings)
-  # Prompts/headers → magenta (5), cursors/indicators → white (7)
-  export GUM_CHOOSE_HEADER_FOREGROUND="${GUM_CHOOSE_HEADER_FOREGROUND:-5}"
-  export GUM_CHOOSE_CURSOR_FOREGROUND="${GUM_CHOOSE_CURSOR_FOREGROUND:-7}"
-  export GUM_CHOOSE_SELECTED_FOREGROUND="${GUM_CHOOSE_SELECTED_FOREGROUND:-7}"
-  export GUM_CONFIRM_PROMPT_FOREGROUND="${GUM_CONFIRM_PROMPT_FOREGROUND:-5}"
-  export GUM_CONFIRM_SELECTED_BACKGROUND="${GUM_CONFIRM_SELECTED_BACKGROUND:-4}"
-  export GUM_CONFIRM_SELECTED_FOREGROUND="${GUM_CONFIRM_SELECTED_FOREGROUND:-15}"
-  export GUM_CONFIRM_UNSELECTED_FOREGROUND="${GUM_CONFIRM_UNSELECTED_FOREGROUND:-7}"
-  export GUM_INPUT_PROMPT_FOREGROUND="${GUM_INPUT_PROMPT_FOREGROUND:-5}"
-  export GUM_INPUT_CURSOR_FOREGROUND="${GUM_INPUT_CURSOR_FOREGROUND:-7}"
-  export GUM_FILTER_HEADER_FOREGROUND="${GUM_FILTER_HEADER_FOREGROUND:-5}"
-  export GUM_FILTER_INDICATOR_FOREGROUND="${GUM_FILTER_INDICATOR_FOREGROUND:-7}"
-  export GUM_FILTER_SELECTED_INDICATOR_FOREGROUND="${GUM_FILTER_SELECTED_INDICATOR_FOREGROUND:-7}"
-  export GUM_FILTER_MATCH_FOREGROUND="${GUM_FILTER_MATCH_FOREGROUND:-7}"
-
   local settings="$HOME/.worktree-settings"
   # shellcheck source=/dev/null
   [[ -f "$settings" ]] && source "$settings"
+}
+
+# ── Interactive helpers ────────────────────────────────────────────────────────
+
+# Y/n confirmation prompt. Returns 0 if user answers "y", 1 otherwise.
+_wt_confirm() {
+  local prompt="$1" reply
+  printf '%s [y/N] ' "$prompt"
+  read -r reply
+  [[ "${reply,,}" == "y" ]]
+}
+
+# Numbered single-select menu. Result stored in _WT_SELECT_RESULT; empty = cancelled.
+# Usage: _wt_select_one "Header text" item1 item2 ...
+_wt_select_one() {
+  local header="$1"; shift
+  local -a items=("$@")
+  printf '\n%s\n' "$header"
+  local i=1
+  for item in "${items[@]}"; do
+    printf '  %d) %s\n' "$i" "$item"
+    (( i++ )) || true
+  done
+  printf '  0) Cancel\n'
+  _WT_SELECT_RESULT=""
+  while true; do
+    printf 'Enter number: '
+    local reply
+    read -r reply
+    if [[ "$reply" == "0" ]]; then
+      _WT_SELECT_RESULT=""
+      return 0
+    elif [[ "$reply" =~ ^[0-9]+$ ]] && [[ "$reply" -ge 1 ]] && [[ "$reply" -le "${#items[@]}" ]]; then
+      _WT_SELECT_RESULT="${items[$((reply-1))]}"
+      return 0
+    fi
+    printf 'Invalid choice.\n' >&2
+  done
 }
 
 # ── Settings save ─────────────────────────────────────────────────────────────
@@ -142,10 +153,11 @@ _wt_step() {
   printf '\033[32m✓ %s\033[0m\n' "$1"
   [[ "$_WT_STEP" != true ]] && return 0
   echo ""
-  gum confirm "Continue?" --affirmative "Continue" --negative "Stop" || {
-    echo "Stopped." >&2
-    return 1
-  }
+  printf 'Continue? [y/N] '
+  local _wt_step_reply
+  read -r _wt_step_reply
+  [[ "${_wt_step_reply,,}" != "y" ]] && { echo "Stopped." >&2; return 1; }
+  return 0
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -208,7 +220,7 @@ _wt_worktree_data() {
 
 # Detect target worktree for merge/abort commands.
 # If CWD is a non-main worktree → auto-selects it.
-# If CWD is main → presents gum choose list.
+# If CWD is main → presents a numbered menu.
 # Sets (in calling scope via dynamic scoping):
 #   _wt_target_path, _wt_target_branch, _wt_main_path, _wt_main_branch
 # Returns 1 on error, 0 on success (including user cancellation via empty _wt_target_path).
@@ -247,9 +259,13 @@ _wt_detect_context() {
       return 1
     fi
 
-    local choice
-    choice=$(printf '%s\n' "$non_main" | gum choose --header "Select worktree to $verb")
-    # Empty choice = user cancelled (Ctrl-C / Escape)
+    local -a non_main_arr=()
+    while IFS= read -r line; do
+      [[ -n "$line" ]] && non_main_arr+=("$line")
+    done <<< "$non_main"
+
+    _wt_select_one "Select worktree to $verb:" "${non_main_arr[@]}"
+    local choice="$_WT_SELECT_RESULT"
     if [[ -z "$choice" ]]; then
       _wt_target_path=""
       return 0
@@ -321,31 +337,14 @@ _wt_copy_mcp_servers() {
 _wt_cmd_create() {
   _wt_load_settings
 
-  local type="${1:-}"
-  [[ $# -gt 0 ]] && shift
-  local description="$*"
+  local name="$*"
 
-  local _printed_blank=false
-
-  # Prompt for type if not given
-  if [[ -z "$type" ]]; then
+  # Prompt for name if not given
+  if [[ -z "$name" ]]; then
     echo ""
-    _printed_blank=true
-    local type_options=("${WORKTREE_TYPES[@]}" other)
-    type=$(printf '%s\n' "${type_options[@]}" | gum choose --header "Select worktree type:")
-    [[ -z "$type" ]] && return 0
-  fi
-
-  if [[ "$type" == "other" ]]; then
-    type=$(gum input --placeholder "Enter type")
-    [[ -z "$type" ]] && return 0
-  fi
-
-  # Prompt for description if not given
-  if [[ -z "$description" ]]; then
-    [[ "$_printed_blank" == false ]] && echo ""
-    description=$(gum input --placeholder "Describe the worktree")
-    [[ -z "$description" ]] && return 0
+    printf 'Worktree name: '
+    read -r name
+    [[ -z "$name" ]] && return 0
   fi
 
   # Derive paths
@@ -358,15 +357,27 @@ _wt_cmd_create() {
   local project_name
   project_name=$(basename "$root")
   local slug
-  slug=$(_wt_slugify "$description")
-  local branch="${type}/${slug}"
+  slug=$(_wt_slugify "$name")
+  local branch="${slug}"
   local worktree_dir
   worktree_dir="$(cd "$root/.." 2>/dev/null && pwd)/${project_name}-worktrees"
-  local worktree_path="${worktree_dir}/${type}-${slug}"
+  local worktree_path="${worktree_dir}/${slug}"
+
+  # Check uniqueness against existing worktrees
+  local existing_worktrees
+  existing_worktrees=$(_wt_worktree_data)
+  while IFS=$'\t' read -r wt_path wt_branch wt_head wt_locked; do
+    [[ "$wt_path" == "$root" ]] && continue  # skip main worktree
+    local existing_name="${wt_path##*/}"
+    if [[ "$existing_name" == "$slug" ]] || [[ "$wt_branch" == "$branch" ]]; then
+      echo "worktree: name '$name' is already in use (worktree: $wt_path, branch: $wt_branch)" >&2
+      return 1
+    fi
+  done <<< "$existing_worktrees"
 
   # If branch already exists, ask to overwrite
   if git -C "$root" rev-parse --verify "refs/heads/$branch" &>/dev/null; then
-    if ! gum confirm "Branch '$branch' already exists. Overwrite it?"; then
+    if ! _wt_confirm "Branch '$branch' already exists. Overwrite it?"; then
       return 0
     fi
     git -C "$root" branch -D "$branch"
@@ -374,7 +385,7 @@ _wt_cmd_create() {
 
   # Check if worktree directory already exists
   if [[ -d "$worktree_path" ]]; then
-    if ! gum confirm "Directory '${worktree_path##*/}' already exists. Overwrite it?"; then
+    if ! _wt_confirm "Directory '${worktree_path##*/}' already exists. Overwrite it?"; then
       return 0
     fi
     _wt_check_jetbrains "$worktree_path"
@@ -384,9 +395,9 @@ _wt_cmd_create() {
   # Check for uncommitted changes
   local copy_changes=false
   if [[ -n "$(git -C "$root" status --porcelain 2>/dev/null)" ]]; then
-    local changes_action
-    changes_action=$(printf '%s\n' "Yes" "No" "Cancel" | \
-      gum choose --header "There are untracked/uncommitted changes. Copy them to the worktree?")
+    _wt_select_one "There are untracked/uncommitted changes. Copy them to the worktree?" \
+      "Yes" "No" "Cancel"
+    local changes_action="$_WT_SELECT_RESULT"
     case "$changes_action" in
       "Yes")
         copy_changes=true
@@ -398,7 +409,7 @@ _wt_cmd_create() {
         : # proceed without stashing
         ;;
       *)
-        return 0  # Cancel or Esc
+        return 0  # Cancel
         ;;
     esac
   fi
@@ -416,13 +427,14 @@ _wt_cmd_create() {
   if [[ "$num_branches" -eq 1 ]]; then
     base_branch=$(printf '%s\n' "$branch_list" | tr -d ' ')
     echo "Using base branch: $base_branch"
-  elif [[ "$num_branches" -le 10 ]]; then
-    echo ""
-    base_branch=$(printf '%s\n' "$branch_list" | gum choose --header "Select base branch")
-    [[ -z "$base_branch" ]] && { [[ "$copy_changes" == true ]] && git -C "$root" stash drop; return 0; }
   else
-    echo ""
-    base_branch=$(printf '%s\n' "$branch_list" | gum filter --header "Select base branch (type to filter)")
+    local -a branch_arr=()
+    while IFS= read -r b; do
+      b=$(printf '%s' "$b" | tr -d ' ')
+      [[ -n "$b" ]] && branch_arr+=("$b")
+    done <<< "$branch_list"
+    _wt_select_one "Select base branch:" "${branch_arr[@]}"
+    base_branch="$_WT_SELECT_RESULT"
     [[ -z "$base_branch" ]] && { [[ "$copy_changes" == true ]] && git -C "$root" stash drop; return 0; }
   fi
 
@@ -459,24 +471,33 @@ _wt_cmd_create() {
     if [[ -n "$mcp_json" && "$mcp_json" != "{}" ]]; then
       local always_copy=()
       local optional=()
-      while IFS= read -r name; do
-        [[ -z "$name" ]] && continue
-        if [[ "$name" == "serena" ]]; then
-          always_copy+=("$name")
+      while IFS= read -r srv_name; do
+        [[ -z "$srv_name" ]] && continue
+        if [[ "$srv_name" == "serena" ]]; then
+          always_copy+=("$srv_name")
         else
-          optional+=("$name")
+          optional+=("$srv_name")
         fi
       done <<< "$(jq -r 'keys[]' <<< "$mcp_json")"
 
       local selected=("${always_copy[@]}")
       if [[ ${#optional[@]} -gt 0 ]]; then
-        local chosen_str
         echo ""
-        chosen_str=$(printf '%s\n' "${optional[@]}" | \
-          gum choose --no-limit --header "Select MCP servers to copy to the new worktree")
-        while IFS= read -r s; do
-          [[ -n "$s" ]] && selected+=("$s")
-        done <<< "$chosen_str"
+        printf 'Available MCP servers to copy:\n'
+        local idx=1
+        for srv in "${optional[@]}"; do
+          printf '  %d) %s\n' "$idx" "$srv"
+          (( idx++ )) || true
+        done
+        printf '  0) None\n'
+        printf 'Enter numbers separated by spaces (or 0 for none): '
+        local mcp_choices
+        read -r mcp_choices
+        for num in $mcp_choices; do
+          if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 1 ]] && [[ "$num" -le "${#optional[@]}" ]]; then
+            selected+=("${optional[$((num-1))]}")
+          fi
+        done
       fi
 
       if [[ ${#selected[@]} -gt 0 ]]; then
@@ -501,10 +522,10 @@ _wt_cmd_create() {
       open_ide=true
     elif [[ "${OPEN_JETBRAINS_IDE:-}" != "false" ]]; then
       echo ""
-      if gum confirm "Open worktree in JetBrains IDE?" --affirmative "Yes" --negative "No"; then
+      if _wt_confirm "Open worktree in JetBrains IDE?"; then
         open_ide=true
       fi
-      if gum confirm "Save this choice as a preference?" --affirmative "Yes" --negative "No"; then
+      if _wt_confirm "Save this choice as a preference?"; then
         _wt_save_setting "OPEN_JETBRAINS_IDE" "$open_ide"
       fi
     fi
@@ -534,10 +555,10 @@ _wt_cmd_create() {
   else
     # No saved preference — ask
     echo ""
-    if gum confirm "Open Claude Code?" --affirmative "Yes" --negative "No"; then
+    if _wt_confirm "Open Claude Code?"; then
       open_claude=true
     fi
-    if gum confirm "Save this choice as a preference?" --affirmative "Yes" --negative "No"; then
+    if _wt_confirm "Save this choice as a preference?"; then
       _wt_save_setting "OPEN_CLAUDE" "$open_claude"
     fi
   fi
@@ -551,22 +572,19 @@ _wt_cmd_create() {
 
     if [[ "$commits_since_base" -gt 0 ]]; then
       echo ""
-      local post_claude_action
-      post_claude_action=$(printf '%s\n' "Merge" "Abort" "Cancel" | \
-        gum choose --header "Merge changes into '$base_branch', or abort this worktree?")
-      case "$post_claude_action" in
+      _wt_select_one "Merge changes into '$base_branch', or abort this worktree?" \
+        "Merge" "Abort" "Cancel"
+      case "$_WT_SELECT_RESULT" in
         "Merge") _wt_cmd_merge ;;
         "Abort") _wt_cmd_abort ;;
-        *)       ;;  # Cancel or Esc — leave worktree as-is
+        *)       ;;  # Cancel — leave worktree as-is
       esac
     else
       echo ""
-      local post_claude_action
-      post_claude_action=$(printf '%s\n' "Yes" "Leave it" | \
-        gum choose --header "No commits were made. Abort this worktree?")
-      case "$post_claude_action" in
+      _wt_select_one "No commits were made. Abort this worktree?" "Yes" "Leave it"
+      case "$_WT_SELECT_RESULT" in
         "Yes") _wt_cmd_abort ;;
-        *)     ;;  # Leave it or Esc
+        *)     ;;  # Leave it
       esac
     fi
   fi
@@ -671,7 +689,7 @@ _wt_cmd_abort() {
   local main_path="$_wt_main_path"
 
   local branch_display="${target_branch:-<detached HEAD>}"
-  if ! gum confirm "Permanently delete worktree and branch '$branch_display'?"; then
+  if ! _wt_confirm "Permanently delete worktree and branch '$branch_display'?"; then
     return 0
   fi
 
@@ -797,7 +815,12 @@ _wt_cmd_switch() {
   fi
 
   if [[ -z "$target" ]]; then
-    target=$(printf '%s\n' "$candidates" | gum choose --header "Select worktree to switch to")
+    local -a candidates_arr=()
+    while IFS= read -r line; do
+      [[ -n "$line" ]] && candidates_arr+=("$line")
+    done <<< "$candidates"
+    _wt_select_one "Select worktree to switch to:" "${candidates_arr[@]}"
+    target="$_WT_SELECT_RESULT"
     [[ -z "$target" ]] && return 0
   fi
 
@@ -852,7 +875,7 @@ _wt_cmd_clean() {
       echo "  ${b:-<detached>}  ($p)"
     done
     echo ""
-    if gum confirm "Prune stale registrations and delete their branches?"; then
+    if _wt_confirm "Prune stale registrations and delete their branches?"; then
       git -C "$main_path" worktree prune
       for entry in "${stale_entries[@]}"; do
         local b="${entry%%	*}"
@@ -885,7 +908,7 @@ _wt_cmd_clean() {
     for entry in "${merged_entries[@]}"; do
       local branch="${entry%%	*}" wt_path="${entry##*	}"
       echo ""
-      if gum confirm "Remove worktree and delete branch '$branch'?"; then
+      if _wt_confirm "Remove worktree and delete branch '$branch'?"; then
         _wt_step "Removing worktree directory $wt_path" || return 1
         git -C "$main_path" worktree remove --force "$wt_path" 2>/dev/null
         rm -rf "$wt_path" 2>/dev/null
@@ -935,7 +958,7 @@ _wt_cmd_clean() {
       echo ""
       for dir in "${orphans[@]}"; do
         echo ""
-        if gum confirm "Remove orphaned directory '${dir##*/}'?"; then
+        if _wt_confirm "Remove orphaned directory '${dir##*/}'?"; then
           _wt_check_jetbrains "$dir"
           rm -rf "$dir" 2>/dev/null
           echo "Removed: $dir"
@@ -960,12 +983,10 @@ Worktree Commands
 
 CREATING
 ────────
-  create [type] [description...]   (default command; alias: start)
-    Create a new worktree and branch. Prompts for missing arguments.
-    Types: feature, refactor, migration, chore, other
-           (customize via ~/.worktree-settings)
-    Example: worktree create feature user-authentication
-    Example: worktree feature user-authentication
+  create [name...]   (default command; alias: start)
+    Create a new worktree and branch. Prompts for a name if not given.
+    Example: worktree create user-authentication
+    Example: worktree user-authentication
 
 MANAGING
 ────────
@@ -1029,14 +1050,12 @@ SETUP
     worktree() { source /path/to/worktree.sh "$@"; }
 
   Optional settings in ~/.worktree-settings:
-    WORKTREE_TYPES=(feature fix refactor migration chore spike)
     OPEN_CLAUDE=true|false   (set automatically when prompted after create)
 
 TIPS
 ────
   . Worktree directories are siblings of the project: ../<project>-worktrees/
-  . Branch names follow the pattern: <type>/<slugified-description>
-  . The 'other' type is always available, even without ~/.worktree-settings
+  . Branch names follow the pattern: <slugified-name>
   . abort and merge work from inside a worktree OR from the main directory
 HELP
 }
