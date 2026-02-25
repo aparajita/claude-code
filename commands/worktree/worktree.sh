@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # worktree.sh — Git worktree manager with interactive shell menus
 #
 # IMPORTANT: This script must be sourced (not executed) so that `cd` affects
@@ -7,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.4.0"
+_WT_VERSION="1.4.1"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -118,7 +117,11 @@ _wt_select_one() {
       _WT_SELECT_RESULT=""
       return 0
     elif [[ "$reply" =~ ^[0-9]+$ ]] && [[ "$reply" -ge 1 ]] && [[ "$reply" -le "${#items[@]}" ]]; then
-      _WT_SELECT_RESULT="${items[$((reply-1))]}"
+      if [[ -n "${ZSH_VERSION:-}" ]]; then
+        _WT_SELECT_RESULT="${items[$reply]}"
+      else
+        _WT_SELECT_RESULT="${items[$((reply-1))]}"
+      fi
       return 0
     fi
     printf 'Invalid choice.\n' >&2
