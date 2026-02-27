@@ -2,56 +2,6 @@
 # Claude Code status line generator
 # Reads context from stdin and outputs formatted status line
 
-# Ensure jq is available; offer to install via brew if missing
-_ensure_jq() {
-  if command -v jq &>/dev/null; then
-    return 0
-  fi
-
-  if ! command -v brew &>/dev/null; then
-    echo "jq is necessary to use this utility, and brew is not available." >&2
-    echo "Install jq from: https://jqlang.github.io/jq/" >&2
-    return 1
-  fi
-
-  # Using printf for interactive prompt
-  printf "jq is necessary to use this utility. Would you like me to install it for you? (yes/no): " >&2
-  read -r response
-
-  if [[ "$response" == "yes" || "$response" == "y" ]]; then
-    brew install jq || {
-      echo "Failed to install jq." >&2
-      return 1
-    }
-    return 0
-  else
-    echo "Sorry, this script cannot be installed without jq being available."
-    return 1
-  fi
-}
-
-# Handle --install flag
-if [ "$1" = "--install" ]; then
-    _ensure_jq || exit 1
-
-    script_path="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-    settings="$HOME/.claude/settings.json"
-
-    chmod +x "$script_path"
-
-    # Create settings file if it doesn't exist
-    if [ ! -f "$settings" ]; then
-        echo '{}' > "$settings"
-    fi
-
-    # Update statusLine in settings.json
-    tmp=$(mktemp)
-    jq --arg cmd "$script_path" '.statusLine = {"type": "command", "command": $cmd, "padding": 0}' "$settings" > "$tmp" && mv "$tmp" "$settings"
-    echo "Installed status line: $script_path"
-    echo "Updated: $settings"
-    exit 0
-fi
-
 input=$(cat)
 
 # DEBUG: log raw input JSON per process
@@ -60,9 +10,6 @@ echo "$input" > "/tmp/claude-status-line-$$.json"
 # Extract values from input JSON
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 model=$(echo "$input" | jq -r '.model.display_name')
-model_id=$(echo "$input" | jq -r '.model.id')
-# effort_level is not in status line JSON; read from settings
-effort_level=$(jq -r '.effortLevel // empty' ~/.claude/settings.json 2>/dev/null)
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
 # Initialize git variables
@@ -93,16 +40,8 @@ if [ -f "$cwd/.git" ]; then
     worktree_indicator="🌲"
 fi
 
-# Output: model name (cyan) with effort level for Opus/Sonnet 4.6+
-model_display="$model"
-if [[ "$model_id" == *"opus-4-6"* || "$model_id" == *"sonnet-4-6"* ]]; then
-    # Default to "high" if effort level is empty
-    if [ -z "$effort_level" ]; then
-        effort_level="high"
-    fi
-    model_display="$model ($effort_level)"
-fi
-printf '\033[36m%s\033[0m' "$model_display"
+# Output: model name (cyan)
+printf '\033[36m%s\033[0m' "$model"
 printf '\033[90m | \033[0m'
 
 # Output: context percentage (color-coded)
