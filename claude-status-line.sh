@@ -22,9 +22,10 @@ if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
              git -C "$cwd" --no-optional-locks rev-parse --short HEAD 2>/dev/null)
 
     if [ -n "$branch" ]; then
-        # Check if there are uncommitted changes
+        # Check if there are uncommitted changes or untracked files
         if ! git -C "$cwd" --no-optional-locks diff --quiet 2>/dev/null || \
-           ! git -C "$cwd" --no-optional-locks diff --cached --quiet 2>/dev/null; then
+           ! git -C "$cwd" --no-optional-locks diff --cached --quiet 2>/dev/null || \
+           [ -n "$(git -C "$cwd" --no-optional-locks ls-files --others --exclude-standard 2>/dev/null)" ]; then
             dirty=$(printf '\033[31m*\033[0m')  # Red asterisk
         fi
     fi
