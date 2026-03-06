@@ -75,9 +75,10 @@ Create a new worktree and branch. Prompts interactively for a name if not provid
 - **cds into the new worktree on completion**
 
 ```bash
-worktree create user-authentication
-worktree user-authentication   # same — create is the default
-worktree create                # fully interactive
+worktree create feat/user authentication  # directory: ../claude-code-worktrees/feat-user-authentication, branch: feat/user-authentication
+worktree feat/user-authentication   # same — create is the default
+worktree create  # fully interactive
+worktree  # same — create is the default
 ```
 
 ### Managing

@@ -12,7 +12,7 @@ Manage hierarchical plans with linked sub-plans and branches. Maintains a master
 
 ### worktree
 
-Manage git worktrees with consistent naming and directory placement conventions. Keeps all worktrees in a sibling directory and enforces a standard branch naming pattern.
+Manage git worktrees with consistent naming and directory placement conventions. Keeps all worktrees in a sibling directory allows flexible branch naming.
 
 [README](commands/worktree/README.md)
 

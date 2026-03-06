@@ -93,7 +93,7 @@ _wt_confirm() {
   local prompt="$1" reply
   printf '%s [y/N] ' "$prompt"
   read -r reply
-  [[ "${reply,,}" == "y" ]]
+  [[ "$(printf '%s' "$reply" | tr '[:upper:]' '[:lower:]')" == "y" ]]
 }
 
 # Numbered single-select menu. Result stored in _WT_SELECT_RESULT; empty = cancelled.
@@ -159,15 +159,20 @@ _wt_step() {
   printf 'Continue? [y/N] '
   local _wt_step_reply
   read -r _wt_step_reply
-  [[ "${_wt_step_reply,,}" != "y" ]] && { echo "Stopped." >&2; return 1; }
+  [[ "$(printf '%s' "$_wt_step_reply" | tr '[:upper:]' '[:lower:]')" != "y" ]] && { echo "Stopped." >&2; return 1; }
   return 0
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-_wt_slugify() {
-  # Lowercase, spaces → hyphens, strip non-alphanumeric except hyphens
-  printf '%s' "$*" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-'
+_wt_slugify_branch() {
+  # Lowercase, spaces → hyphens, keep slashes for branch prefixes (e.g. feat/foo-bar)
+  printf '%s' "$*" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9/-'
+}
+
+_wt_slugify_dir() {
+  # Lowercase, spaces and slashes → hyphens, strip non-alphanumeric except hyphens
+  printf '%s' "$*" | tr '[:upper:]' '[:lower:]' | tr ' /' '-' | tr -cd 'a-z0-9-'
 }
 
 _wt_project_root() {
@@ -359,12 +364,13 @@ _wt_cmd_create() {
   fi
   local project_name
   project_name=$(basename "$root")
-  local slug
-  slug=$(_wt_slugify "$name")
-  local branch="${slug}"
+  local branch
+  branch=$(_wt_slugify_branch "$name")
+  local dir_slug
+  dir_slug=$(_wt_slugify_dir "$name")
   local worktree_dir
   worktree_dir="$(cd "$root/.." 2>/dev/null && pwd)/${project_name}-worktrees"
-  local worktree_path="${worktree_dir}/${slug}"
+  local worktree_path="${worktree_dir}/${dir_slug}"
 
   # Check uniqueness against existing worktrees
   local existing_worktrees
@@ -372,7 +378,7 @@ _wt_cmd_create() {
   while IFS=$'\t' read -r wt_path wt_branch wt_head wt_locked; do
     [[ "$wt_path" == "$root" ]] && continue  # skip main worktree
     local existing_name="${wt_path##*/}"
-    if [[ "$existing_name" == "$slug" ]] || [[ "$wt_branch" == "$branch" ]]; then
+    if [[ "$existing_name" == "$dir_slug" ]] || [[ "$wt_branch" == "$branch" ]]; then
       echo "worktree: name '$name' is already in use (worktree: $wt_path, branch: $wt_branch)" >&2
       return 1
     fi
