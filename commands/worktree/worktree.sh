@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.5.0"
+_WT_VERSION="1.5.1"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -581,16 +581,16 @@ _wt_cmd_create() {
 
     if [[ "$commits_since_base" -gt 0 ]]; then
       echo ""
-      _wt_select_one "Merge changes into '$base_branch', or abort this worktree?" \
-        "Merge" "Abort" "Cancel"
+      _wt_select_one "Are you done with this worktree? If so, you can either merge this branch into '$base_branch' or discard any changes -- either of which will remove the worktree and its branch and return to the main directory -- or you can keep the worktree and its branch." \
+        "Merge" "Discard" "Keep"
       case "$_WT_SELECT_RESULT" in
-        "Merge") _wt_cmd_merge ;;
-        "Abort") _wt_cmd_abort ;;
-        *)       ;;  # Cancel — leave worktree as-is
+        "Merge")   _wt_cmd_merge ;;
+        "Discard") _wt_cmd_abort ;;
+        *)         ;;  # Keep or 0/Cancel — leave worktree as-is
       esac
     else
       echo ""
-      _wt_select_one "No commits were made. Abort this worktree?" "Yes" "Leave it"
+      _wt_select_one "No commits were made. Discard this worktree and its branch?" "Yes" "Leave it"
       case "$_WT_SELECT_RESULT" in
         "Yes") _wt_cmd_abort ;;
         *)     ;;  # Leave it
