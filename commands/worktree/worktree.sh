@@ -1,4 +1,4 @@
-# worktree.sh — Git worktree manager with interactive shell menus
+# worktree.sh — Git worktree manager with interactive gum menus
 #
 # IMPORTANT: This script must be sourced (not executed) so that `cd` affects
 # the calling shell. Add to ~/.zshrc or ~/.bashrc:
@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="1.5.1"
+_WT_VERSION="2.0.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -25,6 +25,12 @@ _wt_check_deps() {
     echo "  Install: https://git-scm.com" >&2
     ok=false
   fi
+  if ! command -v gum &>/dev/null; then
+    echo "worktree: 'gum' is required but not found." >&2
+    echo "  Install: brew install gum   (macOS/Linux via Homebrew)" >&2
+    echo "           https://github.com/charmbracelet/gum" >&2
+    ok=false
+  fi
   if ! command -v jq &>/dev/null; then
     echo "worktree: 'jq' is required but not found." >&2
     echo "  Install: brew install jq   (macOS/Linux via Homebrew)" >&2
@@ -36,7 +42,7 @@ _wt_check_deps() {
 
 # Ensure required dependencies are available; offer to install via brew if missing
 _wt_ensure_dependencies() {
-  local required_deps=("jq")
+  local required_deps=("gum" "jq")
   local missing_deps=()
 
   for dep in "${required_deps[@]}"; do
@@ -81,6 +87,22 @@ _wt_ensure_dependencies() {
 # ── Settings ──────────────────────────────────────────────────────────────────
 
 _wt_load_settings() {
+  # Gum color defaults (ANSI color numbers; override in ~/.worktree-settings)
+  # Prompts/headers → magenta (5), cursors/indicators → white (7)
+  export GUM_CHOOSE_HEADER_FOREGROUND="${GUM_CHOOSE_HEADER_FOREGROUND:-5}"
+  export GUM_CHOOSE_CURSOR_FOREGROUND="${GUM_CHOOSE_CURSOR_FOREGROUND:-7}"
+  export GUM_CHOOSE_SELECTED_FOREGROUND="${GUM_CHOOSE_SELECTED_FOREGROUND:-7}"
+  export GUM_CONFIRM_PROMPT_FOREGROUND="${GUM_CONFIRM_PROMPT_FOREGROUND:-5}"
+  export GUM_CONFIRM_SELECTED_BACKGROUND="${GUM_CONFIRM_SELECTED_BACKGROUND:-4}"
+  export GUM_CONFIRM_SELECTED_FOREGROUND="${GUM_CONFIRM_SELECTED_FOREGROUND:-15}"
+  export GUM_CONFIRM_UNSELECTED_FOREGROUND="${GUM_CONFIRM_UNSELECTED_FOREGROUND:-7}"
+  export GUM_INPUT_PROMPT_FOREGROUND="${GUM_INPUT_PROMPT_FOREGROUND:-5}"
+  export GUM_INPUT_CURSOR_FOREGROUND="${GUM_INPUT_CURSOR_FOREGROUND:-7}"
+  export GUM_FILTER_HEADER_FOREGROUND="${GUM_FILTER_HEADER_FOREGROUND:-5}"
+  export GUM_FILTER_INDICATOR_FOREGROUND="${GUM_FILTER_INDICATOR_FOREGROUND:-7}"
+  export GUM_FILTER_SELECTED_INDICATOR_FOREGROUND="${GUM_FILTER_SELECTED_INDICATOR_FOREGROUND:-7}"
+  export GUM_FILTER_MATCH_FOREGROUND="${GUM_FILTER_MATCH_FOREGROUND:-7}"
+
   local settings="$HOME/.worktree-settings"
   # shellcheck source=/dev/null
   [[ -f "$settings" ]] && source "$settings"
@@ -88,44 +110,17 @@ _wt_load_settings() {
 
 # ── Interactive helpers ────────────────────────────────────────────────────────
 
-# Y/n confirmation prompt. Returns 0 if user answers "y", 1 otherwise.
+# Confirmation prompt. Returns 0 if user confirms, 1 otherwise.
 _wt_confirm() {
-  local prompt="$1" reply
-  printf '%s [y/N] ' "$prompt"
-  read -r reply
-  [[ "$(printf '%s' "$reply" | tr '[:upper:]' '[:lower:]')" == "y" ]]
+  local prompt="$1"
+  gum confirm "$prompt"
 }
 
-# Numbered single-select menu. Result stored in _WT_SELECT_RESULT; empty = cancelled.
+# Interactive single-select menu using gum. Result stored in _WT_SELECT_RESULT; empty = cancelled.
 # Usage: _wt_select_one "Header text" item1 item2 ...
 _wt_select_one() {
   local header="$1"; shift
-  local -a items=("$@")
-  printf '\n%s\n' "$header"
-  local i=1
-  for item in "${items[@]}"; do
-    printf '  %d) %s\n' "$i" "$item"
-    (( i++ )) || true
-  done
-  printf '  0) Cancel\n'
-  _WT_SELECT_RESULT=""
-  while true; do
-    printf 'Enter number: '
-    local reply
-    read -r reply
-    if [[ "$reply" == "0" ]]; then
-      _WT_SELECT_RESULT=""
-      return 0
-    elif [[ "$reply" =~ ^[0-9]+$ ]] && [[ "$reply" -ge 1 ]] && [[ "$reply" -le "${#items[@]}" ]]; then
-      if [[ -n "${ZSH_VERSION:-}" ]]; then
-        _WT_SELECT_RESULT="${items[$reply]}"
-      else
-        _WT_SELECT_RESULT="${items[$((reply-1))]}"
-      fi
-      return 0
-    fi
-    printf 'Invalid choice.\n' >&2
-  done
+  _WT_SELECT_RESULT=$(printf '%s\n' "$@" | gum choose --header "$header") || _WT_SELECT_RESULT=""
 }
 
 # ── Settings save ─────────────────────────────────────────────────────────────
@@ -155,12 +150,7 @@ _WT_CLAUDE=false
 _wt_step() {
   printf '\033[32m✓ %s\033[0m\n' "$1"
   [[ "$_WT_STEP" != true ]] && return 0
-  echo ""
-  printf 'Continue? [y/N] '
-  local _wt_step_reply
-  read -r _wt_step_reply
-  [[ "$(printf '%s' "$_wt_step_reply" | tr '[:upper:]' '[:lower:]')" != "y" ]] && { echo "Stopped." >&2; return 1; }
-  return 0
+  gum confirm "Continue?" --affirmative "Continue" --negative "Stop" || { echo "Stopped." >&2; return 1; }
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -186,8 +176,8 @@ _wt_check_jetbrains() {
   local dir="$1"
   if [[ -d "$dir/.idea" ]]; then
     local display_path="${dir/#$HOME/~}"
-    printf 'Please close the JetBrains project at %s. Press Enter when done.' "$display_path"
-    read -r
+    gum confirm "Please close the JetBrains project at ${display_path}." \
+      --affirmative "Done" --negative "Skip" || true
   fi
 }
 
@@ -349,9 +339,7 @@ _wt_cmd_create() {
 
   # Prompt for name if not given
   if [[ -z "$name" ]]; then
-    echo ""
-    printf 'Worktree name: '
-    read -r name
+    name=$(gum input --placeholder "Worktree name") || return 0
     [[ -z "$name" ]] && return 0
   fi
 
@@ -491,22 +479,12 @@ _wt_cmd_create() {
 
       local selected=("${always_copy[@]}")
       if [[ ${#optional[@]} -gt 0 ]]; then
-        echo ""
-        printf 'Available MCP servers to copy:\n'
-        local idx=1
-        for srv in "${optional[@]}"; do
-          printf '  %d) %s\n' "$idx" "$srv"
-          (( idx++ )) || true
-        done
-        printf '  0) None\n'
-        printf 'Enter numbers separated by spaces (or 0 for none): '
-        local mcp_choices
-        read -r mcp_choices
-        for num in $mcp_choices; do
-          if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 1 ]] && [[ "$num" -le "${#optional[@]}" ]]; then
-            selected+=("${optional[$((num-1))]}")
-          fi
-        done
+        local chosen_str
+        chosen_str=$(printf '%s\n' "${optional[@]}" | \
+          gum choose --no-limit --header "Select MCP servers to copy to the new worktree") || chosen_str=""
+        while IFS= read -r srv; do
+          [[ -n "$srv" ]] && selected+=("$srv")
+        done <<< "$chosen_str"
       fi
 
       if [[ ${#selected[@]} -gt 0 ]]; then
