@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="2.0.0"
+_WT_VERSION="2.1.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -108,12 +108,29 @@ _wt_load_settings() {
   [[ -f "$settings" ]] && source "$settings"
 }
 
+# ── Portability helpers ────────────────────────────────────────────────────────
+
+# Portable regex capture groups: zsh uses $match[], bash uses $BASH_REMATCH[].
+# After a successful [[ str =~ pattern ]], call _wt_capture N to get group N.
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+  _wt_capture() { printf '%s' "${match[$1]}"; }
+else
+  _wt_capture() { printf '%s' "${BASH_REMATCH[$1]}"; }
+fi
+
 # ── Interactive helpers ────────────────────────────────────────────────────────
 
-# Confirmation prompt. Returns 0 if user confirms, 1 otherwise.
+# Confirmation prompt. Returns 0=yes, 1=no, 2=abort (Esc/Ctrl-C).
 _wt_confirm() {
   local prompt="$1"
   gum confirm "$prompt"
+  local rc=$?
+
+  if (( rc > 1 )); then
+    return 2
+  fi
+
+  return $rc
 }
 
 # Interactive single-select menu using gum. Result stored in _WT_SELECT_RESULT; empty = cancelled.
@@ -154,6 +171,40 @@ _wt_step() {
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+# Drop all stashes that belong to a given branch.
+# Stashes are dropped from highest index to lowest to avoid index shifting.
+_wt_drop_branch_stashes() {
+  local branch="$1" main_path="$2"
+  [[ -z "$branch" ]] && return 0
+
+  local stash_list
+  stash_list=$(git -C "$main_path" stash list 2>/dev/null) || return 0
+  [[ -z "$stash_list" ]] && return 0
+
+  # Collect indices of stashes belonging to this branch (match "On <branch>:" or "WIP on <branch>:")
+  local -a indices=()
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^stash@\{([0-9]+)\}:[[:space:]]+(WIP\ on|On)[[:space:]]+${branch}: ]]; then
+      indices+=("$(_wt_capture 1)")
+    fi
+  done <<< "$stash_list"
+
+  [[ ${#indices[@]} -eq 0 ]] && return 0
+
+  _wt_step "Dropping ${#indices[@]} stash(es) for branch $branch" || return 1
+
+  # Reverse so we drop highest index first (avoids index shifting).
+  local -a reversed_indices=()
+  local idx
+  for idx in "${indices[@]}"; do
+    reversed_indices=("$idx" "${reversed_indices[@]}")
+  done
+
+  for idx in "${reversed_indices[@]}"; do
+    git -C "$main_path" stash drop "stash@{${idx}}" 2>/dev/null
+  done
+}
 
 _wt_slugify_branch() {
   # Lowercase, spaces → hyphens, keep slashes for branch prefixes (e.g. feat/foo-bar)
@@ -333,8 +384,6 @@ _wt_copy_mcp_servers() {
 # ── Command: create ───────────────────────────────────────────────────────────
 
 _wt_cmd_create() {
-  _wt_load_settings
-
   local name="$*"
 
   # Prompt for name if not given
@@ -649,6 +698,8 @@ _wt_cmd_merge() {
     echo "Warning: Could not remove $target_path — please delete it manually." >&2
   fi
 
+  _wt_drop_branch_stashes "$target_branch" "$main_path"
+
   # Delete the branch
   _wt_step "Deleting branch $target_branch" || return 1
   git -C "$main_path" branch -d "$target_branch" 2>/dev/null
@@ -691,8 +742,9 @@ _wt_cmd_abort() {
     fi
   fi
 
-  # Force-delete branch (skip for detached HEAD)
+  # Force-delete branch and its stashes (skip for detached HEAD)
   if [[ -n "$target_branch" ]]; then
+    _wt_drop_branch_stashes "$target_branch" "$main_path"
     _wt_step "Deleting branch $target_branch" || return 1
     git -C "$main_path" branch -D "$target_branch" 2>/dev/null
   fi
@@ -863,6 +915,10 @@ _wt_cmd_clean() {
     done
     echo ""
     if _wt_confirm "Prune stale registrations and delete their branches?"; then
+      for entry in "${stale_entries[@]}"; do
+        local b="${entry%%	*}"
+        [[ -n "$b" ]] && _wt_drop_branch_stashes "$b" "$main_path"
+      done
       git -C "$main_path" worktree prune
       for entry in "${stale_entries[@]}"; do
         local b="${entry%%	*}"
@@ -878,7 +934,14 @@ _wt_cmd_clean() {
   while IFS=$'\t' read -r wt_path branch head locked; do
     [[ "$wt_path" == "$main_path" ]] && continue
     [[ -z "$branch" ]] && continue  # skip detached HEAD
+    # A branch is "merged" only if it's an ancestor of main AND has diverged
+    # (i.e., has commits beyond the merge-base). A branch at the same commit
+    # as main simply hasn't started work yet.
     if git -C "$main_path" merge-base --is-ancestor "$branch" "$main_branch" 2>/dev/null; then
+      local branch_head main_head
+      branch_head=$(git -C "$main_path" rev-parse "$branch" 2>/dev/null)
+      main_head=$(git -C "$main_path" rev-parse "$main_branch" 2>/dev/null)
+      [[ "$branch_head" == "$main_head" ]] && continue
       merged_entries+=("${branch}	${wt_path}")
     fi
   done <<< "$wt_data"
@@ -895,7 +958,12 @@ _wt_cmd_clean() {
     for entry in "${merged_entries[@]}"; do
       local branch="${entry%%	*}" wt_path="${entry##*	}"
       echo ""
-      if _wt_confirm "Remove worktree and delete branch '$branch'?"; then
+      _wt_confirm "Remove worktree and delete branch '$branch'?"
+      local rc=$?
+      (( rc == 2 )) && break
+
+      if (( rc == 0 )); then
+        _wt_drop_branch_stashes "$branch" "$main_path"
         _wt_step "Removing worktree directory $wt_path" || return 1
         git -C "$main_path" worktree remove --force "$wt_path" 2>/dev/null
         rm -rf "$wt_path" 2>/dev/null
@@ -945,12 +1013,73 @@ _wt_cmd_clean() {
       echo ""
       for dir in "${orphans[@]}"; do
         echo ""
-        if _wt_confirm "Remove orphaned directory '${dir##*/}'?"; then
+        _wt_confirm "Remove orphaned directory '${dir##*/}'?"
+        local rc=$?
+        (( rc == 2 )) && break
+
+        if (( rc == 0 )); then
           _wt_check_jetbrains "$dir"
           rm -rf "$dir" 2>/dev/null
           echo "Removed: $dir"
         fi
       done
+      echo ""
+    fi
+  fi
+
+  # ── 4. Stashes for branches that no longer exist ────────────────────────────
+  local stash_list
+  stash_list=$(git -C "$main_path" stash list 2>/dev/null)
+
+  if [[ -n "$stash_list" ]]; then
+    # Map branch name → list of "stash@{N}: <message>" entries for dead branches
+    local -a orphaned_stashes=()
+    local idx stash_branch
+    while IFS= read -r line; do
+      if [[ "$line" =~ ^stash@\{([0-9]+)\}:[[:space:]]+(WIP\ on|On)[[:space:]]+([^:]+): ]]; then
+        idx="$(_wt_capture 1)"
+        stash_branch="$(_wt_capture 3)"
+        [[ -z "$idx" ]] && continue
+        if ! git -C "$main_path" rev-parse --verify "refs/heads/${stash_branch}" &>/dev/null; then
+          orphaned_stashes+=("${idx}	${stash_branch}	${line}")
+        fi
+      fi
+    done <<< "$stash_list"
+
+    if [[ ${#orphaned_stashes[@]} -gt 0 ]]; then
+      found_issues=true
+      echo "Stashes for branches that no longer exist:"
+      local entry rest msg
+      for entry in "${orphaned_stashes[@]}"; do
+        rest="${entry#*	}"
+        msg="${rest#*	}"
+        echo "  $msg"
+      done
+      echo ""
+
+      # Reverse so we process highest stash index first (avoids index shifting on drop).
+      # Uses array iteration instead of C-style indexing for zsh compatibility (1-indexed).
+      local -a reversed_stashes=()
+      for entry in "${orphaned_stashes[@]}"; do
+        reversed_stashes=("$entry" "${reversed_stashes[@]}")
+      done
+
+      for entry in "${reversed_stashes[@]}"; do
+        idx="${entry%%	*}"
+        rest="${entry#*	}"
+        stash_branch="${rest%%	*}"
+        msg="${rest#*	}"
+        echo ""
+        _wt_confirm "Delete stash for gone branch '$stash_branch': ${msg}?"
+        local rc=$?
+        (( rc == 2 )) && break
+
+        if (( rc == 0 )); then
+          git -C "$main_path" stash drop "stash@{${idx}}"
+          echo "Dropped stash@{${idx}}"
+        fi
+      done
+
       echo ""
     fi
   fi
@@ -1056,6 +1185,7 @@ _wt_cmd_version() {
 # ── Main dispatch ─────────────────────────────────────────────────────────────
 
 _wt_check_deps || return 1
+_wt_load_settings
 
 # Parse global flags
 while true; do
