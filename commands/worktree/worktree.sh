@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="2.1.0"
+_WT_VERSION="2.2.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -479,7 +479,15 @@ _wt_cmd_create() {
       b=$(printf '%s' "$b" | tr -d ' ')
       [[ -n "$b" ]] && branch_arr+=("$b")
     done <<< "$branch_list"
-    _wt_select_one "Select base branch:" "${branch_arr[@]}"
+
+    # Put 'develop' first so it is the default selection
+    local -a ordered_arr=()
+    for b in "${branch_arr[@]}"; do
+      [[ "$b" == "develop" ]] && ordered_arr=("develop" "${ordered_arr[@]}")
+      [[ "$b" != "develop" ]] && ordered_arr+=("$b")
+    done
+
+    _wt_select_one "Select base branch:" "${ordered_arr[@]}"
     base_branch="$_WT_SELECT_RESULT"
     [[ -z "$base_branch" ]] && { [[ "$copy_changes" == true ]] && git -C "$root" stash drop; return 0; }
   fi
