@@ -32,8 +32,8 @@ if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
-# Replace home directory with tilde
-cwd_display="${cwd/#$HOME/~}"
+# Show only the directory name, not the full path
+cwd_display="${cwd##*/}"
 
 # Check if in a git worktree
 worktree_indicator=""
