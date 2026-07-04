@@ -10,6 +10,7 @@ echo "$input" > "/tmp/claude-status-line-$$.json"
 # Extract values from input JSON
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 model=$(echo "$input" | jq -r '.model.display_name')
+effort=$(echo "$input" | jq -r '.effort.level // empty')
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
 # Initialize git variables
@@ -41,8 +42,12 @@ if [ -f "$cwd/.git" ]; then
     worktree_indicator="🌲"
 fi
 
-# Output: model name (cyan)
-printf '\033[36m%s\033[0m' "$model"
+# Output: model name (cyan) with optional effort level
+if [ -n "$effort" ]; then
+    printf '\033[36m%s [%s]\033[0m' "$model" "$effort"
+else
+    printf '\033[36m%s\033[0m' "$model"
+fi
 printf '\033[90m | \033[0m'
 
 # Output: context percentage (color-coded)
