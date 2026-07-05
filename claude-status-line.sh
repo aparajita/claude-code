@@ -37,6 +37,7 @@ cwd_display="${cwd##*/}"
 
 # Check if in a git worktree
 worktree_indicator=""
+
 if [ -f "$cwd/.git" ]; then
     # .git is a file (not a directory), indicating this is a worktree
     worktree_indicator="🌲"
@@ -48,11 +49,13 @@ if [ -n "$effort" ]; then
 else
     printf '\033[36m%s\033[0m' "$model"
 fi
+
 printf '\033[90m | \033[0m'
 
 # Output: context percentage (color-coded)
 if [ -n "$used_pct" ]; then
     used_int=$(printf "%.0f" "$used_pct")
+
     if [ "$used_int" -le 40 ]; then
         printf '\033[32m%d%%\033[0m' "$used_int"  # Green
     elif [ "$used_int" -le 60 ]; then
@@ -63,6 +66,7 @@ if [ -n "$used_pct" ]; then
 else
     printf '\033[32m0%%\033[0m'  # Green
 fi
+
 printf '\033[90m | \033[0m'
 
 # Output: working directory (blue) with worktree indicator if applicable
