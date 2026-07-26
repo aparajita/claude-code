@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="2.2.0"
+_WT_VERSION="2.3.0"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -168,6 +168,81 @@ _wt_step() {
   printf '\033[32m✓ %s\033[0m\n' "$1"
   [[ "$_WT_STEP" != true ]] && return 0
   gum confirm "Continue?" --affirmative "Continue" --negative "Stop" || { echo "Stopped." >&2; return 1; }
+}
+
+# ── Rebase and test gate ──────────────────────────────────────────────────────
+# A branch that is green on its own can be red once rebased, with no textual conflict for
+# git to report: cut a branch, let another branch land on main, and the two can interact
+# badly the moment they share a tree. Because the merge below is a fast-forward, the tree
+# that lands is the POST-rebase tree — the one nothing tests unless we test it here. Git's
+# own pre-merge-commit hook cannot cover it, since a fast-forward creates no merge commit.
+#
+# So both update and merge follow the same order: rebase, test, then act.
+
+# Set by _wt_run_tests: whether a test command actually ran, as opposed to none being
+# configured. Lets a summary say "skipped" instead of claiming tests passed.
+_WT_TESTS_RAN=false
+
+# Rebase a worktree's branch onto the main branch. A branch that already contains main is
+# a no-op. On conflict the rebase is aborted, matching how the rest of this tool handles
+# them, and the caller must not proceed.
+_wt_rebase_onto_main() {
+  local target_path="$1" target_branch="$2" main_branch="$3"
+
+  _wt_step "Rebasing $target_branch onto $main_branch" || return 1
+
+  if git -C "$target_path" rebase "$main_branch" 2>/dev/null; then
+    return 0
+  fi
+
+  git -C "$target_path" rebase --abort 2>/dev/null
+  echo "worktree: rebase failed due to conflicts." >&2
+  echo "  Resolve conflicts manually in the worktree, then run the command again." >&2
+  echo "  Worktree: $target_path" >&2
+  echo "  Branch:   $target_branch" >&2
+  return 1
+}
+
+# Echo the project's test command, or nothing when the project has not configured one.
+# WT_TEST_CMD (environment or ~/.worktree-settings) wins; otherwise a .worktree-test file
+# supplies it. Both are run as shell code, so they are trusted exactly as much as
+# ~/.worktree-settings, which is sourced.
+#
+# The file is read from the worktree being TESTED, not from the main one: it is part of the
+# tree under test, so a branch that changes how the project is tested is honoured by its own
+# gate. Committing it to the base branch is what makes it present in every worktree.
+_wt_test_cmd() {
+  local target_path="$1"
+
+  if [[ -n "${WT_TEST_CMD:-}" ]]; then
+    printf '%s' "$WT_TEST_CMD"
+    return 0
+  fi
+
+  local test_file="$target_path/.worktree-test"
+
+  if [[ -f "$test_file" ]]; then
+    printf '%s' "$(< "$test_file")"
+  fi
+}
+
+# Run the project's tests in the given worktree. Returns 0 when they pass OR when the
+# project configures no test command, non-zero only on a real failure — so projects that
+# have not opted in behave exactly as they did before the gate existed. Sets
+# _WT_TESTS_RAN so callers can tell "passed" from "never ran" in their summary.
+_wt_run_tests() {
+  local target_path="$1"
+  local cmd
+  cmd=$(_wt_test_cmd "$target_path")
+  _WT_TESTS_RAN=false
+
+  if [[ -z "$cmd" ]]; then
+    printf '\033[33m• No test command configured (WT_TEST_CMD or .worktree-test) — skipping tests\033[0m\n'
+    return 0
+  fi
+
+  _WT_TESTS_RAN=true
+  ( cd "$target_path" && bash -c "$cmd" )
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -673,28 +748,29 @@ _wt_cmd_merge() {
     return 1
   fi
 
-  # Attempt fast-forward merge
-  local merged=false
+  # Rebase unconditionally (a no-op when the branch already contains main) so the tests
+  # below run on the exact tree the fast-forward will put on main. See the test gate.
+  _wt_rebase_onto_main "$target_path" "$target_branch" "$main_branch" || return 1
+  _wt_step "Testing the rebased tree in $target_path" || return 1
+
+  if ! _wt_run_tests "$target_path"; then
+    echo "" >&2
+    echo "worktree: tests FAILED on the rebased tree — nothing was merged." >&2
+    echo "  The rebase stands, so fix the failures in the worktree, commit, and run" >&2
+    echo "  merge again. The worktree and branch are left intact." >&2
+    echo "  Worktree: $target_path" >&2
+    echo "  Branch:   $target_branch" >&2
+    return 1
+  fi
+
   _wt_step "Fast-forward merging $target_branch into $main_branch" || return 1
-  if git -C "$main_path" merge --ff-only "$target_branch" 2>/dev/null; then
-    merged=true
-  else
-    # Try rebase then retry ff-only
-    _wt_step "Fast-forward failed — rebasing $target_branch onto $main_branch" || return 1
-    if git -C "$target_path" rebase "$main_branch" 2>/dev/null; then
-      _wt_step "Retrying fast-forward merge of $target_branch into $main_branch" || return 1
-      if git -C "$main_path" merge --ff-only "$target_branch" 2>/dev/null; then
-        merged=true
-      fi
-    fi
-    if [[ "$merged" != true ]]; then
-      git -C "$target_path" rebase --abort 2>/dev/null
-      echo "worktree: rebase failed due to conflicts." >&2
-      echo "  Resolve conflicts manually in the worktree, then run merge again." >&2
-      echo "  Worktree: $target_path" >&2
-      echo "  Branch:   $target_branch" >&2
-      return 1
-    fi
+
+  if ! git -C "$main_path" merge --ff-only "$target_branch"; then
+    echo "worktree: fast-forward merge failed even though the rebase was clean." >&2
+    echo "  Nothing was merged; $main_branch may have moved during this run." >&2
+    echo "  Worktree: $target_path" >&2
+    echo "  Branch:   $target_branch" >&2
+    return 1
   fi
 
   # Cleanup: remove worktree files
@@ -721,6 +797,59 @@ _wt_cmd_merge() {
   echo "  Merged:         $target_branch → $main_branch"
   echo "  Removed:        $target_path"
   echo "  Deleted branch: $target_branch"
+}
+
+# ── Command: update ───────────────────────────────────────────────────────────
+
+# Bring a worktree's branch up to date with main mid-development: the same rebase and test
+# gate merge uses, minus the merge. Running this whenever main moves means a bad interaction
+# surfaces while its cause is still one rebase, instead of days later under a pile of work.
+_wt_cmd_update() {
+  local _wt_target_path="" _wt_target_branch="" _wt_main_path="" _wt_main_branch=""
+  _wt_detect_context "update" || return $?
+  [[ -z "$_wt_target_path" ]] && return 0  # user cancelled
+
+  local target_path="$_wt_target_path"
+  local target_branch="$_wt_target_branch"
+  local main_path="$_wt_main_path"
+  local main_branch="$_wt_main_branch"
+
+  if [[ -z "$target_branch" ]]; then
+    echo "worktree: cannot update a worktree in detached HEAD state" >&2
+    return 1
+  fi
+
+  if [[ -n "$(git -C "$target_path" status --porcelain 2>/dev/null)" ]]; then
+    echo "worktree: the worktree has uncommitted changes or untracked files" >&2
+    echo "  Worktree: $target_path" >&2
+    echo "  Branch:   $target_branch" >&2
+    echo "  Commit or stash them before updating." >&2
+    return 1
+  fi
+
+  _wt_rebase_onto_main "$target_path" "$target_branch" "$main_branch" || return 1
+  _wt_step "Testing the rebased tree in $target_path" || return 1
+
+  if ! _wt_run_tests "$target_path"; then
+    echo "" >&2
+    echo "worktree: tests FAILED after rebasing onto $main_branch." >&2
+    echo "  The rebase stands, so fix the failures in the worktree and commit." >&2
+    echo "  Worktree: $target_path" >&2
+    echo "  Branch:   $target_branch" >&2
+    return 1
+  fi
+
+  echo ""
+  echo "Worktree updated successfully:"
+  echo "  Rebased: $target_branch onto $main_branch"
+
+  if [[ "$_WT_TESTS_RAN" == true ]]; then
+    echo "  Tests:   passed"
+  else
+    echo "  Tests:   skipped (no test command configured)"
+  fi
+
+  echo "  Not merged — use 'worktree merge' when the branch is done."
 }
 
 # ── Command: abort ────────────────────────────────────────────────────────────
@@ -1120,8 +1249,20 @@ MANAGING
     If run from main, presents a list to choose from.
     Example: worktree abort
 
+  update (alias: rebase)
+    Bring a worktree branch up to date: rebase it onto main and run the
+    project's tests on the result. Does not merge. Run it whenever main
+    has moved, so a bad interaction between your branch and main surfaces
+    while its cause is still just the rebase.
+    If run from inside a worktree, uses it automatically.
+    If run from main, presents a list to choose from.
+    Example: worktree update
+
   merge
-    Rebase and merge a worktree branch into main, then clean up.
+    Rebase a worktree branch onto main, run the project's tests on the
+    rebased tree, and merge only if they pass — then clean up. Because the
+    merge is a fast-forward, the tree that lands is the rebased one, which
+    nothing else tests.
     If run from inside a worktree, uses it automatically.
     If run from main, presents a list to choose from.
     Example: worktree merge
@@ -1175,12 +1316,27 @@ SETUP
 
   Optional settings in ~/.worktree-settings:
     OPEN_CLAUDE=true|false   (set automatically when prompted after create)
+    WT_TEST_CMD=<command>    (test command for update and merge, all projects)
+
+TESTS
+─────
+  update and merge run the project's test command on the rebased tree. The
+  command comes from, in order:
+    1. WT_TEST_CMD in the environment or ~/.worktree-settings
+    2. a .worktree-test file in the worktree being tested, holding the
+       command — commit it to the base branch so every worktree has it
+  A project with neither configured skips the tests, with a notice — so this
+  is opt-in per project and changes nothing for projects that ignore it.
+
+  The command runs from the worktree's own directory, via bash. It is trusted
+  shell code, exactly like ~/.worktree-settings, which is sourced.
+  Example .worktree-test:  ./scripts/test.sh unit
 
 TIPS
 ────
   . Worktree directories are siblings of the project: ../<project>-worktrees/
   . Branch names follow the pattern: <slugified-name>
-  . abort and merge work from inside a worktree OR from the main directory
+  . abort, update and merge work from inside a worktree OR from the main directory
 HELP
 }
 
@@ -1210,10 +1366,12 @@ _wt_cmd="${1:-create}"
 # Normalize aliases
 [[ "$_wt_cmd" == "start" ]]   && _wt_cmd="create"
 [[ "$_wt_cmd" == "cleanup" ]] && _wt_cmd="clean"
+[[ "$_wt_cmd" == "rebase" ]]  && _wt_cmd="update"
 
 case "$_wt_cmd" in
   create)  _wt_cmd_create "$@" ;;
   merge)   _wt_cmd_merge ;;
+  update)  _wt_cmd_update ;;
   abort)   _wt_cmd_abort ;;
   clean)   _wt_cmd_clean ;;
   list)    _wt_cmd_list ;;
@@ -1227,4 +1385,9 @@ case "$_wt_cmd" in
     ;;
 esac
 
+# Propagate the command's status. Without this the sourced script's status is whatever the
+# last statement returned (the unset below, always 0), so a failed merge or update reported
+# success to any caller that checked — invisible interactively, fatal for scripted callers.
+_wt_status=$?
 unset _wt_cmd
+return $_wt_status

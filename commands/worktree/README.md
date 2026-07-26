@@ -11,8 +11,9 @@ Manage git worktrees with consistent naming and directory placement conventions.
 - **Uncommitted change copying** — optionally copies all uncommitted changes into the new worktree via `git stash`, while leaving the original directory unchanged
 - **MCP server copying** — reads project MCP server config from `~/.claude.json` and offers to copy servers to the new worktree; `serena` is always copied automatically if present
 - **JetBrains IDE integration** — automatically opens the worktree in the IDE when a `.idea` directory is detected
-- **Rebase-first merge** — attempts a fast-forward merge, falls back to rebase if needed, aborts cleanly on conflicts
-- **Context-aware abort/merge** — auto-detects the current worktree; shows a selection list when run from the main directory
+- **Tested merges** — rebases onto the main branch, runs the project's tests on the rebased tree, and merges only if they pass
+- **Mid-development updates** — `update` applies the same rebase-and-test gate without merging
+- **Context-aware abort/update/merge** — auto-detects the current worktree; shows a selection list when run from the main directory
 
 ## Requirements
 
@@ -43,6 +44,7 @@ Create `~/.worktree-settings` to set persistent preferences:
 # ~/.worktree-settings
 OPEN_CLAUDE=true         # always open Claude Code after creating a worktree
 OPEN_JETBRAINS_IDE=true  # always open JetBrains IDE after creating a worktree
+WT_TEST_CMD='make test'  # test command for update and merge, in every project
 ```
 
 These are also set automatically when you answer the post-create prompts.
@@ -96,14 +98,30 @@ Remove a worktree and delete its branch without merging.
 worktree abort
 ```
 
-**`merge`**
+**`update`** (alias: `rebase`)
 
-Rebase and merge a worktree branch into the main branch, then clean up.
+Bring a worktree branch up to date: rebase it onto the main branch and run the project's [test gate](#test-gate) on the result. Does not merge.
 
 - If run from inside a worktree, uses it automatically
 - If run from the main directory, presents a selection list
-- Attempts fast-forward merge, falls back to rebase; aborts on conflicts
-- Removes the worktree directory and deletes the branch
+- Rebases, then tests; a failure leaves the rebase in place so you can fix forward
+- Leaves the worktree and branch alone — nothing is merged or removed
+
+Run it whenever the main branch has moved. A branch cut before another branch landed can be green on its own and red once rebased, and updating regularly means that surfaces while its cause is still just the rebase.
+
+```bash
+worktree update
+```
+
+**`merge`**
+
+Rebase a worktree branch onto the main branch, run the [test gate](#test-gate) on the rebased tree, and merge only if it passes — then clean up.
+
+- If run from inside a worktree, uses it automatically
+- If run from the main directory, presents a selection list
+- Rebases first (a no-op when already current), aborts on conflicts
+- Tests the rebased tree; on failure nothing is merged and nothing is removed
+- Removes the worktree directory and deletes the branch on success
 - **cds back to the main directory on completion**
 
 ```bash
@@ -123,6 +141,28 @@ Each item requires individual confirmation before removal. If run from inside a 
 ```bash
 worktree cleanup
 ```
+
+### Test gate
+
+`update` and `merge` both run the project's tests on the rebased tree before doing anything irreversible.
+
+This exists because the merge is a fast-forward, so the tree that lands on the main branch is the *post-rebase* tree — and nothing else tests that. Two branches can each be green alone and red once they share a tree, with no textual conflict for git to report. Git's own `pre-merge-commit` hook cannot cover it either: it only fires when a merge commit is created, and a fast-forward creates none.
+
+The test command is resolved in this order:
+
+1. `WT_TEST_CMD` in the environment or `~/.worktree-settings`
+2. a `.worktree-test` file holding the command
+
+A project with neither configured skips the tests and says so, so this is opt-in per project and changes nothing for projects that ignore it.
+
+`.worktree-test` is read from the worktree being **tested**, not from the main one — it is part of the tree under test, so a branch that changes how the project is tested is honoured by its own gate. Commit it to the base branch so every worktree gets it.
+
+```bash
+# .worktree-test
+./scripts/test.sh unit
+```
+
+The command runs from the worktree's own directory, via `bash`. It is trusted shell code, exactly like `~/.worktree-settings`, which is sourced.
 
 ### Navigating
 
@@ -167,6 +207,6 @@ worktree --step abort
 
 ## Tips
 
-- `abort` and `merge` work from inside a worktree **or** from the main directory
+- `abort`, `update` and `merge` work from inside a worktree **or** from the main directory
 - When creating a worktree, uncommitted changes are copied (not moved) — the original directory is left unchanged
 - Project MCP servers (from `~/.claude.json`) can optionally be copied to the new worktree
