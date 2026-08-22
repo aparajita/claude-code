@@ -64,6 +64,7 @@ Each phase section should have a status icon at the beginning of the header for 
 
 **Status:** In Progress  <br>
 **BlockedBy:** —  <br>
+**Files:** {repo-relative paths this phase writes, comma-separated}  <br>
 **Recommended model/effort:** {model}, {effort} — {brief rationale for the choice}
 
 ### Status: In Progress
@@ -76,6 +77,25 @@ Each phase section should have a status icon at the beginning of the header for 
 2. Add responsive breakpoints
    ...
 ```
+
+**Files field:** Always include. It lists the files the phase **writes** — creates,
+modifies, deletes, or moves — as comma-separated repo-relative paths. `/execute-plan`
+runs phases in parallel in one working tree, and this field is what keeps two of them
+from writing the same file at once: phases whose file sets overlap are ordered so they
+never run together.
+
+- List only files the phase writes. Files it merely reads for reference do not belong
+  here — a read is not a conflict.
+- A trailing `/` covers a whole directory (`src/store/`); globs are allowed
+  (`src/ui/*.tsx`). A coarse entry only costs parallelism, never correctness.
+- Use `—` when the phase writes no files at all (a verification or review phase).
+- A phase with no `Files:` line has to be assumed to write everything, which
+  serializes it against every other phase.
+
+Examples:
+- `**Files:** src/layout/engine.ts, src/layout/grid.ts`
+- `**Files:** src/store/, docs/architecture.md`
+- `**Files:** —`
 
 **Recommended model/effort field:** Always include. Format: `{model}, {effort level} — {brief rationale}`. Examples:
 - `Sonnet 4.6, low effort — mechanical extract-method refactor; existing tests gate correctness`
@@ -362,6 +382,7 @@ metadata block, and a numbered `### Tasks` list.
 
 **Status:** Pending  <br>
 **BlockedBy:** {phase numbers, or —}  <br>
+**Files:** {repo-relative paths this phase writes, or —}  <br>
 **Recommended model/effort:** {model}, {effort} — {rationale}
 
 ### Tasks
@@ -377,6 +398,10 @@ metadata block, and a numbered `### Tasks` list.
   this split.
 - **Isolate tests.** If a complex phase needs more than a few tests, make test
   writing its own phase (usually last), blocked by the phases it tests.
+- **Split along files.** Phases run in parallel in one working tree, so two that
+  write the same file must be ordered and cannot overlap. Give each phase its own
+  files where the work allows, and keep the `Files` field accurate — it is what
+  makes that scheduling safe.
 - **Gate every phase.** The final task(s) of each phase run the project scripts —
   `./scripts/compile.sh`, and `./scripts/test.sh {target}` for test phases — and
   must report SUCCESS / green before the phase is considered done.
