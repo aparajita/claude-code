@@ -6,7 +6,7 @@
 #   worktree() { source /path/to/worktree.sh "$@"; }
 
 # ── Version ───────────────────────────────────────────────────────────────────
-_WT_VERSION="2.3.0"
+_WT_VERSION="2.3.1"
 
 # ── Script location ───────────────────────────────────────────────────────────
 # BASH_SOURCE[0] in bash, $0 in zsh (both give the sourced file's path)
@@ -44,6 +44,7 @@ _wt_check_deps() {
 _wt_ensure_dependencies() {
   local required_deps=("gum" "jq")
   local missing_deps=()
+  local dep
 
   for dep in "${required_deps[@]}"; do
     if ! command -v "$dep" &>/dev/null; then
@@ -113,6 +114,7 @@ _wt_load_settings() {
 # Portable regex capture groups: zsh uses $match[], bash uses $BASH_REMATCH[].
 # After a successful [[ str =~ pattern ]], call _wt_capture N to get group N.
 if [[ -n "${ZSH_VERSION:-}" ]]; then
+  # shellcheck disable=SC2154  # zsh's =~ assigns $match; shellcheck checks this file as bash
   _wt_capture() { printf '%s' "${match[$1]}"; }
 else
   _wt_capture() { printf '%s' "${BASH_REMATCH[$1]}"; }
@@ -247,23 +249,36 @@ _wt_run_tests() {
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+# Output one tab-separated line per stash: index<TAB>branch<TAB>message.
+# The branch comes from the stash commit's own subject ("WIP on <branch>: …" or
+# "On <branch>: …"), not from `git stash list`. That list shows the reflog message, which
+# `git stash store -m` replaces, so a stash stored that way names no branch there.
+_wt_stash_entries() {
+  local main_path="$1"
+  local log_out
+  log_out=$(git -C "$main_path" log -g --format='%gd%x09%s%x09%gs' refs/stash 2>/dev/null) || return 0
+  [[ -z "$log_out" ]] && return 0
+
+  local ref subject message idx
+  while IFS=$'\t' read -r ref subject message; do
+    [[ "$ref" =~ ^stash@\{([0-9]+)\}$ ]] || continue
+    idx="$(_wt_capture 1)"
+    [[ "$subject" =~ ^(WIP\ on|On)[[:space:]]+([^:]+): ]] || continue
+    printf '%s\t%s\t%s\n' "$idx" "$(_wt_capture 2)" "$message"
+  done <<< "$log_out"
+}
+
 # Drop all stashes that belong to a given branch.
 # Stashes are dropped from highest index to lowest to avoid index shifting.
 _wt_drop_branch_stashes() {
   local branch="$1" main_path="$2"
   [[ -z "$branch" ]] && return 0
 
-  local stash_list
-  stash_list=$(git -C "$main_path" stash list 2>/dev/null) || return 0
-  [[ -z "$stash_list" ]] && return 0
-
-  # Collect indices of stashes belonging to this branch (match "On <branch>:" or "WIP on <branch>:")
   local -a indices=()
-  while IFS= read -r line; do
-    if [[ "$line" =~ ^stash@\{([0-9]+)\}:[[:space:]]+(WIP\ on|On)[[:space:]]+${branch}: ]]; then
-      indices+=("$(_wt_capture 1)")
-    fi
-  done <<< "$stash_list"
+  local idx stash_branch message
+  while IFS=$'\t' read -r idx stash_branch message; do
+    [[ "$stash_branch" == "$branch" ]] && indices+=("$idx")
+  done <<< "$(_wt_stash_entries "$main_path")"
 
   [[ ${#indices[@]} -eq 0 ]] && return 0
 
@@ -271,7 +286,6 @@ _wt_drop_branch_stashes() {
 
   # Reverse so we drop highest index first (avoids index shifting).
   local -a reversed_indices=()
-  local idx
   for idx in "${indices[@]}"; do
     reversed_indices=("$idx" "${reversed_indices[@]}")
   done
@@ -366,13 +380,13 @@ _wt_detect_context() {
   if [[ "$current_root" != "$_wt_main_path" ]]; then
     # Inside a non-main worktree — auto-select it
     _wt_target_path="$current_root"
-    _wt_target_branch=$(printf '%s\n' "$wt_data" | while IFS=$'\t' read -r p b h l; do
+    _wt_target_branch=$(printf '%s\n' "$wt_data" | while IFS=$'\t' read -r p b _ _; do
       if [[ "$p" == "$current_root" ]]; then printf '%s' "$b"; break; fi
     done)
   else
     # In main — build list of non-main worktrees for user to choose from
-    local non_main=""
-    while IFS=$'\t' read -r p b h l; do
+    local non_main="" p b line
+    while IFS=$'\t' read -r p b _ _; do
       [[ "$p" == "$_wt_main_path" ]] && continue
       non_main+="${b} — ${p}"$'\n'
     done <<< "$wt_data"
@@ -485,9 +499,9 @@ _wt_cmd_create() {
   local worktree_path="${worktree_dir}/${dir_slug}"
 
   # Check uniqueness against existing worktrees
-  local existing_worktrees
+  local existing_worktrees wt_path wt_branch
   existing_worktrees=$(_wt_worktree_data)
-  while IFS=$'\t' read -r wt_path wt_branch wt_head wt_locked; do
+  while IFS=$'\t' read -r wt_path wt_branch _ _; do
     [[ "$wt_path" == "$root" ]] && continue  # skip main worktree
     local existing_name="${wt_path##*/}"
     if [[ "$existing_name" == "$dir_slug" ]] || [[ "$wt_branch" == "$branch" ]]; then
@@ -544,7 +558,7 @@ _wt_cmd_create() {
   local num_branches=0
   while IFS= read -r _; do (( num_branches++ )) || true; done <<< "$branch_list"
 
-  local base_branch=""
+  local base_branch="" b
   if [[ "$num_branches" -eq 1 ]]; then
     base_branch=$(printf '%s\n' "$branch_list" | tr -d ' ')
     echo "Using base branch: $base_branch"
@@ -591,6 +605,7 @@ _wt_cmd_create() {
   # Copy MCP servers
   local mcp_copy_succeeded=false
   local serena_copied=false
+  local srv_name srv s
   if [[ -f "$HOME/.claude.json" ]]; then
     _wt_ensure_dependencies || return 1
     local mcp_json
@@ -782,7 +797,7 @@ _wt_cmd_merge() {
     echo "Warning: Could not remove $target_path — please delete it manually." >&2
   fi
 
-  _wt_drop_branch_stashes "$target_branch" "$main_path"
+  _wt_drop_branch_stashes "$target_branch" "$main_path" || return 1
 
   # Delete the branch
   _wt_step "Deleting branch $target_branch" || return 1
@@ -881,7 +896,7 @@ _wt_cmd_abort() {
 
   # Force-delete branch and its stashes (skip for detached HEAD)
   if [[ -n "$target_branch" ]]; then
-    _wt_drop_branch_stashes "$target_branch" "$main_path"
+    _wt_drop_branch_stashes "$target_branch" "$main_path" || return 1
     _wt_step "Deleting branch $target_branch" || return 1
     git -C "$main_path" branch -D "$target_branch" 2>/dev/null
   fi
@@ -960,8 +975,8 @@ _wt_cmd_switch() {
   current_root=$(_wt_project_root)
 
   # Build list of non-current worktrees as "branch — path" lines
-  local candidates=""
-  while IFS=$'\t' read -r wt_path branch head locked; do
+  local candidates="" wt_path branch head
+  while IFS=$'\t' read -r wt_path branch head _; do
     [[ "$wt_path" == "$current_root" ]] && continue
     local display_branch="${branch:-${head:0:7}}"
     candidates+="${display_branch} — ${wt_path}"$'\n'
@@ -992,6 +1007,7 @@ _wt_cmd_switch() {
 
   if [[ -z "$target" ]]; then
     local -a candidates_arr=()
+    local line
     while IFS= read -r line; do
       [[ -n "$line" ]] && candidates_arr+=("$line")
     done <<< "$candidates"
@@ -1037,7 +1053,8 @@ _wt_cmd_clean() {
 
   # ── 1. Stale git worktree registrations (directory missing) ─────────────────
   local -a stale_entries=()
-  while IFS=$'\t' read -r wt_path branch head locked; do
+  local wt_path branch entry reg dir
+  while IFS=$'\t' read -r wt_path branch _ _; do
     [[ "$wt_path" == "$main_path" ]] && continue
     [[ -d "$wt_path" ]] && continue
     stale_entries+=("${branch}	${wt_path}")
@@ -1054,7 +1071,9 @@ _wt_cmd_clean() {
     if _wt_confirm "Prune stale registrations and delete their branches?"; then
       for entry in "${stale_entries[@]}"; do
         local b="${entry%%	*}"
-        [[ -n "$b" ]] && _wt_drop_branch_stashes "$b" "$main_path"
+        if [[ -n "$b" ]]; then
+          _wt_drop_branch_stashes "$b" "$main_path" || return 1
+        fi
       done
       git -C "$main_path" worktree prune
       for entry in "${stale_entries[@]}"; do
@@ -1068,7 +1087,7 @@ _wt_cmd_clean() {
 
   # ── 2. Registered worktrees with branches merged into main ──────────────────
   local -a merged_entries=()
-  while IFS=$'\t' read -r wt_path branch head locked; do
+  while IFS=$'\t' read -r wt_path branch _ _; do
     [[ "$wt_path" == "$main_path" ]] && continue
     [[ -z "$branch" ]] && continue  # skip detached HEAD
     # A branch is "merged" only if it's an ancestor of main AND has diverged
@@ -1100,7 +1119,7 @@ _wt_cmd_clean() {
       (( rc == 2 )) && break
 
       if (( rc == 0 )); then
-        _wt_drop_branch_stashes "$branch" "$main_path"
+        _wt_drop_branch_stashes "$branch" "$main_path" || return 1
         _wt_step "Removing worktree directory $wt_path" || return 1
         git -C "$main_path" worktree remove --force "$wt_path" 2>/dev/null
         rm -rf "$wt_path" 2>/dev/null
@@ -1126,7 +1145,7 @@ _wt_cmd_clean() {
   if [[ -d "$worktree_base" ]]; then
     # Collect registered worktree paths (excluding main)
     local -a registered_paths=()
-    while IFS=$'\t' read -r wt_path branch head locked; do
+    while IFS=$'\t' read -r wt_path _ _ _; do
       [[ "$wt_path" == "$main_path" ]] && continue
       registered_paths+=("$wt_path")
     done <<< "$wt_data"
@@ -1165,28 +1184,23 @@ _wt_cmd_clean() {
   fi
 
   # ── 4. Stashes for branches that no longer exist ────────────────────────────
-  local stash_list
-  stash_list=$(git -C "$main_path" stash list 2>/dev/null)
+  local stash_entries
+  stash_entries=$(_wt_stash_entries "$main_path")
 
-  if [[ -n "$stash_list" ]]; then
+  if [[ -n "$stash_entries" ]]; then
     # Map branch name → list of "stash@{N}: <message>" entries for dead branches
     local -a orphaned_stashes=()
-    local idx stash_branch
-    while IFS= read -r line; do
-      if [[ "$line" =~ ^stash@\{([0-9]+)\}:[[:space:]]+(WIP\ on|On)[[:space:]]+([^:]+): ]]; then
-        idx="$(_wt_capture 1)"
-        stash_branch="$(_wt_capture 3)"
-        [[ -z "$idx" ]] && continue
-        if ! git -C "$main_path" rev-parse --verify "refs/heads/${stash_branch}" &>/dev/null; then
-          orphaned_stashes+=("${idx}	${stash_branch}	${line}")
-        fi
+    local idx stash_branch message
+    while IFS=$'\t' read -r idx stash_branch message; do
+      if ! git -C "$main_path" rev-parse --verify "refs/heads/${stash_branch}" &>/dev/null; then
+        orphaned_stashes+=("${idx}	${stash_branch}	stash@{${idx}}: ${message}")
       fi
-    done <<< "$stash_list"
+    done <<< "$stash_entries"
 
     if [[ ${#orphaned_stashes[@]} -gt 0 ]]; then
       found_issues=true
       echo "Stashes for branches that no longer exist:"
-      local entry rest msg
+      local rest msg
       for entry in "${orphaned_stashes[@]}"; do
         rest="${entry#*	}"
         msg="${rest#*	}"
@@ -1230,7 +1244,7 @@ _wt_cmd_clean() {
 # ── Command: help ─────────────────────────────────────────────────────────────
 
 _wt_cmd_help() {
-  cat <<'HELP'
+  cat <<'END_OF_HELP'
 Worktree Commands
 ═══════════════════════════════════════════════════════════
 
@@ -1268,7 +1282,7 @@ MANAGING
     Example: worktree merge
 
   clean (alias: cleanup)
-    Find and remove worktree leftovers. Checks three things:
+    Find and remove worktree leftovers. Checks four things:
       1. Stale git registrations — worktrees git tracks but whose
          directories no longer exist on disk. Offers to prune them.
       2. Merged worktrees — registered worktrees whose branches are
@@ -1276,6 +1290,8 @@ MANAGING
          remove the directory and delete the branch.
       3. Orphaned directories — directories in the worktree base
          folder that aren't registered with git. Offers to delete.
+      4. Orphaned stashes — stashes made on a branch that no longer
+         exists. Offers to drop them.
     Each item requires individual confirmation before removal.
     Example: worktree clean
 
@@ -1337,7 +1353,7 @@ TIPS
   . Worktree directories are siblings of the project: ../<project>-worktrees/
   . Branch names follow the pattern: <slugified-name>
   . abort, update and merge work from inside a worktree OR from the main directory
-HELP
+END_OF_HELP
 }
 
 # ── Command: version ──────────────────────────────────────────────────────────
