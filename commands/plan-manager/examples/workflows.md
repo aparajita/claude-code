@@ -16,7 +16,7 @@ Claude: ✓ Initialized master plan: plans/layout-engine.md (flat)
         ┌─────────────────────────────────────────────────────────┐
         │ Setup                                                   │
         │                                                         │
-        │ ○ Configure now (Recommended)                           │
+        │ ○ Configure now                                         │
         │   Set up category directories (migrations/, docs/, etc.)│
         │                                                         │
         │ ○ Use defaults                                          │
@@ -194,7 +194,7 @@ Claude: *Uses AskUserQuestion tool*
         ┌─────────────────────────────────────────────────────────┐
         │ Proceed with this organization plan?                    │
         │                                                         │
-        │ ○ Apply all (Recommended)                               │
+        │ ○ Apply all                                             │
         │   Execute every change listed above                     │
         │                                                         │
         │ ○ Review each section                                   │

@@ -101,7 +101,7 @@ Options:
 Question: "Configure category organization for standalone plans?"
 Header: "Setup"
 Options:
-  - Label: "Configure now (Recommended)"
+  - Label: "Configure now"
     Description: "Set up category directories (migrations/, docs/, etc.)"
   - Label: "Use defaults"
     Description: "Use built-in defaults (migrations, docs, designs, etc.)"

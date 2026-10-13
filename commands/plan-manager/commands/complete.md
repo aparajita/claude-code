@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-complete <file-or-phase-or-range> [step]
+complete <file-or-phase-or-range> [step] [--master <path>] [--unattended]
 ```
 
 Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as complete.
@@ -16,6 +16,33 @@ Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as comp
 - Phase ranges: `1-5`, `2-4`
 - File paths: `plans/sub-plan.md`
 - Steps within sub-plans: `plans/sub-plan.md 2` or natural language "step 2 of plans/sub-plan.md"
+
+**Flags:**
+- `--master <path>` — resolve phase numbers against this master plan instead of the active one.
+- `--unattended` — run every step below without asking anything. `/execute-plan` uses it
+  to record each phase it completes. See **Unattended mode**.
+
+## Unattended mode
+
+With `--unattended`, every **AskUserQuestion** in the steps below is answered as follows
+instead of being asked:
+
+| Question | Answer |
+|----------|--------|
+| Confirm completion (Section 4) | Yes — mark complete |
+| All steps in the sub-plan complete — mark it complete? (Section 3, step 5) | Yes |
+| All steps in the parent sub-plan complete — complete it too? (Section 2a, step 2) | Yes |
+| How should the completed sub-plan/branch be integrated? (Section 2, step 3) | Just mark complete |
+| What's the status of the parent phase? (Section 5, step 4) | Phase complete |
+| What should happen to the completed sub-plan/branch, or to the master plan? (Section 5, steps 3 and 5) | Leave in place |
+| Should a phase blocked by the completed one be unblocked? (Section 5, step 6) | Yes; if no blockers remain, its new status is ⏳ Pending |
+
+Skip the "last phase but no others are marked complete" check in Section 5, step 3 —
+an unattended caller completes phases one at a time, in order.
+
+A plan the state file does not track still completes. Skip every state-file update, and
+find the phases a completed phase blocks from the Status Dashboard's
+`⏸️ Blocked by …` notation instead of the state file's `blocks` array.
 
 ## Steps
 
@@ -52,7 +79,7 @@ Mark a sub-plan, branch, master plan phase(s), or step within a sub-plan as comp
    Question: "This {type} is complete. How should it be integrated?"
    Header: "Integration"
    Options:
-     - Label: "Replace with summary + link (Recommended)"
+     - Label: "Replace with summary + link"
        Description: "Replace phase body with a summary and link to the {type}"
      - Label: "Merge into master"
        Description: "Merge {type} content into the master plan's phase section"
@@ -85,7 +112,7 @@ When a completed sub-plan's parent is another sub-plan (not a master):
      Question: "All steps in the parent sub-plan ({parent-name}) are now complete. Mark it as complete too?"
      Header: "Recursive completion"
      Options:
-       - Label: "Yes, complete parent (Recommended)"
+       - Label: "Yes, complete parent"
          Description: "Mark {parent-name} as Completed and propagate upward"
        - Label: "No, leave in progress"
          Description: "Keep the parent sub-plan as In Progress"
@@ -129,7 +156,7 @@ Use this workflow when marking a specific step within a sub-plan as complete.
      Question: "All steps in this sub-plan are now complete. Mark the entire sub-plan as complete?"
      Header: "Sub-plan completion"
      Options:
-       - Label: "Yes, mark complete (Recommended)"
+       - Label: "Yes, mark complete"
          Description: "Update sub-plan status to Completed and proceed with integration"
        - Label: "No, leave in progress"
          Description: "Keep sub-plan status as In Progress"
@@ -154,7 +181,7 @@ Use this workflow when marking master plan phases complete directly (no sub-plan
    Question: "Mark Phase {N} as complete in the master plan?"
    Header: "Confirm completion"
    Options:
-     - Label: "Yes, mark complete (Recommended)"
+     - Label: "Yes, mark complete"
        Description: "Update Phase {N} to ✅ Complete"
      - Label: "No, cancel"
        Description: "Don't make any changes"
@@ -166,7 +193,7 @@ Use this workflow when marking master plan phases complete directly (no sub-plan
    Question: "Mark Phases {start}-{end} as complete in the master plan?"
    Header: "Confirm completion"
    Options:
-     - Label: "Yes, mark all complete (Recommended)"
+     - Label: "Yes, mark all complete"
        Description: "Update all {count} phases to ✅ Complete"
      - Label: "No, cancel"
        Description: "Don't make any changes"
@@ -261,14 +288,14 @@ After completing a sub-plan/branch (whose parent is a master plan) OR direct pha
        Question: "Phase {blocked} was blocked by {completed}. Should it be unblocked now?"
        Header: "Unblock dependency"
        Options:
-         - Label: "Yes, unblock it (Recommended)"
+         - Label: "Yes, unblock it"
            Description: "Remove blocker and allow Phase {blocked} to proceed"
          - Label: "No, keep it blocked"
            Description: "Other blockers may still exist, leave it blocked for now"
        ```
      - If "Yes, unblock it":
        - Run unblock logic (same as `unblock` command)
-       - Remove blocker from the blocked phase's `blockedBy` field in master plan and state file
+       - Remove blocker from the blocked phase's Status Dashboard row and its `blockedBy` array in the state file
        - If no other blockers remain, prompt for new status
        - Update Status Dashboard accordingly
      - If "No, keep it blocked", do nothing

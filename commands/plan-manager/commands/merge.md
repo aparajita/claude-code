@@ -48,7 +48,7 @@ Merge a sub-plan or branch's content into the master plan.
    Options:
      - Label: "Append to {phase/step}"
        Description: "Add plan content to the end of {Phase/Step} {N} section"
-     - Label: "Inline content (Recommended)"
+     - Label: "Inline content"
        Description: "Replace {Phase/Step} {N} body with plan content, then delete the sub-plan file"
      - Label: "Reference to sub-plan"
        Description: "Replace {Phase/Step} {N} body with summary + link to sub-plan"
@@ -102,7 +102,7 @@ Merge a sub-plan or branch's content into the master plan.
    Question: "Plan merged successfully. What should happen to the plan file?"
    Header: "Plan cleanup"
    Options:
-     - Label: "Delete it (Recommended)"
+     - Label: "Delete it"
        Description: "Remove the file (content is now in master plan)"
      - Label: "Archive it"
        Description: "Move to plans/completed/ directory for reference"
@@ -143,7 +143,7 @@ Claude: *Reads plan content*
         │ ○ Append to phase                                       │
         │   Add plan content to the end of Phase 2 section        │
         │                                                         │
-        │ ○ Inline content (Recommended)                          │
+        │ ○ Inline content                                        │
         │   Replace Phase 2 body with plan content, then delete   │
         │   the sub-plan file                                     │
         │                                                         │

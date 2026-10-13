@@ -297,7 +297,7 @@ Claude: *Reads plan content*
         │ ○ Append to phase                                       │
         │   Add plan content to the end of Phase 2 section        │
         │                                                         │
-        │ ○ Inline content (Recommended)                          │
+        │ ○ Inline content                                        │
         │   Replace Phase 2 body with plan content, then delete   │
         │   the sub-plan file                                     │
         │                                                         │

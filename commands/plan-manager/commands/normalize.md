@@ -74,7 +74,7 @@ If the plan has 3+ structural elements that require remapping, show a preview an
 Question: "I'll normalize this plan. Does this mapping look right?"
 Header: "Confirm structure"
 Options:
-  - Label: "Yes, normalize it (Recommended)"
+  - Label: "Yes, normalize it"
     Description: "Milestone 1→Phase 1, Milestone 2→Phase 2, Milestone 3→Phase 3"
   - Label: "Adjust mapping"
     Description: "Tell me how to remap the sections"
@@ -110,18 +110,11 @@ Rewrite the file in place using the Write tool. Apply these transformations:
 **For sub-plans / branches:**
 
 1. Ensure a single `# Sub-plan: Title` or `# Branch: Title` h1
-2. If the `**Type:**` header block is missing, prepend it before the first content section:
-   ```markdown
-   **Type:** Sub-plan  <br>
-   **Parent:** <master-path or "unknown — update with capture"> → Phase <N or "? — update with capture">  <br>
-   **Created:** <date>  <br>
-   **Status:** In Progress  <br>
-   **BlockedBy:** —
+2. If the `**Type:**` header block is missing, prepend it before the first content section. Take the header block (from `**Type:**` through the `---` rule) of the matching template in `~/.claude/skills/make-plan/plan-templates.md`:
+   - **Sub-plan:** § Sub-plan Template, or § Nested Sub-plan Template when `--step` is provided
+   - **Branch:** § Branch Plan Template, or § Nested Branch Template when `--step` is provided
 
-   ---
-   ```
-   If `--master` and `--phase`/`--step` weren't provided, use placeholder values and note them in the output.
-   If `--step` is provided instead of `--phase`, use `→ Step N` instead of `→ Phase N` and add a `**Master:**` field (for nested sub-plans).
+   If `--master` and `--phase`/`--step` weren't provided, use placeholder values — `unknown — update with capture` for the path, `? — update with capture` for the number — and note them in the output.
 3. Remap structural headings to `## ⏳ Step N: Title` or `## ⏳ Phase N: Title` format with status icons
 4. Preserve all body content verbatim
 5. Ensure a `---` separator exists between the header block and body content
@@ -144,7 +137,7 @@ After normalization, if the file isn't yet tracked and normalize was invoked dir
 Question: "Add this master plan to tracking?"
 Header: "Track plan"
 Options:
-  - Label: "Yes, initialize it (Recommended)"
+  - Label: "Yes, initialize it"
     Description: "Run init to add to .claude/plan-manager-state.json"
   - Label: "Not yet"
     Description: "Leave untracked for now"
@@ -158,7 +151,7 @@ If yes, follow the `init` command steps for this file.
 Question: "Link this sub-plan to the master plan?"
 Header: "Link plan"
 Options:
-  - Label: "Yes, capture it (Recommended)"
+  - Label: "Yes, capture it"
     Description: "Run capture to link to Phase {N} of the master plan"
   - Label: "Not yet"
     Description: "Leave unlinked for now"

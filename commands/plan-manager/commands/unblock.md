@@ -40,10 +40,9 @@ Remove blockers from a phase or step.
 
 6. **Update master plan**:
    - Find the phase section for the target
-   - Update the `**BlockedBy:**` field:
-     - If removing all blockers, set to `—`
-     - If removing specific blocker, remove from comma-separated list
    - Update Status Dashboard:
+     - If blockers remain, remove the unblocked one(s) from the comma-separated
+       list in `⏸️ Blocked by …`
      - If no blockers remain, use **AskUserQuestion** to determine new status:
        ```
        Question: "{Phase|Step} {target} is no longer blocked. What's the new status?"

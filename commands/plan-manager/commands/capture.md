@@ -102,61 +102,11 @@ When `--parent <path>` points to a sub-plan, use `--step N` to specify which ste
    - Follow the **normalize command** steps with `--type {sub-plan|branch}`, `--phase N` or `--step N`, `--master {master-path}`
    - If `--parent` was used, also pass `--parent {parent-path}` to normalize
    - Skip normalize's type-detection step (type is already known from step 4) and its tracking-offer step (capture handles linking)
-   - This ensures the file has standard `## ⏳ Step N:` or `## ⏳ Phase N:` headings and the correct header block:
-
-**For sub-plans (parent is master):**
-```markdown
-**Type:** Sub-plan  <br>
-**Parent:** {master-plan-path} → Phase {N}  <br>
-**Captured:** {date}  <br>
-**Status:** In Progress  <br>
-**BlockedBy:** —
-
----
-
-{original content}
-```
-
-**For sub-plans (parent is sub-plan, nested):**
-```markdown
-**Type:** Sub-plan  <br>
-**Parent:** {parent-sub-plan-path} → Step {N}  <br>
-**Master:** {master-plan-path}  <br>
-**Captured:** {date}  <br>
-**Status:** In Progress  <br>
-**BlockedBy:** —
-
----
-
-{original content}
-```
-
-**For branches (parent is master):**
-```markdown
-**Type:** Branch  <br>
-**Parent:** {master-plan-path} → Phase {N}  <br>
-**Captured:** {date}  <br>
-**Status:** In Progress  <br>
-**BlockedBy:** —
-
----
-
-{original content}
-```
-
-**For branches (parent is sub-plan, nested):**
-```markdown
-**Type:** Branch  <br>
-**Parent:** {parent-sub-plan-path} → Step {N}  <br>
-**Master:** {master-plan-path}  <br>
-**Captured:** {date}  <br>
-**Status:** In Progress  <br>
-**BlockedBy:** —
-
----
-
-{original content}
-```
+   - This ensures the file has standard `## ⏳ Step N:` or `## ⏳ Phase N:` headings and the header block from `~/.claude/skills/make-plan/plan-templates.md`:
+     - **Sub-plan, parent is master:** § Captured Sub-plan Header
+     - **Sub-plan, parent is sub-plan (nested):** § Captured Nested Sub-plan Header
+     - **Branch, parent is master:** § Captured Branch Header
+     - **Branch, parent is sub-plan (nested):** § Captured Nested Branch Header
 
 9. **Update the parent plan**:
    - **If parent is a master plan**:

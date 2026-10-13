@@ -45,7 +45,7 @@ Claude: *Uses AskUserQuestion tool*
         │ Found 6 standalone plans that can be organized by       │
         │ category. Organize them?                                │
         │                                                         │
-        │ ○ Organize all (Recommended)                            │
+        │ ○ Organize all                                          │
         │   Move plans to category subdirs (migrations/, docs/,   │
         │   designs/)                                             │
         │                                                         │
@@ -92,7 +92,7 @@ Claude: *Runs config command in edit mode*
         ┌─────────────────────────────────────────────────────────┐
         │ Organization                                            │
         │                                                         │
-        │ ○ Enabled (Recommended)                                 │
+        │ ○ Enabled                                               │
         │   Organize standalone plans by category (migrations/,   │
         │   docs/, etc.)                                          │
         │                                                         │

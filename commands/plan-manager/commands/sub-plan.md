@@ -65,66 +65,10 @@ When `--parent <path>` is provided, the argument is a **step number** in the par
      - Find the target step in the parent sub-plan
      - Update the step's icon to 📋 (e.g., `3. 📋 Research edge cases` or `## 📋 Step 3: Research edge cases`)
      - Add a blockquote sub-plan reference below the step: `> Sub-plan: [name.md](./name.md)`
-8. **Create the sub-plan file** with the appropriate template:
-
-   **When parent is a master plan:**
-   ```markdown
-   # Sub-plan: {description}
-
-   **Type:** Sub-plan  <br>
-   **Parent:** {master-plan-path} → Phase {N}  <br>
-   **Created:** {date}  <br>
-   **Status:** In Progress  <br>
-   **BlockedBy:** —
-
-   ---
-
-   ## Purpose
-
-   {Brief description of what this phase aims to accomplish}
-
-   ## Implementation Approach
-
-   {To be filled in - how will this phase be implemented}
-
-   ## Dependencies
-
-   {Any dependencies or prerequisites}
-
-   ## Plan
-
-   {Detailed implementation steps}
-   ```
-
-   **When parent is a sub-plan (nested):**
-   ```markdown
-   # Sub-plan: {description}
-
-   **Type:** Sub-plan  <br>
-   **Parent:** {parent-sub-plan-path} → Step {N}  <br>
-   **Master:** {master-plan-path}  <br>
-   **Created:** {date}  <br>
-   **Status:** In Progress  <br>
-   **BlockedBy:** —
-
-   ---
-
-   ## Purpose
-
-   {Brief description of what this step aims to accomplish}
-
-   ## Implementation Approach
-
-   {To be filled in - how will this step be implemented}
-
-   ## Dependencies
-
-   {Any dependencies or prerequisites}
-
-   ## Plan
-
-   {Detailed implementation steps}
-   ```
+8. **Create the sub-plan file** from the template in
+   `~/.claude/skills/make-plan/plan-templates.md`:
+   - **When parent is a master plan:** § Sub-plan Template
+   - **When parent is a sub-plan (nested):** § Nested Sub-plan Template
 
 8a. **Post-creation rename check**: If the filename of the newly-created sub-plan matches random/meaningless name patterns (see `rename.md` § Detecting random/meaningless names), immediately offer to rename it using the rename suggest mode before updating the state file and parent plan references. Apply the rename before proceeding so that all subsequent references (state file, parent plan links) use the correct name.
 9. **Update state file** with new sub-plan entry:

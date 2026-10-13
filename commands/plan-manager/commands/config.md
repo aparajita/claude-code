@@ -103,7 +103,7 @@ Options:
 Question: "Enable category organization for standalone plans?"
 Header: "Organization"
 Options:
-  - Label: "Enabled (Recommended)"
+  - Label: "Enabled"
     Description: "Organize standalone plans by category (migrations/, docs/, etc.)"
   - Label: "Disabled"
     Description: "Don't organize standalone plans by category"

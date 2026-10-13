@@ -60,50 +60,10 @@ When `--parent <path>` is provided, the argument is a **step number** in the par
      - Find the target step in the parent sub-plan
      - Update the step's icon to 🔀 (e.g., `3. 🔀 Investigate caching` or `## 🔀 Step 3: Investigate caching`)
      - Add a blockquote branch reference below the step: `> Branch: [name.md](./name.md)`
-8. **Create the branch file** with the appropriate template:
-
-   **When parent is a master plan:**
-   ```markdown
-   # Branch: {description}
-
-   **Type:** Branch  <br>
-   **Parent:** {master-plan-path} → Phase {N}  <br>
-   **Created:** {date}  <br>
-   **Status:** In Progress  <br>
-   **BlockedBy:** —
-
-   ---
-
-   ## Context
-
-   {Brief description of the issue/topic that led to this branch}
-
-   ## Plan
-
-   {To be filled in}
-   ```
-
-   **When parent is a sub-plan (nested):**
-   ```markdown
-   # Branch: {description}
-
-   **Type:** Branch  <br>
-   **Parent:** {parent-sub-plan-path} → Step {N}  <br>
-   **Master:** {master-plan-path}  <br>
-   **Created:** {date}  <br>
-   **Status:** In Progress  <br>
-   **BlockedBy:** —
-
-   ---
-
-   ## Context
-
-   {Brief description of the issue/topic that led to this branch}
-
-   ## Plan
-
-   {To be filled in}
-   ```
+8. **Create the branch file** from the template in
+   `~/.claude/skills/make-plan/plan-templates.md`:
+   - **When parent is a master plan:** § Branch Plan Template
+   - **When parent is a sub-plan (nested):** § Nested Branch Template
 
 9. **Update state file** with new sub-plan entry:
    - Set `type: "branch"`

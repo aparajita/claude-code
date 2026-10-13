@@ -117,7 +117,7 @@ Then ask for approval via **AskUserQuestion**:
 Question: "Proceed with this organization plan?"
 Header: "Organize"
 Options:
-  - Label: "Apply all (Recommended)"
+  - Label: "Apply all"
     Description: "Execute every change listed above"
   - Label: "Review each section"
     Description: "I'll walk through each category of changes and you approve or skip"
